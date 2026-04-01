@@ -102,14 +102,17 @@ body{
 .home-right{
   min-height:720px;position:relative;overflow:hidden;
   background:
-    radial-gradient(circle at 75% 18%, rgba(255,255,255,.75) 0 58px, transparent 58px),
-    linear-gradient(180deg,#e7f1ff 0%,#eef7ff 18%,#e7f6ee 18%,#e7f6ee 45%,#d9f0da 45%,#d9f0da 100%)
+    linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.16)),
+    url('https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/main%20page.png') center/cover no-repeat,
+    linear-gradient(180deg,#e7f1ff 0%,#eef7ff 18%,#e7f6ee 18%,#e7f6ee 45%,#d9f0da 45%,#d9f0da 100%);
 }
 .home-right::before{
   content:"";position:absolute;inset:0;
-  background:radial-gradient(circle at 72% 30%, rgba(206,223,255,.75) 0 210px, transparent 210px),
-            radial-gradient(circle at 22% 80%, rgba(248,209,231,.42) 0 170px, transparent 170px),
-            linear-gradient(180deg, transparent 0 58%, rgba(138,190,139,.10) 58% 100%)
+  background:
+    radial-gradient(circle at 72% 30%, rgba(206,223,255,.28) 0 210px, transparent 210px),
+    radial-gradient(circle at 22% 80%, rgba(248,209,231,.18) 0 170px, transparent 170px),
+    linear-gradient(180deg, rgba(255,255,255,.06) 0 58%, rgba(138,190,139,.04) 58% 100%);
+  pointer-events:none;
 }
 .hero-cloud{position:absolute;top:58px;left:72px;width:210px;height:76px;background:rgba(255,255,255,.82);border-radius:999px}
 .hero-cloud::before,.hero-cloud::after{content:"";position:absolute;background:inherit;border-radius:50%}
@@ -129,7 +132,7 @@ body{
 .princess-aura{position:absolute;inset:24px 18px 14px;background:radial-gradient(circle at 50% 50%, rgba(226,232,255,.96), rgba(221,221,252,.56) 55%, transparent 75%)}
 .hero-princess{position:relative;z-index:3;max-width:365px;max-height:410px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 18px 25px rgba(164,134,194,.22))}
 .hero-knight{position:absolute;right:4px;bottom:8px;z-index:4;width:132px;height:auto}
-.hero-cloud,.mountain,.forest,.lake,.village,.map-deco-label,.map-castle{opacity:.38}
+.hero-cloud,.mountain,.forest,.lake,.village,.map-deco-label,.map-castle{opacity:.18}
 
 .modal-backdrop{
   position:fixed;inset:0;background:rgba(77,61,106,.34);display:none;place-items:center;z-index:100;padding:18px
@@ -594,7 +597,7 @@ body{
       msg.style.display = 'grid';
       msg.style.placeItems = 'center';
       msg.style.padding = '24px';
-      msg.innerHTML = `<div class="card" style="max-width:520px;text-align:center"><div class="big">The kingdom map is still sleeping.</div><div class="soft" style="margin-top:8px">I could not find level rows in Supabase yet. Please make sure the level seed SQL has been imported, then refresh.</div></div>`;
+      msg.innerHTML = `<div class="card" style="max-width:520px;text-align:center"><div class="big">The kingdom map is still sleeping.</div><div class="soft" style="margin-top:8px">I could not find level rows in Supabase yet. This usually means the content tables do not have select policies for signed-in users, or the level seed SQL has not been imported yet.</div></div>`;
       layer.appendChild(msg);
       return;
     }
