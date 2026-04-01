@@ -266,7 +266,7 @@ body{
 
       <div class="cta-row">
         <button id="startBtn" class="primary-btn">Start the Journey ✨</button>
-        <button id="continueBtn" class="primary-btn hidden">Continue the Journey ➜</button>
+        <button id="continueBtn" class="primary-btn hidden">Continue the Journey ✨</button>
               </div>
 
       <div class="guide-anchor"><button id="guideBtn" class="guide-btn">Adventure Guide</button></div>
@@ -470,12 +470,12 @@ body{
   }
   function posForLevel(levelNo) {
     const positions = [
-      [76,7],[68,9.5],[60,12],[51,14.5],[43,17],[35,19.5],
-      [33,23],[41,25.5],[50,28],[59,30.5],[68,33],[75,35.5],
-      [67,40],[58,42.5],[49,45],[40,47.5],[31,50],[26,52.5],
-      [34,56],[43,58.5],[52,61],[61,63.5],[70,66],[75,68.5],
-      [66,73],[57,75.5],[48,78],[39,80.5],[30,83],[24,85.5],
-      [32,89],[42,91.5],[53,94],[64,96],[74,98],[66,99.5]
+      [76,7],[70,9.5],[62,12.5],[55,16],[46,19.5],[37,23],
+      [34,28],[42,31.5],[50,35],[58,39],[67,43],[76,47],
+      [67,52],[58,56],[49,60],[40,64],[31,69],[24,73],
+      [31,77],[40,80.5],[49,84],[58,87.5],[67,91],[76,94.5],
+      [68,99],[59,103],[50,107],[41,111],[32,115],[24,119],
+      [31,123],[40,127],[49,131],[58,135],[67,139],[76,143]
     ];
     const p = positions[levelNo - 1] || [50, 50];
     return { x: p[0], y: p[1] };
@@ -502,6 +502,35 @@ body{
       [copy[i], copy[j]] = [copy[j], copy[i]];
     }
     return copy;
+  }
+
+  const MAP_BG_CANDIDATES = [
+    'https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/map.png',
+    'https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/map%20page.png',
+    'https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/fairy-map.png',
+    'https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/world-map.png'
+  ];
+
+  function tryLoadImage(url) {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => resolve(url);
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
+  }
+
+  async function applyMapBackground() {
+    const canvas = $('mapCanvas');
+    if (!canvas) return;
+    for (const url of MAP_BG_CANDIDATES) {
+      const ok = await tryLoadImage(url);
+      if (ok) {
+        canvas.style.setProperty('--map-bg', `url("${ok}") center top / 100% auto no-repeat`);
+        return;
+      }
+    }
+    canvas.style.setProperty('--map-bg', 'linear-gradient(180deg,#eaf5ff,#eef8ff)');
   }
 
   function applyTopbar() {
@@ -848,6 +877,7 @@ body{
     if (!state.levels.length) {
       try { await loadContentTables(); } catch (e) { console.error(e); }
     }
+    await applyMapBackground();
     $('mapModal').classList.add('open');
     renderMap();
   }
