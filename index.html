@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,51 +8,32 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabaseClient/supabaseClient-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --line:#ead7ef;--text:#6e5688;--text2:#8a78a0;--title:#7a5796;
     --shadow:0 20px 50px rgba(173,145,201,.16);--shadow-soft:0 12px 26px rgba(173,145,201,.12);
-    --panel:#fffafc;--pink:#f5a9d2;--lav:#efc7f8;
+    --pink:#f5a9d2;--lav:#efc7f8;--bg:#f8f4fb;--gold:#d9b24f;
   }
-  *{box-sizing:border-box} html,body{margin:0;padding:0;min-height:100%}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;min-height:100%}
   body{
+    font-family:'Nunito',system-ui,sans-serif;color:var(--text);padding:22px;
     background:
-      radial-gradient(circle at 10% 10%, #ffffff 0 12%, transparent 12%),
+      radial-gradient(circle at 10% 10%, #fff 0 12%, transparent 12%),
       radial-gradient(circle at 85% 6%, #fff7fb 0 10%, transparent 10%),
       linear-gradient(180deg,#f8f4fb 0%, #f6f0fb 45%, #f1eef9 100%);
-    color:var(--text);font-family:'Nunito',system-ui,sans-serif;padding:24px;
   }
-  .app{max-width:1360px;margin:0 auto;position:relative}
-  .floating-stars:before,.floating-stars:after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.45}
-  .floating-stars:before{
-    background:
-      radial-gradient(circle at 6% 18%, #b59ad0 0 2px, transparent 2px),
-      radial-gradient(circle at 24% 42%, #d3b4d9 0 2px, transparent 2px),
-      radial-gradient(circle at 58% 19%, #c9b0d8 0 2px, transparent 2px),
-      radial-gradient(circle at 84% 22%, #d9c5e5 0 2px, transparent 2px),
-      radial-gradient(circle at 90% 76%, #d9c5e5 0 2px, transparent 2px),
-      radial-gradient(circle at 43% 75%, #c9b0d8 0 2px, transparent 2px);
-    animation: twinkle 5s ease-in-out infinite alternate;
+  .app{max-width:1360px;margin:0 auto}
+  .topbar,.panel,.modal{
+    background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,252,254,.94));
+    border:1px solid rgba(233,218,240,.9);box-shadow:var(--shadow);border-radius:30px;
   }
-  .floating-stars:after{
-    background:
-      radial-gradient(circle at 14% 70%, rgba(255,255,255,.9) 0 26px, transparent 26px),
-      radial-gradient(circle at 74% 16%, rgba(255,255,255,.75) 0 40px, transparent 40px),
-      radial-gradient(circle at 94% 42%, rgba(255,255,255,.7) 0 16px, transparent 16px),
-      radial-gradient(circle at 35% 28%, rgba(255,255,255,.65) 0 18px, transparent 18px);
-    filter: blur(8px);animation: drift 9s ease-in-out infinite alternate;
-  }
-  @keyframes twinkle{from{transform:translateY(0)}to{transform:translateY(-6px);opacity:.7}}
-  @keyframes drift{from{transform:translateX(0)}to{transform:translateX(10px)}}
-  .topbar{
-    display:flex;align-items:center;justify-content:space-between;gap:16px;background:rgba(255,255,255,.66);
-    backdrop-filter: blur(10px);border:1px solid rgba(233,218,240,.9);box-shadow:var(--shadow-soft);border-radius:28px;padding:18px 22px;position:sticky;top:12px;z-index:20
-  }
-  .brand{display:flex;align-items:center;gap:14px}
-  .brand-badge{width:44px;height:44px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,#fce6f3,#ebe6ff);font-size:22px;box-shadow:var(--shadow-soft)}
-  .brand h1{font-size:18px;line-height:1.1;margin:0;color:var(--title);font-weight:900}
-  .brand p{margin:3px 0 0;font-size:12px;color:var(--text2);font-weight:700}
+  .topbar{display:flex;justify-content:space-between;gap:14px;padding:18px 20px;position:sticky;top:10px;z-index:20;backdrop-filter:blur(10px)}
+  .brand{display:flex;gap:14px;align-items:center}
+  .badge{width:44px;height:44px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,#fce6f3,#ebe6ff);font-size:22px}
+  .brand h1{margin:0;font-size:18px;line-height:1;color:var(--title);font-weight:900}
+  .brand p{margin:4px 0 0;font-size:12px;color:var(--text2);font-weight:700}
   .top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
   .chip{position:relative;display:inline-flex;align-items:center;gap:8px;background:rgba(255,251,253,.95);border:1px solid var(--line);border-radius:999px;padding:12px 16px;font-weight:800;color:var(--title);min-height:46px;box-shadow:0 8px 18px rgba(187,166,209,.08)}
   .chip[data-tip]:hover::after,.chip[data-tip]:focus-visible::after{
@@ -60,10 +42,11 @@
   .btn,.primary-btn,.ghost-btn{border:none;cursor:pointer;border-radius:18px;font-family:inherit;font-weight:900;transition:.2s transform}
   .btn:hover,.primary-btn:hover,.ghost-btn:hover{transform:translateY(-1px)}
   .btn{padding:12px 16px;background:linear-gradient(180deg,#ffffff,#f8f4ff);border:1px solid var(--line);color:var(--title);box-shadow:var(--shadow-soft)}
-  .primary-btn{padding:16px 22px;background:linear-gradient(135deg,var(--pink),var(--lav));color:#fff;box-shadow:0 12px 24px rgba(230,130,186,.28)}
-  .ghost-btn{padding:16px 22px;background:#f7f7ff;color:var(--title);border:1px solid var(--line)}
+  .primary-btn{padding:14px 20px;background:linear-gradient(135deg,var(--pink),var(--lav));color:#fff;box-shadow:0 12px 24px rgba(230,130,186,.28)}
+  .primary-btn.secondary{background:linear-gradient(135deg,#8fc7ff,#d8beff)}
+  .ghost-btn{padding:14px 20px;background:#f7f7ff;color:var(--title);border:1px solid var(--line)}
   .shell{display:grid;grid-template-columns:1.05fr .95fr;gap:22px;margin-top:18px}
-  .panel{background:linear-gradient(180deg,rgba(255,255,255,.74),rgba(255,252,254,.92));border:1px solid rgba(233,218,240,.9);border-radius:34px;box-shadow:var(--shadow);overflow:hidden;position:relative}
+  .panel{overflow:hidden;position:relative}
   .home-left{padding:30px 34px 30px}
   .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:#fff8fc;border:1px solid var(--line);color:#9a7cb0;font-size:13px;font-weight:900}
   .home-title{margin:18px 0 12px;color:var(--title);font-size:clamp(30px,4vw,58px);line-height:1.02;font-weight:1000;letter-spacing:-1.2px}
@@ -131,7 +114,7 @@
   .map-princess{position:absolute;z-index:4;width:66px;height:auto;transform:translate(-50%,-100%)}
   .modal-backdrop{position:fixed;inset:0;background:rgba(77,61,106,.34);display:none;place-items:center;z-index:100;padding:18px}
   .modal-backdrop.open{display:grid}
-  .modal{width:min(760px,100%);max-height:88vh;overflow:auto;background:#fffdfd;border:1px solid var(--line);border-radius:30px;box-shadow:0 28px 70px rgba(109,88,145,.22);padding:24px}
+  .modal{width:min(920px,100%);max-height:90vh;overflow:auto;padding:24px}
   .modal h3{margin:0 0 8px;color:var(--title);font-size:28px}
   .modal p,.modal li{color:#7b668f;line-height:1.7}
   .close-row{display:flex;justify-content:flex-end}
@@ -144,6 +127,18 @@
   .big{font-size:20px;color:var(--title);font-weight:1000}
   .lesson{margin-top:16px;border-top:1px dashed var(--line);padding-top:16px}
   .boss-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .question-card{border:1px solid var(--line);border-radius:22px;padding:16px;background:#fffafc;margin:12px 0}
+  .question-card h4{margin:0 0 10px;color:var(--title);font-size:18px}
+  .q-meta{font-size:12px;color:#a087b6;font-weight:800;margin-bottom:10px}
+  .option{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:#fff;margin-top:10px;cursor:pointer}
+  .option.correct{border-color:#9cd4aa;background:#f5fff6}
+  .option.wrong{border-color:#f0a3b3;background:#fff5f7}
+  .option input{margin-top:3px}
+  .question-expl{margin-top:10px;padding:12px 14px;border-radius:16px;background:#fff;border:1px dashed var(--line);display:none}
+  .question-expl.show{display:block}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .score-box{padding:12px 14px;border-radius:18px;background:#fff8fc;border:1px solid var(--line);font-weight:900;color:#8c73a6}
+  .hidden{display:none !important}
   @media (max-width:980px){
     .shell{grid-template-columns:1fr}.home-right{min-height:520px}.princess-stage{right:50%;transform:translateX(50%);bottom:110px;width:330px;height:340px}.hero-princess{max-width:290px;max-height:320px}.hero-knight{width:110px}.road{width:85%}
   }
@@ -152,11 +147,11 @@
   }
 </style>
 </head>
-<body class="floating-stars">
+<body>
 <div class="app">
   <div class="topbar">
     <div class="brand">
-      <div class="brand-badge">🦄</div>
+      <div class="badge">🦄</div>
       <div><h1>Princess Spiral Quest</h1><p>a spiral-learning fairy tale adventure</p></div>
     </div>
     <div class="top-actions">
@@ -167,7 +162,7 @@
       <div class="chip" tabindex="0" data-tip="Cloud means the story came from the signed-in account. Local means it only lives in this browser right now.">☁️ <span id="heroSource">Local</span></div>
       <button id="spellBookBtn" class="btn">📖 Spell Book</button>
       <button id="authLauncher" class="btn">☁️ Sign In</button>
-      <button id="signOutBtn" class="btn" style="display:none">↩ Sign Out</button>
+      <button id="signOutBtn" class="btn hidden">↩ Sign Out</button>
     </div>
   </div>
 
@@ -188,7 +183,7 @@
       </div>
       <div class="cta-row">
         <button id="beginBtn" class="primary-btn">Begin the Story ✨</button>
-        <button id="continueBtn" class="primary-btn" style="display:none">Continue the Story ➜</button>
+        <button id="continueBtn" class="primary-btn hidden">Continue the Story ➜</button>
         <button id="openMapBtn" class="ghost-btn">Open the Map</button>
       </div>
       <div class="guide-anchor"><button id="guideBtn" class="guide-btn">Adventure Guide</button></div>
@@ -296,7 +291,11 @@
         <div id="levelSpellPlan" class="soft" style="margin-top:8px"></div>
       </div>
     </div>
-    <div id="bossSection" class="lesson" style="display:none">
+    <div id="lessonSection" class="lesson hidden">
+      <h3 style="font-size:22px;margin-bottom:6px">🛡️ Sir Knight Lesson</h3>
+      <div id="lessonContent"></div>
+    </div>
+    <div id="bossSection" class="lesson hidden">
       <h3 style="font-size:22px;margin-bottom:6px">👑 AMC Bonus Boss</h3>
       <div class="grid2">
         <div class="card">
@@ -321,384 +320,817 @@
       </div>
     </div>
     <div class="boss-btns" style="margin-top:18px">
-      <button id="mockLevelStartBtn" class="primary-btn">Start Main Level</button>
+      <button id="startLevelBtn" class="primary-btn">Start Main Level</button>
       <button class="ghost-btn" data-close="levelModal">Back to Map</button>
     </div>
   </div>
 </div>
 
+<div id="quizModal" class="modal-backdrop">
+  <div class="modal">
+    <div class="close-row"><button class="close-btn" data-close="quizModal">Close</button></div>
+    <div class="toolbar">
+      <div>
+        <h3 id="quizTitle">Level Quiz</h3>
+        <div id="quizSubtitle" class="soft"></div>
+      </div>
+      <div id="quizScoreBox" class="score-box hidden"></div>
+    </div>
+    <div id="quizQuestions"></div>
+    <div class="boss-btns">
+      <button id="submitQuizBtn" class="primary-btn">Submit Level</button>
+      <button id="retryQuizBtn" class="ghost-btn hidden">Retry This Level</button>
+    </div>
+  </div>
+</div>
+
 <script>
-const SUPABASE_URL = 'https://hokxngwigywyutilokya.supabaseClient.co';
-const SUPABASE_KEY = 'sb_publishable_RQlefCTSaipW2oWnv1zz7g_gqMWsoOv';
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const STORAGE_KEY = 'princess_spiral_quest_v8';
+(() => {
+  const SUPABASE_URL = 'https://hokxngwigywyutilokya.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_RQlefCTSaipW2oWnv1zz7g_gqMWsoOv';
 
-const state = {
-  session:null,user:null,childName:'',princessName:'Hero Princess',playerId:null,
-  levels:[],progress:{},spellStats:[],cloudSource:false,
-  bonusByLevel:{},currentLevelDetail:null,spellPlanByLevel:{}
-};
-
-const $ = (id) => document.getElementById(id);
-function localLoad(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; } }
-function localSave(patch){ localStorage.setItem(STORAGE_KEY, JSON.stringify(Object.assign({}, localLoad(), patch))); }
-function setStatus(msg){ $('homeStatus').textContent = msg || ''; }
-function sumStars(progress){ return Object.values(progress || {}).reduce((acc, row) => acc + (row.stars || 0) + (row.bonusStars || 0), 0); }
-function hasAnySave(progress){ return Object.values(progress || {}).some(v => (v.best_score || 0) > 0 || v.completed || (v.stars||0) > 0 || (v.bonusStars||0) > 0); }
-function unlockedCount(levels, progress){
-  if (!levels.length) return 1;
-  let count = 1;
-  for (let i=2;i<=levels.length;i++){ if (progress[i-1] && progress[i-1].completed) count = i; else break; }
-  return count;
-}
-function nextPlayableLevel(levels, progress){
-  for (let i=1;i<=levels.length;i++){ if (!(progress[i] && progress[i].completed)) return i; }
-  return levels.length || 1;
-}
-function posForLevel(levelNo){
-  const positions = [[50,89],[36,84],[63,80],[48,75],[34,70],[63,66],[49,61],[37,56],[61,52],[49,47],[36,43],[63,39],[50,35],[38,31],[63,28],[49,24],[36,20],[61,17],[49,13],[36,10],[63,8],[74,13],[81,20],[76,29],[67,37],[21,24],[16,33],[22,42],[31,50],[22,58],[17,67],[23,75],[33,82],[46,86],[58,90],[72,93]];
-  const p = positions[levelNo-1] || [50,50];
-  return {x:p[0], y:p[1]};
-}
-
-async function loadLevels(){
-  const { data, error } = await supabaseClient.from('levels').select('*').order('level_no');
-  if (error) throw error;
-  state.levels = data || [];
-}
-async function loadSpellPlans(){
-  try{
-    const { data, error } = await supabaseClient
-      .from('level_spell_plan')
-      .select('level_id, role, min_questions, max_questions, difficulty_band, spells(code,name)')
-      .order('created_at');
-    if (error) return;
-    const idToNo = Object.fromEntries((state.levels || []).map(l => [l.id, l.level_no]));
-    state.spellPlanByLevel = {};
-    (data || []).forEach(row => {
-      const no = idToNo[row.level_id];
-      if (!no) return;
-      if (!state.spellPlanByLevel[no]) state.spellPlanByLevel[no] = [];
-      state.spellPlanByLevel[no].push(row);
-    });
-  } catch {}
-}
-async function loadBonusBosses(){
-  try{
-    const { data, error } = await supabaseClient
-      .from('level_bonus_boss_plan')
-      .select('level_id, reward_stars, amc_bonus_bosses(*)');
-    if (error) return;
-    const idToNo = Object.fromEntries((state.levels || []).map(l => [l.id, l.level_no]));
-    state.bonusByLevel = {};
-    (data || []).forEach(row => {
-      const no = idToNo[row.level_id];
-      if (!no) return;
-      state.bonusByLevel[no] = { reward_stars: row.reward_stars, boss: row.amc_bonus_bosses };
-    });
-  } catch {}
-}
-async function loadPlayerByName(childName){
-  const { data, error } = await supabaseClient.from('players').select('*').eq('child_name', childName).maybeSingle();
-  if (error && error.code !== 'PGRST116') throw error;
-  return data || null;
-}
-async function ensurePlayer(childName){
-  let player = await loadPlayerByName(childName);
-  if (!player){
-    const { data, error } = await supabaseClient.from('players').insert({ child_name: childName, princess_name: `Princess ${childName}` }).select().single();
-    if (error) throw error;
-    player = data;
-  }
-  state.playerId = player.id;
-  state.childName = player.child_name;
-  state.princessName = player.princess_name;
-  localSave({ childName: state.childName });
-  return player;
-}
-async function getUserProfile(){
-  if (!state.user) return null;
-  try{
-    const { data, error } = await supabaseClient.from('user_profiles').select('*').eq('user_id', state.user.id).maybeSingle();
-    if (error) return null;
-    return data || null;
-  } catch { return null; }
-}
-async function saveUserProfile(childName){
-  if (!state.user) return;
-  try{
-    await supabaseClient.from('user_profiles').upsert({ user_id: state.user.id, child_name: childName, updated_at: new Date().toISOString() });
-  } catch {}
-}
-async function loadProgress(){
-  state.progress = {}; state.spellStats = [];
-  if (!state.playerId) return;
-  const { data: levelData, error: levelErr } = await supabaseClient.from('player_level_progress').select('level_id,best_score,stars,completed').eq('player_id', state.playerId);
-  if (levelErr) throw levelErr;
-  const idToNo = Object.fromEntries((state.levels || []).map(l => [l.id, l.level_no]));
-  (levelData || []).forEach(r => {
-    const no = idToNo[r.level_id];
-    if (no) state.progress[no] = { best_score: r.best_score || 0, stars: r.stars || 0, completed: !!r.completed };
-  });
-  try{
-    const { data: bonusData } = await supabaseClient.from('player_question_attempts').select('level_id,selected_answer').eq('player_id', state.playerId).ilike('selected_answer', 'BONUS_CLAIM:%');
-    (bonusData || []).forEach(r => {
-      const no = idToNo[r.level_id];
-      if (!no) return;
-      const bonusStars = Number(String(r.selected_answer).split(':')[1] || 0);
-      if (!state.progress[no]) state.progress[no] = { best_score:0, stars:0, completed:false };
-      state.progress[no].bonusStars = Math.max(state.progress[no].bonusStars || 0, bonusStars);
-    });
-  } catch {}
-  try{
-    const { data: spellData } = await supabaseClient.from('player_spell_stats').select('attempts,correct,accuracy,mastered,spell_id').eq('player_id', state.playerId);
-    state.spellStats = spellData || [];
-  } catch { state.spellStats = []; }
-}
-
-function updateHome(){
-  const levelNo = nextPlayableLevel(state.levels, state.progress);
-  const unlocked = unlockedCount(state.levels, state.progress);
-  const totalStars = sumStars(state.progress);
-  $('heroName').textContent = state.princessName || 'Hero Princess';
-  $('heroLevel').textContent = `Level ${levelNo}`;
-  $('heroStars').textContent = `Stars ${totalStars}`;
-  $('heroUnlock').textContent = `Unlocked ${unlocked}/${state.levels.length || 36}`;
-  $('heroSource').textContent = state.cloudSource ? 'Cloud' : 'Local';
-  $('signOutBtn').style.display = state.user ? '' : 'none';
-  const saveExists = hasAnySave(state.progress);
-  const displayName = state.childName ? `Princess ${state.childName}` : 'the princess';
-  $('storyText').textContent = state.childName
-    ? `Far above the Cloud-Castle Kingdom, sleeping stars are waiting for ${displayName}. She must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.`
-    : `Far above the Cloud-Castle Kingdom, sleeping stars have gone dim. A young princess must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.`;
-  $('storyQuote').textContent = state.childName ? (saveExists ? `${displayName}'s story is ready to continue.` : `Tonight's tale belongs to ${displayName}.`) : `Tonight's tale is waiting for its princess.`;
-  if (saveExists){
-    $('beginBtn').style.display = 'none';
-    $('continueBtn').style.display = '';
-    $('newPlayerFields').style.display = 'none';
-    $('homeTitle').innerHTML = `Welcome back, ${state.childName || 'Princess'}.<small>Your next star is already waiting in the sky.</small>`;
-  } else {
-    $('beginBtn').style.display = '';
-    $('continueBtn').style.display = 'none';
-    $('newPlayerFields').style.display = '';
-    $('homeTitle').innerHTML = `A gentler beginning for the kingdom.<small>Write one name, and the fairy tale will open.</small>`;
-  }
-  $('nextHint').textContent = `Next stop: Level ${levelNo}${state.levels[levelNo-1] ? ' · ' + state.levels[levelNo-1].title : ''}`;
-  $('mapSub').textContent = saveExists ? `Your next main story stop is Level ${levelNo}. Older spells will return, and new ones will arrive gently.` : `Start the story to wake the first bridge. Older spells return often, and new ones appear slowly.`;
-  $('saveMode').textContent = state.cloudSource
-    ? `☁️ Cloud save is active. This account can reopen the same story automatically.`
-    : `☁️ Sign in to make cloud save automatic.`;
-}
-function renderMap(){
-  const layer = $('nodeLayer');
-  layer.innerHTML = '';
-  const unlocked = unlockedCount(state.levels, state.progress);
-  const nextNo = nextPlayableLevel(state.levels, state.progress);
-  state.levels.forEach(level => {
-    const no = level.level_no, pos = posForLevel(no), stars = (state.progress[no]?.stars || 0), unlockedNow = no <= unlocked, active = no === nextNo, done = !!state.progress[no]?.completed;
-    const div = document.createElement('div');
-    div.className = `node ${done ? 'done':''} ${unlockedNow ? '' : 'locked'} ${active ? 'active':''}`;
-    div.style.left = pos.x + '%'; div.style.top = pos.y + '%';
-    const starStr = stars ? '⭐'.repeat(stars) : '☆☆☆';
-    const hasBonus = !!state.bonusByLevel[no];
-    div.innerHTML = `${active ? `<img class="map-princess" src="https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/4.png" alt="Princess pin" style="left:50%;top:-8px">` : ''}
-      <button class="node-btn" ${!unlockedNow ? 'disabled' : ''}>${no}</button>
-      <div class="stars">${starStr}</div>
-      <div class="name">${level.title}</div>
-      <div class="tag">${done ? 'Completed' : unlockedNow ? 'Open' : 'Locked'}</div>
-      ${hasBonus ? `<div class="bonus">👑 AMC Bonus</div>` : ''}`;
-    if (unlockedNow){
-      div.querySelector('.node-btn').addEventListener('click', () => openLevelDetail(no));
-    }
-    layer.appendChild(div);
-  });
-}
-function renderSpellBook(){
-  const list = $('spellList');
-  const stats = [...state.spellStats].sort((a,b)=> (a.mastered===b.mastered ? (a.accuracy||0)-(b.accuracy||0) : (a.mastered?1:-1)));
-  if (!stats.length){
-    list.innerHTML = `<p class="soft">Your spell pages will fill as soon as the princess answers questions and builds records in the kingdom.</p>`;
+  if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+    document.body.innerHTML = '<div style="padding:24px;font-family:sans-serif">Supabase library did not load. Please refresh and try again.</div>';
     return;
   }
-  list.innerHTML = stats.slice(0,12).map((s, idx) => `
-    <div style="border:1px solid var(--line);border-radius:20px;padding:14px 16px;margin-bottom:10px;background:#fffafc">
-      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
-        <strong style="color:var(--title)">Spell ${idx+1}</strong>
-        <span class="pill">${Math.round(s.accuracy || 0)}% ${s.mastered ? '· Mastered' : '· Learning'}</span>
-      </div>
-      <div class="soft" style="margin-top:8px">Correct ${s.correct || 0} / ${s.attempts || 0}</div>
-    </div>`).join('');
-}
-function openLevelDetail(levelNo){
-  const level = state.levels.find(l => l.level_no === levelNo);
-  if (!level) return;
-  state.currentLevelDetail = levelNo;
-  $('levelModalTitle').textContent = `Level ${levelNo} · ${level.title}`;
-  $('levelStoryText').textContent = level.story_text || 'The next fairy road is ready.';
-  const row = state.progress[levelNo];
-  $('levelProgressText').textContent = row?.completed ? 'Completed' : row?.best_score ? `Best score ${row.best_score}/12` : 'Not started yet';
-  $('levelStarsText').textContent = `Main stars: ${row?.stars || 0}${row?.bonusStars ? ` · Bonus stars: ${row.bonusStars}` : ''}`;
-  const plans = state.spellPlanByLevel[levelNo] || [];
-  $('levelSpellPlan').innerHTML = plans.length
-    ? plans.map(p => `<div><strong>${p.spells?.name || p.spells?.code || 'Spell'}</strong> · ${p.role} · ${p.difficulty_band} · ${p.min_questions}-${p.max_questions} question(s)</div>`).join('')
-    : 'The spell plan for this level has not loaded yet.';
-  const bonus = state.bonusByLevel[levelNo];
-  if (bonus){
-    $('bossSection').style.display = '';
-    $('bossTitle').textContent = `${bonus.boss?.year || ''} AMC 8 · Problem ${bonus.boss?.problem_no || ''}`;
-    $('bossTags').textContent = Array.isArray(bonus.boss?.topic_tags) ? bonus.boss.topic_tags.join(' · ') : '';
-    $('bossReward').textContent = `+${bonus.reward_stars || 0} stars`;
-    const claimed = !!(row?.bonusStars);
-    $('bossClaimState').textContent = claimed ? 'Reward already claimed for this level.' : 'Solve the real AMC8 problem, then claim the reward once.';
-    $('bossHintShort').textContent = bonus.boss?.knight_hint_short || '';
-    $('bossHintLong').textContent = bonus.boss?.knight_hint_long || '';
-    $('bossOpenLink').href = bonus.boss?.source_url || '#';
-    $('claimBossBtn').disabled = claimed;
-    $('claimBossBtn').textContent = claimed ? 'Reward already claimed' : 'I Solved It · Claim Reward';
-  } else {
-    $('bossSection').style.display = 'none';
+
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const STORAGE_KEY = 'princess_spiral_quest_v9';
+
+  const state = {
+    session: null,
+    user: null,
+    childName: '',
+    princessName: 'Hero Princess',
+    playerId: null,
+    levels: [],
+    progress: {},
+    spellStats: [],
+    cloudSource: false,
+    bonusByLevel: {},
+    currentLevelDetail: null,
+    spellPlanByLevel: {},
+    lessonsBySpellId: {},
+    quizQuestions: [],
+    quizSubmitted: false
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  function localLoad() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+    catch { return {}; }
   }
-  $('levelModal').classList.add('open');
-}
-async function claimBossReward(){
-  const levelNo = state.currentLevelDetail;
-  if (!levelNo || !state.playerId) return;
-  const bonus = state.bonusByLevel[levelNo];
-  if (!bonus) return;
-  const level = state.levels.find(l => l.level_no === levelNo);
-  if (!level) return;
-  if (state.progress[levelNo]?.bonusStars) return;
-  try{
-    const { error } = await supabaseClient.from('player_question_attempts').insert({
-      player_id: state.playerId,
-      level_id: level.id,
-      question_id: null,
-      spell_id: null,
-      is_correct: true,
-      selected_answer: `BONUS_CLAIM:${bonus.reward_stars}`
-    });
+  function localSave(patch) {
+    const current = localLoad();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(Object.assign({}, current, patch)));
+  }
+  function setStatus(msg) { $('homeStatus').textContent = msg || ''; }
+  function sumStars(progress) {
+    return Object.values(progress || {}).reduce((acc, row) => acc + (row.stars || 0) + (row.bonusStars || 0), 0);
+  }
+  function hasAnySave(progress) {
+    return Object.values(progress || {}).some(v => (v.best_score || 0) > 0 || v.completed || (v.stars || 0) > 0 || (v.bonusStars || 0) > 0);
+  }
+  function starsForScore(score) {
+    if (score >= 11) return 3;
+    if (score >= 8) return 2;
+    if (score >= 5) return 1;
+    return 0;
+  }
+  function unlockedCount(levels, progress) {
+    if (!levels.length) return 1;
+    let count = 1;
+    for (let i = 2; i <= levels.length; i++) {
+      if (progress[i - 1] && progress[i - 1].completed) count = i;
+      else break;
+    }
+    return count;
+  }
+  function nextPlayableLevel(levels, progress) {
+    for (let i = 1; i <= levels.length; i++) {
+      if (!(progress[i] && progress[i].completed)) return i;
+    }
+    return levels.length || 1;
+  }
+  function posForLevel(levelNo) {
+    const positions = [
+      [50,89],[36,84],[63,80],[48,75],[34,70],[63,66],[49,61],[37,56],[61,52],[49,47],[36,43],[63,39],
+      [50,35],[38,31],[63,28],[49,24],[36,20],[61,17],[49,13],[36,10],[63,8],[74,13],[81,20],[76,29],
+      [67,37],[21,24],[16,33],[22,42],[31,50],[22,58],[17,67],[23,75],[33,82],[46,86],[58,90],[72,93]
+    ];
+    const p = positions[levelNo - 1] || [50, 50];
+    return { x: p[0], y: p[1] };
+  }
+  function uniqueBy(arr, keyFn) {
+    const seen = new Set();
+    const out = [];
+    for (const item of arr) {
+      const key = keyFn(item);
+      if (!seen.has(key)) {
+        seen.add(key);
+        out.push(item);
+      }
+    }
+    return out;
+  }
+  function shuffle(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  async function loadLevels() {
+    const { data, error } = await client.from('levels').select('*').order('level_no');
     if (error) throw error;
-  } catch {
-    try{
-      const { error } = await supabaseClient.from('player_question_attempts').insert({
-        player_id: state.playerId,
-        level_id: level.id,
-        is_correct: true,
-        selected_answer: `BONUS_CLAIM:${bonus.reward_stars}`
+    state.levels = data || [];
+  }
+
+  async function loadSpellPlans() {
+    try {
+      const { data, error } = await client
+        .from('level_spell_plan')
+        .select('level_id, spell_id, role, min_questions, max_questions, difficulty_band, spells(code,name)')
+        .order('created_at', { ascending: true });
+      if (error) return;
+      const idToNo = Object.fromEntries((state.levels || []).map(l => [l.id, l.level_no]));
+      state.spellPlanByLevel = {};
+      (data || []).forEach(row => {
+        const no = idToNo[row.level_id];
+        if (!no) return;
+        if (!state.spellPlanByLevel[no]) state.spellPlanByLevel[no] = [];
+        state.spellPlanByLevel[no].push(row);
       });
+    } catch {}
+  }
+
+  async function loadLessons() {
+    try {
+      const { data, error } = await client
+        .from('spell_lessons')
+        .select('spell_id, concept_intro, knight_explanation_short, knight_explanation_long, step_by_step, common_mistakes, khan_url, youtube_url, resource_title');
+      if (error) return;
+      state.lessonsBySpellId = {};
+      (data || []).forEach(row => {
+        if (!state.lessonsBySpellId[row.spell_id]) state.lessonsBySpellId[row.spell_id] = [];
+        state.lessonsBySpellId[row.spell_id].push(row);
+      });
+    } catch {}
+  }
+
+  async function loadBonusBosses() {
+    try {
+      const { data, error } = await client
+        .from('level_bonus_boss_plan')
+        .select('level_id, amc_bonus_boss_id, reward_stars, amc_bonus_bosses(*)');
+      if (error) return;
+      const idToNo = Object.fromEntries((state.levels || []).map(l => [l.id, l.level_no]));
+      state.bonusByLevel = {};
+      (data || []).forEach(row => {
+        const no = idToNo[row.level_id];
+        if (!no) return;
+        state.bonusByLevel[no] = { id: row.amc_bonus_boss_id, reward_stars: row.reward_stars, boss: row.amc_bonus_bosses };
+      });
+    } catch {}
+  }
+
+  async function getUserProfile() {
+    if (!state.user) return null;
+    try {
+      const { data, error } = await client.from('user_profiles').select('*').eq('user_id', state.user.id).maybeSingle();
+      if (error) return null;
+      return data || null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function ensurePlayer(childName) {
+    if (state.user) {
+      const profile = await getUserProfile();
+      if (profile?.player_id) {
+        const { data: existingById } = await client.from('players').select('*').eq('id', profile.player_id).maybeSingle();
+        if (existingById) {
+          state.playerId = existingById.id;
+          state.childName = existingById.child_name;
+          state.princessName = existingById.princess_name;
+          localSave({ childName: state.childName });
+          return existingById;
+        }
+      }
+    }
+
+    let player = null;
+    const { data: foundByName } = await client.from('players').select('*').eq('child_name', childName).maybeSingle();
+    if (foundByName) player = foundByName;
+    if (!player) {
+      const { data, error } = await client
+        .from('players')
+        .insert({ child_name: childName, princess_name: `Princess ${childName}` })
+        .select()
+        .single();
       if (error) throw error;
-    } catch(err){
-      console.error(err);
+      player = data;
+    }
+    state.playerId = player.id;
+    state.childName = player.child_name;
+    state.princessName = player.princess_name;
+    localSave({ childName: state.childName });
+    await saveUserProfile(player);
+    return player;
+  }
+
+  async function saveUserProfile(player) {
+    if (!state.user || !player) return;
+    try {
+      await client.from('user_profiles').upsert({
+        user_id: state.user.id,
+        player_id: player.id,
+        child_name: player.child_name,
+        updated_at: new Date().toISOString()
+      });
+    } catch {}
+  }
+
+  async function loadProgress() {
+    state.progress = {};
+    state.spellStats = [];
+    if (!state.playerId) return;
+
+    const { data: levelData, error: levelErr } = await client
+      .from('player_level_progress')
+      .select('level_id,best_score,stars,completed')
+      .eq('player_id', state.playerId);
+    if (levelErr) throw levelErr;
+
+    const idToNo = Object.fromEntries((state.levels || []).map(l => [l.id, l.level_no]));
+    (levelData || []).forEach(r => {
+      const no = idToNo[r.level_id];
+      if (no) state.progress[no] = { best_score: Number(r.best_score || 0), stars: Number(r.stars || 0), completed: !!r.completed };
+    });
+
+    try {
+      const { data: bonusData } = await client
+        .from('player_bonus_claims')
+        .select('level_id,stars_awarded')
+        .eq('player_id', state.playerId);
+      (bonusData || []).forEach(r => {
+        const no = idToNo[r.level_id];
+        if (!no) return;
+        if (!state.progress[no]) state.progress[no] = { best_score: 0, stars: 0, completed: false };
+        state.progress[no].bonusStars = Math.max(state.progress[no].bonusStars || 0, Number(r.stars_awarded || 0));
+      });
+    } catch {}
+
+    try {
+      const { data: spellData } = await client
+        .from('player_spell_stats')
+        .select('attempts,correct,accuracy,mastered,spell_id,spells(name,code)')
+        .eq('player_id', state.playerId);
+      state.spellStats = spellData || [];
+    } catch {
+      state.spellStats = [];
+    }
+  }
+
+  function updateHome() {
+    const levelNo = nextPlayableLevel(state.levels, state.progress);
+    const unlocked = unlockedCount(state.levels, state.progress);
+    const totalStars = sumStars(state.progress);
+    $('heroName').textContent = state.princessName || 'Hero Princess';
+    $('heroLevel').textContent = `Level ${levelNo}`;
+    $('heroStars').textContent = `Stars ${totalStars}`;
+    $('heroUnlock').textContent = `Unlocked ${unlocked}/${state.levels.length || 36}`;
+    $('heroSource').textContent = state.cloudSource ? 'Cloud' : 'Local';
+    $('signOutBtn').classList.toggle('hidden', !state.user);
+
+    const saveExists = hasAnySave(state.progress);
+    const displayName = state.childName ? `Princess ${state.childName}` : 'the princess';
+
+    $('storyText').textContent = state.childName
+      ? `Far above the Cloud-Castle Kingdom, sleeping stars are waiting for ${displayName}. She must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.`
+      : `Far above the Cloud-Castle Kingdom, sleeping stars have gone dim. A young princess must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.`;
+
+    $('storyQuote').textContent = state.childName
+      ? (saveExists ? `${displayName}'s story is ready to continue.` : `Tonight's tale belongs to ${displayName}.`)
+      : `Tonight's tale is waiting for its princess.`;
+
+    $('beginBtn').classList.toggle('hidden', saveExists);
+    $('continueBtn').classList.toggle('hidden', !saveExists);
+    $('newPlayerFields').classList.toggle('hidden', saveExists);
+
+    $('homeTitle').innerHTML = saveExists
+      ? `Welcome back, ${state.childName || 'Princess'}.<small>Your next star is already waiting in the sky.</small>`
+      : `A gentler beginning for the kingdom.<small>Write one name, and the fairy tale will open.</small>`;
+
+    $('nextHint').textContent = `Next stop: Level ${levelNo}${state.levels[levelNo-1] ? ' · ' + state.levels[levelNo-1].title : ''}`;
+    $('mapSub').textContent = saveExists
+      ? `Your next main story stop is Level ${levelNo}. Older spells will return, and new ones will arrive gently.`
+      : `Start the story to wake the first bridge. Older spells return often, and new ones appear slowly.`;
+
+    $('saveMode').textContent = state.cloudSource
+      ? `☁️ Cloud save is active. This account can reopen the same story automatically.`
+      : `☁️ Sign in to make cloud save automatic.`;
+  }
+
+  function renderMap() {
+    const layer = $('nodeLayer');
+    layer.innerHTML = '';
+    const unlocked = unlockedCount(state.levels, state.progress);
+    const nextNo = nextPlayableLevel(state.levels, state.progress);
+
+    state.levels.forEach(level => {
+      const no = level.level_no;
+      const pos = posForLevel(no);
+      const stars = state.progress[no]?.stars || 0;
+      const unlockedNow = no <= unlocked;
+      const active = no === nextNo;
+      const done = !!state.progress[no]?.completed;
+      const hasBonus = !!state.bonusByLevel[no];
+
+      const div = document.createElement('div');
+      div.className = `node ${done ? 'done' : ''} ${unlockedNow ? '' : 'locked'} ${active ? 'active' : ''}`;
+      div.style.left = pos.x + '%';
+      div.style.top = pos.y + '%';
+      div.innerHTML = `
+        ${active ? `<img class="map-princess" src="https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/4.png" alt="Princess pin" style="left:50%;top:-8px">` : ''}
+        <button class="node-btn" ${!unlockedNow ? 'disabled' : ''}>${no}</button>
+        <div class="stars">${stars ? '⭐'.repeat(stars) : '☆☆☆'}</div>
+        <div class="name">${level.title}</div>
+        <div class="tag">${done ? 'Completed' : unlockedNow ? 'Open' : 'Locked'}</div>
+        ${hasBonus ? `<div class="bonus">👑 AMC Bonus</div>` : ''}
+      `;
+      if (unlockedNow) {
+        div.querySelector('.node-btn').addEventListener('click', () => openLevelDetail(no));
+      }
+      layer.appendChild(div);
+    });
+  }
+
+  function renderSpellBook() {
+    const list = $('spellList');
+    const stats = [...state.spellStats].sort((a, b) => {
+      if (!!a.mastered === !!b.mastered) return Number(a.accuracy || 0) - Number(b.accuracy || 0);
+      return a.mastered ? 1 : -1;
+    });
+
+    if (!stats.length) {
+      list.innerHTML = `<p class="soft">Your spell pages will fill as soon as the princess answers questions and builds records in the kingdom.</p>`;
+      return;
+    }
+
+    list.innerHTML = stats.map((s) => `
+      <div class="card" style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+          <strong style="color:var(--title)">${s.spells?.name || 'Spell'}</strong>
+          <span class="pill">${Math.round(Number(s.accuracy || 0))}% ${s.mastered ? '· Mastered' : '· Learning'}</span>
+        </div>
+        <div class="soft" style="margin-top:8px">Correct ${s.correct || 0} / ${s.attempts || 0}</div>
+      </div>
+    `).join('');
+  }
+
+  function openLevelDetail(levelNo) {
+    const level = state.levels.find(l => l.level_no === levelNo);
+    if (!level) return;
+    state.currentLevelDetail = levelNo;
+
+    $('levelModalTitle').textContent = `Level ${levelNo} · ${level.title}`;
+    $('levelStoryText').textContent = level.story_text || 'The next fairy road is ready.';
+
+    const row = state.progress[levelNo];
+    $('levelProgressText').textContent = row?.completed ? 'Completed' : row?.best_score ? `Best score ${row.best_score}/12` : 'Not started yet';
+    $('levelStarsText').textContent = `Main stars: ${row?.stars || 0}${row?.bonusStars ? ` · Bonus stars: ${row.bonusStars}` : ''}`;
+
+    const plans = state.spellPlanByLevel[levelNo] || [];
+    $('levelSpellPlan').innerHTML = plans.length
+      ? plans.map(p => `<div><strong>${p.spells?.name || p.spells?.code || 'Spell'}</strong> · ${p.role} · ${p.difficulty_band} · ${p.min_questions}-${p.max_questions} question(s)</div>`).join('')
+      : 'The spell plan for this level has not loaded yet.';
+
+    const introPlans = plans.filter(p => p.role === 'new_intro' || p.difficulty_band === 'concept' || p.difficulty_band === 'guided');
+    const lessonHtml = introPlans.map(p => {
+      const lesson = (state.lessonsBySpellId[p.spell_id] || [])[0];
+      if (!lesson) return '';
+      return `
+        <div class="card" style="margin-top:10px">
+          <div class="mini">${p.spells?.name || 'Spell'}</div>
+          <div style="margin-top:8px"><strong>${lesson.resource_title || 'Sir Knight Lesson'}</strong></div>
+          <div style="margin-top:8px">${lesson.concept_intro || ''}</div>
+          <div class="soft" style="margin-top:8px">${lesson.knight_explanation_short || ''}</div>
+          ${lesson.khan_url ? `<div style="margin-top:8px"><a href="${lesson.khan_url}" target="_blank" rel="noopener noreferrer">Open Khan lesson</a></div>` : ''}
+        </div>`;
+    }).join('');
+    $('lessonSection').classList.toggle('hidden', !lessonHtml);
+    $('lessonContent').innerHTML = lessonHtml || '';
+
+    const bonus = state.bonusByLevel[levelNo];
+    if (bonus) {
+      $('bossSection').classList.remove('hidden');
+      $('bossTitle').textContent = `${bonus.boss?.year || ''} AMC 8 · Problem ${bonus.boss?.problem_no || ''}`;
+      $('bossTags').textContent = Array.isArray(bonus.boss?.topic_tags) ? bonus.boss.topic_tags.join(' · ') : '';
+      $('bossReward').textContent = `+${bonus.reward_stars || 0} stars`;
+      const claimed = !!(row?.bonusStars);
+      $('bossClaimState').textContent = claimed ? 'Reward already claimed for this level.' : 'Solve the real AMC8 problem, then claim the reward once.';
+      $('bossHintShort').textContent = bonus.boss?.knight_hint_short || '';
+      $('bossHintLong').textContent = bonus.boss?.knight_hint_long || '';
+      $('bossOpenLink').href = bonus.boss?.source_url || '#';
+      $('claimBossBtn').disabled = claimed;
+      $('claimBossBtn').textContent = claimed ? 'Reward already claimed' : 'I Solved It · Claim Reward';
+    } else {
+      $('bossSection').classList.add('hidden');
+    }
+
+    $('levelModal').classList.add('open');
+  }
+
+  async function fetchQuestionsForLevel(levelNo) {
+    const level = state.levels.find(l => l.level_no === levelNo);
+    if (!level) return [];
+    const plans = state.spellPlanByLevel[levelNo] || [];
+    if (!plans.length) return [];
+
+    const spellIds = uniqueBy(plans.map(p => p.spell_id), x => x);
+    let wrongRows = [];
+    if (state.playerId) {
+      try {
+        const { data } = await client
+          .from('player_wrong_questions')
+          .select('question_id, spell_id, mistake_count, resolved')
+          .eq('player_id', state.playerId)
+          .eq('resolved', false)
+          .in('spell_id', spellIds);
+        wrongRows = data || [];
+      } catch {}
+    }
+
+    const { data: allQs, error } = await client
+      .from('questions')
+      .select('id, spell_id, question_type, difficulty, grade_band, stem, option_a, option_b, option_c, option_d, correct_answer, answer_format, explanation, hint, story_context, spells(name,code)')
+      .eq('is_active', true)
+      .in('spell_id', spellIds);
+    if (error) throw error;
+
+    const bySpell = {};
+    (allQs || []).forEach(q => {
+      if (!bySpell[q.spell_id]) bySpell[q.spell_id] = [];
+      bySpell[q.spell_id].push(q);
+    });
+
+    const chosen = [];
+    const chosenIds = new Set();
+    const wrongIds = wrongRows.map(r => r.question_id);
+
+    function addQuestion(q) {
+      if (!q || chosenIds.has(q.id)) return false;
+      chosen.push(q);
+      chosenIds.add(q.id);
+      return true;
+    }
+
+    for (const plan of plans) {
+      const candidates = bySpell[plan.spell_id] || [];
+      const prioritizeWrong = shuffle(candidates.filter(q => wrongIds.includes(q.id)));
+      for (const q of prioritizeWrong) {
+        if (chosen.length >= 12) break;
+        if (addQuestion(q) && chosen.filter(x => x.spell_id === plan.spell_id).length >= Number(plan.min_questions || 0)) break;
+      }
+
+      let filtered = candidates.filter(q => q.difficulty === plan.difficulty_band && !chosenIds.has(q.id));
+      if (filtered.length < Number(plan.min_questions || 0)) {
+        filtered = candidates.filter(q => !chosenIds.has(q.id));
+      }
+
+      for (const q of shuffle(filtered)) {
+        const countForSpell = chosen.filter(x => x.spell_id === plan.spell_id).length;
+        if (countForSpell >= Number(plan.min_questions || 0)) break;
+        addQuestion(q);
+      }
+    }
+
+    if (chosen.length < 12) {
+      const leftovers = shuffle((allQs || []).filter(q => !chosenIds.has(q.id)));
+      for (const q of leftovers) {
+        if (chosen.length >= 12) break;
+        addQuestion(q);
+      }
+    }
+
+    return chosen.slice(0, 12);
+  }
+
+  function renderQuiz(levelNo, questions) {
+    state.quizQuestions = questions;
+    state.quizSubmitted = false;
+
+    const level = state.levels.find(l => l.level_no === levelNo);
+    $('quizTitle').textContent = `Level ${levelNo} · ${level?.title || 'Quiz'}`;
+    $('quizSubtitle').textContent = questions.length ? `${questions.length} questions · Main level from Supabase` : 'No questions loaded.';
+    $('quizScoreBox').classList.add('hidden');
+    $('quizScoreBox').textContent = '';
+    $('retryQuizBtn').classList.add('hidden');
+    $('submitQuizBtn').classList.remove('hidden');
+
+    const container = $('quizQuestions');
+    if (!questions.length) {
+      container.innerHTML = `<div class="card">No questions were returned for this level yet. Please make sure the question bank is loaded in Supabase.</div>`;
+      return;
+    }
+
+    container.innerHTML = questions.map((q, idx) => {
+      const options = [q.option_a, q.option_b, q.option_c, q.option_d].filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+      const isMc = options.length > 0;
+      const optionHtml = isMc
+        ? options.map((opt, optIdx) => `
+            <label class="option" data-qid="${q.id}" data-opt="${opt}">
+              <input type="radio" name="q_${q.id}" value="${opt}">
+              <div><strong>${String.fromCharCode(65 + optIdx)}.</strong> ${opt}</div>
+            </label>
+          `).join('')
+        : `<div class="field" style="margin-top:10px"><label>Answer</label><input type="text" name="q_${q.id}" data-text-answer="1" placeholder="Type your answer"></div>`;
+
+      return `
+        <div class="question-card" data-qid="${q.id}" data-correct="${String(q.correct_answer).replace(/"/g, '&quot;')}" data-spell-id="${q.spell_id}">
+          <div class="q-meta">Question ${idx + 1} · ${q.spells?.name || 'Spell'} · ${q.difficulty || 'mixed'}</div>
+          <h4>${q.stem}</h4>
+          ${q.story_context ? `<div class="soft">${q.story_context}</div>` : ''}
+          ${optionHtml}
+          <div class="question-expl" id="expl_${q.id}">
+            <strong>Explanation</strong>
+            <div style="margin-top:6px">${q.explanation || q.hint || 'No explanation saved yet.'}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function collectQuizAnswers() {
+    return state.quizQuestions.map(q => {
+      let selectedAnswer = '';
+      const checked = document.querySelector(`input[name="q_${q.id}"]:checked`);
+      const textInput = document.querySelector(`input[name="q_${q.id}"][data-text-answer="1"]`);
+      if (checked) selectedAnswer = checked.value;
+      else if (textInput) selectedAnswer = textInput.value.trim();
+      const correctAnswer = String(q.correct_answer).trim().toLowerCase();
+      const isCorrect = String(selectedAnswer).trim().toLowerCase() === correctAnswer;
+      return {
+        question_id: q.id,
+        spell_id: q.spell_id,
+        selected_answer: selectedAnswer,
+        is_correct: isCorrect
+      };
+    });
+  }
+
+  function markQuizReview(attempts) {
+    attempts.forEach(a => {
+      const card = document.querySelector(`.question-card[data-qid="${a.question_id}"]`);
+      if (!card) return;
+      if (card.querySelector('input[type="radio"]')) {
+        const selected = card.querySelector(`input[name="q_${a.question_id}"]:checked`);
+        if (selected) selected.closest('.option').classList.add(a.is_correct ? 'correct' : 'wrong');
+      } else {
+        const textInput = card.querySelector(`input[name="q_${a.question_id}"]`);
+        if (textInput) textInput.style.border = a.is_correct ? '2px solid #9cd4aa' : '2px solid #f0a3b3';
+      }
+      const expl = $('expl_' + a.question_id);
+      if (expl) expl.classList.add('show');
+    });
+  }
+
+  async function submitQuiz() {
+    if (!state.playerId || !state.currentLevelDetail) {
+      setStatus('Please create or load a story first.');
+      return;
+    }
+    const unanswered = state.quizQuestions.some(q => {
+      const checked = document.querySelector(`input[name="q_${q.id}"]:checked`);
+      const textInput = document.querySelector(`input[name="q_${q.id}"][data-text-answer="1"]`);
+      return !checked && !(textInput && textInput.value.trim());
+    });
+    if (unanswered) {
+      alert('Please answer all questions before submitting this level.');
+      return;
+    }
+
+    const level = state.levels.find(l => l.level_no === state.currentLevelDetail);
+    const attempts = collectQuizAnswers();
+    const { data, error } = await client.rpc('submit_level_attempt', {
+      p_player_id: state.playerId,
+      p_level_id: level.id,
+      p_attempts: attempts
+    });
+    if (error) {
+      console.error(error);
+      setStatus('The level could not be saved right now.');
+      return;
+    }
+
+    const result = Array.isArray(data) ? data[0] : data;
+    state.progress[state.currentLevelDetail] = {
+      ...(state.progress[state.currentLevelDetail] || {}),
+      best_score: Number(result?.score || 0),
+      stars: Number(result?.stars || 0),
+      completed: !!result?.completed,
+      bonusStars: state.progress[state.currentLevelDetail]?.bonusStars || 0
+    };
+
+    const score = Number(result?.score || 0);
+    const stars = Number(result?.stars || 0);
+    $('quizScoreBox').classList.remove('hidden');
+    $('quizScoreBox').textContent = `Score ${score}/12 · Stars ${stars}`;
+    $('retryQuizBtn').classList.remove('hidden');
+    $('submitQuizBtn').classList.add('hidden');
+    markQuizReview(attempts);
+    state.quizSubmitted = true;
+
+    await loadProgress();
+    updateHome();
+    renderMap();
+    renderSpellBook();
+    setStatus(`Level ${state.currentLevelDetail} saved. Score ${score}/12 and ${stars} main stars earned.`);
+  }
+
+  async function claimBossReward() {
+    const levelNo = state.currentLevelDetail;
+    if (!levelNo || !state.playerId) return;
+    const bonus = state.bonusByLevel[levelNo];
+    if (!bonus) return;
+    const level = state.levels.find(l => l.level_no === levelNo);
+    if (!level) return;
+    if (state.progress[levelNo]?.bonusStars) return;
+
+    const { data, error } = await client.rpc('claim_bonus_boss', {
+      p_player_id: state.playerId,
+      p_level_id: level.id,
+      p_bonus_boss_id: bonus.id,
+      p_stars_awarded: bonus.reward_stars
+    });
+    if (error) {
+      console.error(error);
       setStatus('The bonus reward could not be saved right now.');
       return;
     }
-  }
-  if (!state.progress[levelNo]) state.progress[levelNo] = { best_score:0, stars:0, completed:false };
-  state.progress[levelNo].bonusStars = bonus.reward_stars;
-  updateHome();
-  renderMap();
-  openLevelDetail(levelNo);
-  setStatus(`AMC Bonus Boss reward claimed: +${bonus.reward_stars} stars.`);
-}
-async function loadCloudOrLocalProfile(){
-  const local = localLoad();
-  state.childName = local.childName || '';
-  if (state.childName) state.princessName = `Princess ${state.childName}`;
-  const { data:{ session } } = await supabaseClient.auth.getSession();
-  state.session = session;
-  state.user = session?.user || null;
-  $('authLauncher').textContent = state.user ? '☁️ Signed In' : '☁️ Sign In';
-  state.cloudSource = !!state.user;
 
-  if (state.user){
-    const profile = await getUserProfile();
-    if (profile?.child_name){
-      state.childName = profile.child_name;
-      state.princessName = `Princess ${state.childName}`;
-      localSave({ childName: state.childName });
+    const result = Array.isArray(data) ? data[0] : data;
+    if (!state.progress[levelNo]) state.progress[levelNo] = { best_score: 0, stars: 0, completed: false };
+    state.progress[levelNo].bonusStars = Number(result?.stars_awarded || bonus.reward_stars || 0);
+    updateHome();
+    renderMap();
+    openLevelDetail(levelNo);
+    setStatus(`AMC Bonus Boss reward claimed: +${bonus.reward_stars} stars.`);
+  }
+
+  async function startLevel() {
+    const levelNo = state.currentLevelDetail;
+    if (!levelNo) return;
+    $('levelModal').classList.remove('open');
+    setStatus('Loading questions from Supabase...');
+    try {
+      const qs = await fetchQuestionsForLevel(levelNo);
+      renderQuiz(levelNo, qs);
+      $('quizModal').classList.add('open');
+      setStatus(`Level ${levelNo} is ready.`);
+    } catch (err) {
+      console.error(err);
+      setStatus('Questions could not load right now.');
     }
   }
-  if (state.childName){
-    await ensurePlayer(state.childName);
-    await loadProgress();
-  }
-  updateHome();
-  renderMap();
-  renderSpellBook();
-}
-async function beginStory(){
-  const name = (($('childName').value || state.childName || '') + '').trim();
-  if (!name){ setStatus("Please enter the child's name first."); return; }
-  setStatus('Opening the story...');
-  await ensurePlayer(name);
-  await saveUserProfile(name);
-  await loadProgress();
-  updateHome();
-  renderMap();
-  setStatus(`Welcome, Princess ${name}. The first road is ready.`);
-}
-function continueStory(){
-  if (!state.childName) return;
-  setStatus(`Continuing the story for Princess ${state.childName}.`);
-  document.querySelector('.map-panel').scrollIntoView({behavior:'smooth', block:'start'});
-}
-async function signOut(){
-  try{
-    await supabaseClient.auth.signOut();
-    state.user = null;
-    state.session = null;
-    state.cloudSource = false;
-    $('authLauncher').textContent = '☁️ Sign In';
-    $('signOutBtn').style.display = 'none';
-    setStatus('Signed out. Local story view is still available on this browser.');
-    await loadCloudOrLocalProfile();
-  } catch(err){
-    console.error(err);
-    setStatus('Could not sign out right now.');
-  }
-}
 
-$('beginBtn').addEventListener('click', beginStory);
-$('continueBtn').addEventListener('click', continueStory);
-$('openMapBtn').addEventListener('click', () => document.querySelector('.map-panel').scrollIntoView({behavior:'smooth'}));
-$('guideBtn').addEventListener('click', () => $('guideModal').classList.add('open'));
-$('spellBookBtn').addEventListener('click', () => $('spellModal').classList.add('open'));
-$('authLauncher').addEventListener('click', () => $('authModal').classList.add('open'));
-$('signOutBtn').addEventListener('click', signOut);
-$('mockLevelStartBtn').addEventListener('click', () => {
-  const levelNo = state.currentLevelDetail;
-  $('levelModal').classList.remove('open');
-  setStatus(`Level ${levelNo} is ready. This cloud-driven shell now loads level plans, bonus boss data, and progress from Supabase. The next step is to wire the full answer screen to the same flow.`);
-});
-$('claimBossBtn').addEventListener('click', claimBossReward);
-document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', () => $(btn.dataset.close).classList.remove('open')));
-$('sendMagicBtn').addEventListener('click', async () => {
-  const email = $('emailInput').value.trim();
-  if (!email){ $('authStatus').textContent = 'Please enter an email address first.'; return; }
-  $('authStatus').textContent = 'Sending magic link...';
-  const { error } = await supabaseClient.auth.signInWithOtp({ email, options:{ emailRedirectTo: window.location.href.split('#')[0] } });
-  $('authStatus').textContent = error ? error.message : 'Magic link sent. Open your email and come back to this page after signing in.';
-});
-supabaseClient.auth.onAuthStateChange(async (_event, session) => {
-  state.session = session;
-  state.user = session?.user || null;
-  $('authLauncher').textContent = state.user ? '☁️ Signed In' : '☁️ Sign In';
-  $('signOutBtn').style.display = state.user ? '' : 'none';
-  state.cloudSource = !!state.user;
-  await loadCloudOrLocalProfile();
-});
-async function init(){
-  try{
-    await loadLevels();
-    await loadSpellPlans();
-    await loadBonusBosses();
-    await loadCloudOrLocalProfile();
-  }catch(err){
-    console.error(err);
-    setStatus('The kingdom could not load yet. Please check Supabase tables and try refreshing.');
+  async function loadCloudOrLocalProfile() {
+    const local = localLoad();
+    state.childName = local.childName || '';
+    if (state.childName) state.princessName = `Princess ${state.childName}`;
+
+    const { data: { session } } = await client.auth.getSession();
+    state.session = session;
+    state.user = session?.user || null;
+    $('authLauncher').textContent = state.user ? '☁️ Signed In' : '☁️ Sign In';
+    $('signOutBtn').classList.toggle('hidden', !state.user);
+    state.cloudSource = !!state.user;
+
+    if (state.user) {
+      const profile = await getUserProfile();
+      if (profile?.player_id) {
+        const { data: playerById } = await client.from('players').select('*').eq('id', profile.player_id).maybeSingle();
+        if (playerById) {
+          state.playerId = playerById.id;
+          state.childName = playerById.child_name;
+          state.princessName = playerById.princess_name;
+          localSave({ childName: state.childName });
+        }
+      } else if (profile?.child_name) {
+        await ensurePlayer(profile.child_name);
+      }
+    } else {
+      state.playerId = null;
+    }
+
+    if (state.childName && !state.playerId) {
+      await ensurePlayer(state.childName);
+    }
+    if (state.playerId) {
+      await loadProgress();
+    } else {
+      state.progress = {};
+      state.spellStats = [];
+    }
+
+    updateHome();
+    renderMap();
+    renderSpellBook();
   }
-}
-init();
+
+  async function beginStory() {
+    const name = (($('childName').value || state.childName || '') + '').trim();
+    if (!name) {
+      setStatus("Please enter the child's name first.");
+      return;
+    }
+    setStatus('Opening the story...');
+    const player = await ensurePlayer(name);
+    await saveUserProfile(player);
+    await loadProgress();
+    updateHome();
+    renderMap();
+    renderSpellBook();
+    setStatus(`Welcome, Princess ${name}. The first road is ready.`);
+  }
+
+  function continueStory() {
+    if (!state.childName) return;
+    setStatus(`Continuing the story for Princess ${state.childName}.`);
+    document.querySelector('.map-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function signOut() {
+    try {
+      await client.auth.signOut();
+      state.user = null;
+      state.session = null;
+      state.cloudSource = false;
+      $('authLauncher').textContent = '☁️ Sign In';
+      $('signOutBtn').classList.add('hidden');
+      setStatus('Signed out. Local story view is still available on this browser.');
+      await loadCloudOrLocalProfile();
+    } catch (err) {
+      console.error(err);
+      setStatus('Could not sign out right now.');
+    }
+  }
+
+  $('beginBtn').addEventListener('click', beginStory);
+  $('continueBtn').addEventListener('click', continueStory);
+  $('openMapBtn').addEventListener('click', () => document.querySelector('.map-panel').scrollIntoView({ behavior: 'smooth' }));
+  $('guideBtn').addEventListener('click', () => $('guideModal').classList.add('open'));
+  $('spellBookBtn').addEventListener('click', () => $('spellModal').classList.add('open'));
+  $('authLauncher').addEventListener('click', () => $('authModal').classList.add('open'));
+  $('signOutBtn').addEventListener('click', signOut);
+  $('startLevelBtn').addEventListener('click', startLevel);
+  $('claimBossBtn').addEventListener('click', claimBossReward);
+  $('submitQuizBtn').addEventListener('click', submitQuiz);
+  $('retryQuizBtn').addEventListener('click', startLevel);
+  document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', () => $(btn.dataset.close).classList.remove('open')));
+
+  $('sendMagicBtn').addEventListener('click', async () => {
+    const email = $('emailInput').value.trim();
+    if (!email) {
+      $('authStatus').textContent = 'Please enter an email address first.';
+      return;
+    }
+    $('authStatus').textContent = 'Sending magic link...';
+    const { error } = await client.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.href.split('#')[0] }
+    });
+    $('authStatus').textContent = error ? error.message : 'Magic link sent. Open your email and come back to this page after signing in.';
+  });
+
+  client.auth.onAuthStateChange(async (_event, session) => {
+    state.session = session;
+    state.user = session?.user || null;
+    $('authLauncher').textContent = state.user ? '☁️ Signed In' : '☁️ Sign In';
+    $('signOutBtn').classList.toggle('hidden', !state.user);
+    state.cloudSource = !!state.user;
+    await loadCloudOrLocalProfile();
+  });
+
+  async function init() {
+    try {
+      await loadLevels();
+      await loadSpellPlans();
+      await loadLessons();
+      await loadBonusBosses();
+      await loadCloudOrLocalProfile();
+    } catch (err) {
+      console.error(err);
+      setStatus('The kingdom could not load yet. Please check Supabase tables and try refreshing.');
+    }
+  }
+
+  init();
+})();
 </script>
 </body>
 </html>
