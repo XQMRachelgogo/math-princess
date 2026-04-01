@@ -267,8 +267,7 @@ body{
       <div class="cta-row">
         <button id="startBtn" class="primary-btn">Start the Journey ✨</button>
         <button id="continueBtn" class="primary-btn hidden">Continue the Journey ➜</button>
-        <button id="openMapBtn" class="ghost-btn hidden">Open the Journey Map</button>
-      </div>
+              </div>
 
       <div class="guide-anchor"><button id="guideBtn" class="guide-btn">Adventure Guide</button></div>
       <div id="homeStatus" class="status-line"></div>
@@ -330,30 +329,23 @@ body{
 </div>
 
 <div id="mapModal" class="modal-backdrop">
-  <div class="modal" style="width:min(1080px,100%)">
+  <div class="modal" style="width:min(980px,100%)">
     <div class="close-row"><button class="close-btn" data-close="mapModal">Close</button></div>
     <div class="map-legend">
       <div>
         <h3 style="margin-bottom:4px">The Fairy World Map</h3>
-        <div class="soft">Click a node to open that level. The current road glows with the princess marker.</div>
+        <div class="soft">Levels now travel from top to bottom along the kingdom road. Tap a circle to open that level.</div>
       </div>
       <div class="pill" id="mapNextHint">Next stop: Level 1</div>
     </div>
     <div id="mapShell" class="map-shell">
-      <div class="map-canvas">
-        <div class="map-road">
-          <svg viewBox="0 0 100 1000" preserveAspectRatio="none">
-            <path d="M50 20 C 15 80, 85 130, 50 190 S 18 300, 52 360 S 86 470, 50 540 S 18 650, 50 720 S 84 830, 52 900"
-                  fill="none" stroke="#f5c3db" stroke-width="6" stroke-linecap="round"/>
-            <path d="M50 20 C 15 80, 85 130, 50 190 S 18 300, 52 360 S 86 470, 50 540 S 18 650, 50 720 S 84 830, 52 900"
-                  fill="none" stroke="#ffffff" stroke-opacity=".75" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="1 18"/>
-          </svg>
-        </div>
+      <div id="mapCanvas" class="map-canvas">
         <div id="mapLayer" class="map-layer"></div>
       </div>
     </div>
   </div>
 </div>
+/div>
 
 <div id="levelModal" class="modal-backdrop">
   <div class="modal">
@@ -485,10 +477,12 @@ body{
   }
   function posForLevel(levelNo) {
     const positions = [
-      [50,89],[36,84],[63,80],[48,75],[34,70],[63,66],[49,61],[37,56],[61,52],[49,47],
-      [36,43],[63,39],[50,35],[38,31],[63,28],[49,24],[36,20],[61,17],[49,13],[36,10],
-      [63,8],[74,13],[81,20],[76,29],[67,37],[21,24],[16,33],[22,42],[31,50],[22,58],
-      [17,67],[23,75],[33,82],[46,86],[58,90],[72,93]
+      [76,7],[68,9.5],[60,12],[51,14.5],[43,17],[35,19.5],
+      [33,23],[41,25.5],[50,28],[59,30.5],[68,33],[75,35.5],
+      [67,40],[58,42.5],[49,45],[40,47.5],[31,50],[26,52.5],
+      [34,56],[43,58.5],[52,61],[61,63.5],[70,66],[75,68.5],
+      [66,73],[57,75.5],[48,78],[39,80.5],[30,83],[24,85.5],
+      [32,89],[42,91.5],[53,94],[64,96],[74,98],[66,99.5]
     ];
     const p = positions[levelNo - 1] || [50, 50];
     return { x: p[0], y: p[1] };
@@ -549,13 +543,11 @@ body{
       $('nameSection').classList.add('hidden');
       $('startBtn').classList.add('hidden');
       $('continueBtn').classList.remove('hidden');
-      $('openMapBtn').classList.remove('hidden');
     } else {
       $('homeTitle').innerHTML = `A gentler beginning for the kingdom.<small>Write one name, and the fairy tale will open.</small>`;
       $('nameSection').classList.remove('hidden');
       $('startBtn').classList.remove('hidden');
       $('continueBtn').classList.add('hidden');
-      $('openMapBtn').classList.add('hidden');
     }
   }
 
@@ -1195,7 +1187,6 @@ body{
   $('sendMagicBtn').addEventListener('click', sendMagicLink);
   $('startBtn').addEventListener('click', startJourney);
   $('continueBtn').addEventListener('click', continueJourney);
-  $('openMapBtn').addEventListener('click', openMapModal);
   $('startLevelBtn').addEventListener('click', startLevelFlow);
   $('submitQuizBtn').addEventListener('click', submitQuiz);
   $('retryQuizBtn').addEventListener('click', startLevelFlow);
