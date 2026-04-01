@@ -122,9 +122,11 @@ a{color:#7c67d6}
 .map-princess{position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);width:72px;height:auto;object-fit:contain;filter:drop-shadow(0 8px 14px rgba(255,162,208,.3));animation:floaty 2.8s ease-in-out infinite;z-index:3;pointer-events:none}
 .skill-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
 .skill-chip{padding:8px 14px;border-radius:999px;background:#fff7fd;border:1px solid var(--border);font-weight:900;font-size:13px;box-shadow:0 8px 16px rgba(255,182,220,.14)}
-.map-board{position:relative;max-width:940px;margin:18px auto 8px;padding:24px 18px 18px;border-radius:34px;background:linear-gradient(180deg,#eaf8ff 0%,#f9f4ff 40%,#fff8fc 100%);border:1px solid rgba(255,255,255,.95);box-shadow:var(--shadow);overflow:hidden}
-.map-land{position:absolute;inset:auto 0 0 0;height:34%;background:radial-gradient(circle at 20% 40%,rgba(202,245,221,.95) 0, rgba(202,245,221,.95) 18%, transparent 19%),radial-gradient(circle at 80% 45%,rgba(191,233,255,.95) 0, rgba(191,233,255,.95) 18%, transparent 19%),linear-gradient(180deg,transparent 0%,transparent 34%,#dbf7ea 35%,#d7f0ff 78%,#fef5fb 100%)}
-.map-castle,.map-tower,.map-cloud-decor,.map-river,.traveler-bubble{position:absolute;pointer-events:none}
+.map-board{position:relative;max-width:980px;margin:18px auto 8px;padding:26px 20px 22px;border-radius:38px;background:linear-gradient(180deg,#f6fbff 0%,#f4efff 22%,#fff6fb 64%,#fffaf1 100%);border:1px solid rgba(255,255,255,.95);box-shadow:0 24px 50px rgba(160,129,190,.18), inset 0 0 0 8px rgba(255,255,255,.18);overflow:hidden}
+.map-board::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 14% 10%,rgba(255,255,255,.85) 0,transparent 14%),radial-gradient(circle at 86% 14%,rgba(255,255,255,.75) 0,transparent 12%),radial-gradient(circle at 24% 72%,rgba(255,236,247,.72) 0,transparent 18%),radial-gradient(circle at 78% 78%,rgba(234,244,255,.72) 0,transparent 18%);pointer-events:none}
+.map-board::after{content:'';position:absolute;inset:14px;border-radius:30px;border:1px dashed rgba(194,158,207,.25);pointer-events:none}
+.map-land{position:absolute;inset:auto 0 0 0;height:42%;background:radial-gradient(circle at 16% 48%,rgba(202,245,221,.98) 0, rgba(202,245,221,.98) 16%, transparent 17%),radial-gradient(circle at 78% 42%,rgba(191,233,255,.98) 0, rgba(191,233,255,.98) 14%, transparent 15%),radial-gradient(circle at 55% 55%,rgba(255,232,193,.88) 0, rgba(255,232,193,.88) 10%, transparent 11%),linear-gradient(180deg,transparent 0%,transparent 28%,#dbf7ea 29%,#dff4ff 62%,#fff4e7 100%)}
+.map-castle,.map-tower,.map-cloud-decor,.map-river,.traveler-bubble,.map-mountains,.map-forest,.map-lake,.map-village,.map-label{position:absolute;pointer-events:none}
 .map-castle{left:28px;top:28px;width:124px;height:108px;border-radius:24px 24px 10px 10px;background:linear-gradient(180deg,#fff,#ffe9f5);border:3px solid rgba(255,255,255,.96);box-shadow:0 16px 28px rgba(244,162,201,.14)}
 .map-castle::before,.map-castle::after{content:"";position:absolute;top:-24px;width:28px;height:42px;border-radius:14px 14px 6px 6px;background:linear-gradient(180deg,#fff,#f8f1ff);border:3px solid rgba(255,255,255,.95)}
 .map-castle::before{left:16px}.map-castle::after{right:16px}
@@ -136,6 +138,17 @@ a{color:#7c67d6}
 .map-cloud-decor::before{width:44px;height:44px;left:12px;top:-14px}.map-cloud-decor::after{width:56px;height:56px;right:14px;top:-24px}
 .map-cloud-decor.a{left:170px;top:26px}.map-cloud-decor.b{right:120px;top:170px;width:100px}.map-cloud-decor.c{left:80px;bottom:130px;width:110px}
 .map-river{left:50%;top:120px;transform:translateX(-50%) rotate(-8deg);width:120px;height:560px;border-radius:999px;background:linear-gradient(180deg,rgba(181,236,255,.18),rgba(181,236,255,.55),rgba(181,236,255,.14));filter:blur(0.5px)}
+.map-mountains{right:134px;top:58px;width:210px;height:120px;background:linear-gradient(180deg,rgba(236,229,255,.95),rgba(214,206,246,.95));clip-path:polygon(0 100%,17% 58%,30% 84%,48% 32%,68% 78%,85% 48%,100% 100%);opacity:.8}
+.map-forest{left:82px;bottom:110px;width:200px;height:110px;background:radial-gradient(circle at 10% 86%,#b8e5c7 0 18%,transparent 19%),radial-gradient(circle at 28% 78%,#9fd8b4 0 18%,transparent 19%),radial-gradient(circle at 46% 84%,#b8e5c7 0 18%,transparent 19%),radial-gradient(circle at 62% 76%,#9fd8b4 0 18%,transparent 19%),radial-gradient(circle at 80% 84%,#b8e5c7 0 18%,transparent 19%);opacity:.92}
+.map-lake{right:84px;bottom:128px;width:160px;height:94px;border-radius:50% 50% 46% 54%/56% 44% 56% 44%;background:linear-gradient(180deg,rgba(204,244,255,.95),rgba(163,225,245,.95));box-shadow:inset 0 0 0 8px rgba(255,255,255,.34)}
+.map-village{left:318px;top:146px;width:140px;height:74px;background:radial-gradient(circle at 16% 60%,#fff 0 10%,transparent 11%),radial-gradient(circle at 36% 50%,#ffeef8 0 12%,transparent 13%),radial-gradient(circle at 58% 58%,#fff5eb 0 12%,transparent 13%),radial-gradient(circle at 80% 54%,#f3efff 0 11%,transparent 12%);opacity:.96}
+.map-label{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.85);font-size:11px;font-weight:900;letter-spacing:.02em;color:#8f6f8f;backdrop-filter:blur(4px)}
+.map-label.a{left:72px;top:154px}.map-label.b{right:146px;top:174px}.map-label.c{left:108px;bottom:88px}.map-label.d{right:92px;bottom:96px}
+.node-bonus{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:999px;background:linear-gradient(135deg,#fff7c8,#ffd96f);border:1px solid rgba(255,255,255,.9);font-size:10px;font-weight:900;color:#846000;margin-top:5px;box-shadow:0 8px 16px rgba(255,217,111,.22)}
+.bonus-panel{margin-top:14px;padding:14px 16px;border-radius:18px;background:linear-gradient(180deg,#fff9df,#fff5f2);border:1px solid #f8e3b4;box-shadow:0 12px 20px rgba(222,191,125,.12)}
+.bonus-panel h4{margin:0 0 8px;font-size:18px;color:#8c6a2f}
+.bonus-panel p{margin:6px 0 0;line-height:1.6}
+.bonus-modal-card{max-width:860px}.bonus-pill{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:linear-gradient(135deg,#fff9d8,#ffeaaa);border:1px solid #f6d57e;font-size:12px;font-weight:900;color:#8a651f}.bonus-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.bonus-box{padding:16px;border-radius:20px;background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.95);min-height:180px}.bonus-box h4{margin:0 0 10px;font-size:18px}.bonus-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.bonus-tags span{display:inline-flex;padding:6px 10px;border-radius:999px;background:#fff5fb;border:1px solid var(--border);font-size:12px;font-weight:800}.bonus-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.bonus-links a{display:inline-flex;padding:9px 12px;border-radius:999px;background:#fff;border:1px solid var(--border);text-decoration:none;font-weight:800}.bonus-title-note{margin-top:8px;color:#8b6c92;font-size:14px;line-height:1.65}@media (max-width:720px){.bonus-grid{grid-template-columns:1fr}.map-mountains{right:84px;top:74px;width:154px;height:86px}.map-village{left:190px;top:150px;width:108px}.map-label{font-size:10px;padding:4px 8px}}
 .traveler-bubble{position:relative;right:auto;bottom:auto;left:auto;margin:8px auto 0;width:min(560px,calc(100% - 20px));background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.96);border-radius:24px;padding:12px 16px;box-shadow:0 12px 24px rgba(186,146,196,.14);display:flex;align-items:center;gap:12px;z-index:3;pointer-events:auto}
 .traveler-bubble img{width:54px;height:auto;object-fit:contain;display:block}
 .traveler-bubble div{font-size:13px;font-weight:900;line-height:1.55;max-width:100%}
@@ -231,6 +244,40 @@ a{color:#7c67d6}
 @media (max-width:900px){.spell-shell::after{display:none}.spell-layout{grid-template-columns:1fr}.spell-knight{grid-template-columns:1fr}}
 @media (max-width:720px){.node{width:128px}.node-row{min-height:160px;gap:10px}.map-board{padding:18px 12px 16px}.traveler-bubble{width:min(100%,92%)}}
 @media (max-width:520px){.app{padding:12px 10px 28px}.screen{padding:14px}.node{width:96px}.node-btn{width:72px;height:72px}.node-row{min-height:144px;gap:6px}.node-label{font-size:11px;max-width:92px;min-height:44px}.q-text{font-size:18px}.knight-row{grid-template-columns:1fr}.map-princess{width:56px}.traveler-bubble{margin-top:10px}.traveler-bubble img{width:48px}}
+
+.map-board{background:
+  radial-gradient(circle at 14% 18%, rgba(255,255,255,.78) 0 10%, transparent 11%),
+  radial-gradient(circle at 86% 16%, rgba(255,255,255,.66) 0 8%, transparent 9%),
+  radial-gradient(circle at 22% 82%, rgba(255,241,214,.8) 0 8%, transparent 9%),
+  linear-gradient(180deg,#dff4ff 0%,#ecf6ff 34%,#eefbea 60%,#f8f1da 100%) !important;overflow:hidden}
+.map-board::after{content:"";position:absolute;inset:16px;border-radius:28px;border:1px dashed rgba(255,255,255,.5);pointer-events:none}
+.map-compass{position:absolute;right:22px;bottom:22px;width:92px;height:92px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#fffdf5 0%,#ffe9b7 58%,#ffd985 100%);border:3px solid rgba(255,255,255,.9);box-shadow:0 14px 26px rgba(186,146,90,.18);font-size:36px;color:#9d6f15;transform:rotate(-10deg);z-index:1}
+.map-rainbow{position:absolute;left:46px;top:22px;width:170px;height:86px;border-radius:170px 170px 0 0/90px 90px 0 0;background:conic-gradient(from 180deg at 50% 100%, #ff9fcf 0 18%, #ffd98f 18% 34%, #fff7a7 34% 50%, #bdf0c3 50% 66%, #bfe9ff 66% 82%, #d3c4ff 82% 100%);mask:radial-gradient(circle at 50% 100%, transparent 0 48px, #000 49px);opacity:.75;filter:drop-shadow(0 8px 14px rgba(255,182,220,.18));z-index:0}
+.map-island{position:absolute;border-radius:50%;background:linear-gradient(180deg,#d9f7d4,#bfe9b0);box-shadow:inset 0 6px 10px rgba(255,255,255,.45),0 12px 20px rgba(115,172,121,.18);z-index:0}
+.map-island.a{width:92px;height:38px;left:120px;bottom:112px;transform:rotate(-8deg)}
+.map-island.b{width:78px;height:32px;right:150px;top:118px;transform:rotate(12deg)}
+.guide-row{display:flex;justify-content:center;margin-top:14px}
+.guide-btn{padding:10px 16px;border:none;border-radius:999px;background:linear-gradient(135deg,#fffefb,#ffe9f6);border:1px solid var(--border);box-shadow:var(--shadow);font-weight:900;color:#7b5577;cursor:pointer}
+.guide-modal{position:fixed;inset:0;z-index:140;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(92,70,99,.34);backdrop-filter:blur(7px)}
+.guide-modal.show{display:flex}
+.guide-card{width:min(860px,96vw);max-height:92vh;overflow:auto;background:linear-gradient(180deg,#fffdfd,#fff7fd 58%,#f3f6ff 100%);border:1px solid rgba(255,255,255,.95);border-radius:30px;box-shadow:0 28px 60px rgba(122,86,133,.24);padding:22px 22px 18px;position:relative}
+.guide-title{margin:4px 0 10px;font-size:30px;color:#7a4f84}
+.guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.guide-box{padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.82);border:1px solid var(--border)}
+.guide-box h4{margin:0 0 8px;font-size:16px}
+.guide-box p,.guide-box li{line-height:1.7;font-size:14px}
+.battle-shell{position:relative;overflow:hidden;background:linear-gradient(180deg,#fffdfa,#fff5ef 48%,#f8f2ff 100%) !important}
+.battle-shell::before{content:"";position:absolute;inset:auto -40px -40px auto;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,#ffe8ba 0%,transparent 68%);opacity:.8;pointer-events:none}
+.battle-banner{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;background:linear-gradient(135deg,#fff5c7,#ffd870);border:1px solid #f3d172;font-weight:900;color:#895f08;box-shadow:0 10px 18px rgba(225,186,81,.22)}
+.reward-board{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:14px}
+.reward-card{padding:14px 16px;border-radius:20px;background:linear-gradient(180deg,#fffefa,#fff7eb);border:1px solid #f4dfaa}
+.reward-stars{font-size:22px;letter-spacing:2px}
+.reward-status{padding:10px 12px;border-radius:14px;background:#fff;border:1px solid #f0dfb0;font-weight:800;margin-top:10px}
+.reward-status.win{background:linear-gradient(180deg,#f8fff1,#eefce4);border-color:#cfe8a5;color:#5c8b2a}
+.reward-status.wait{background:linear-gradient(180deg,#fffdf6,#fff8e7);border-color:#f0dfb0;color:#8b6b1d}
+.end-reward-note{margin-top:12px;padding:12px 14px;border-radius:16px;background:linear-gradient(180deg,#fff9ef,#fffdf8);border:1px solid #f6e1b5;font-size:14px;line-height:1.7}
+@media (max-width:760px){.guide-grid,.reward-board{grid-template-columns:1fr}.map-compass{width:74px;height:74px;font-size:28px}}
+
 </style>
 </head>
 <body>
@@ -305,6 +352,18 @@ a{color:#7c67d6}
       <div class="map-cloud-decor b"></div>
       <div class="map-cloud-decor c"></div>
       <div class="map-river"></div>
+      <div class="map-mountains"></div>
+      <div class="map-forest"></div>
+      <div class="map-lake"></div>
+      <div class="map-village"></div>
+      <div class="map-rainbow"></div>
+      <div class="map-island a"></div>
+      <div class="map-island b"></div>
+      <div class="map-compass">✦</div>
+      <div class="map-label a">Whisper Village</div>
+      <div class="map-label b">Starlight Peaks</div>
+      <div class="map-label c">Emerald Forest</div>
+      <div class="map-label d">Moonlake</div>
       <div class="path">
         <svg viewBox="0 0 820 820" preserveAspectRatio="none" aria-hidden="true">
           <path d="M125 65 C 285 75, 545 130, 660 178 C 770 225, 748 318, 635 354 C 455 414, 122 381, 118 468 C 114 557, 612 510, 685 590 C 760 672, 505 766, 238 736" fill="none" stroke="rgba(255,183,219,.65)" stroke-width="18" stroke-linecap="round" stroke-dasharray="1 24"/>
@@ -316,6 +375,7 @@ a{color:#7c67d6}
       <div class="traveler-bubble"><img id="mapTravelerImg" alt="Princess traveler" /><div id="mapTravelerText">The princess is ready to travel to the next glowing stop.</div></div>
     </div>
     <div class="footer-note">Each path stop blends old magic with just a little new learning.</div>
+    <div class="guide-row"><button class="guide-btn" id="guideBtnMap" type="button">📜 Adventure Guide</button></div>
   </section>
 
   <section id="reviewScreen" class="screen hidden">
@@ -517,6 +577,15 @@ a{color:#7c67d6}
             </div>
           </div>
           <ul id="reviewList" class="review-list"></ul>
+          <div id="bonusBossPanel" class="bonus-panel hidden">
+            <div class="bonus-pill">👑 AMC 8 Bonus Boss</div>
+            <h4 id="bonusBossTitle">A real AMC 8 challenge is waiting.</h4>
+            <p id="bonusBossText">Sir Knight has found a true bonus challenge from AMC 8.</p>
+            <div class="cta-row" style="margin-top:12px">
+              <button class="btn btn-primary" id="openBonusBossBtn">Open Bonus Boss</button>
+            </div>
+          </div>
+          <div class="end-reward-note" id="rewardExplainText">Level stars: 3 stars for 11–12 correct, 2 stars for 8–10, 1 star for 5–7, and 0 below 5. Bonus Boss stars are extra and can be claimed once after solving the real AMC problem.</div>
           <div class="cta-row" style="justify-content:center;margin-top:16px">
             <button class="btn btn-primary" id="nextLevelBtn">Go to Next Stop</button>
             <button class="btn btn-secondary" id="mapBtn">Return to Map</button>
@@ -525,6 +594,83 @@ a{color:#7c67d6}
       </div>
     </div>
   </section>
+  <div id="guideModal" class="guide-modal" aria-hidden="true">
+    <div class="guide-card">
+      <div class="spell-head">
+        <div>
+          <h2 class="guide-title">📜 Adventure Guide</h2>
+          <p class="spell-sub">A simple guide to stars, spells, reviews, and Bonus Boss rewards.</p>
+        </div>
+        <button class="spell-close" id="guideModalClose" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="guide-grid">
+        <div class="guide-box">
+          <h4>How each story stop works</h4>
+          <ul>
+            <li>Each level has 12 questions.</li>
+            <li>About 5 questions are old spells for review.</li>
+            <li>About 7 questions are the newest spell work for this chapter.</li>
+            <li>Old spells come back in deeper, more varied ways.</li>
+          </ul>
+        </div>
+        <div class="guide-box">
+          <h4>Main level stars</h4>
+          <ul>
+            <li>11–12 correct → 3 stars</li>
+            <li>8–10 correct → 2 stars</li>
+            <li>5–7 correct → 1 star</li>
+            <li>0–4 correct → 0 stars</li>
+          </ul>
+        </div>
+        <div class="guide-box">
+          <h4>Spell mastery</h4>
+          <p>Each knowledge skill is a spell. A spell is mastered only when that spell's accuracy reaches <strong>100%</strong>. Wrong answers quietly return later in spiral review.</p>
+        </div>
+        <div class="guide-box">
+          <h4>Bonus Boss rewards</h4>
+          <p>Every few levels, a real AMC 8 Bonus Boss appears. Open the real problem, use Sir Knight's hints, and then claim the extra bonus stars once after solving it.</p>
+          <p>Bonus stars are added on top of normal level stars.</p>
+        </div>
+      </div>
+      <div class="cta-row" style="justify-content:center;margin-top:14px"><button class="btn btn-primary" id="guideGotItBtn" type="button">Got it ✨</button></div>
+    </div>
+  </div>
+
+  <div id="bonusModal" class="spell-modal" aria-hidden="true">
+    <div class="spell-shell bonus-modal-card">
+      <div class="spell-head">
+        <div>
+          <h2 class="spell-title" id="bonusModalTitle">AMC 8 Bonus Boss</h2>
+          <p class="spell-sub" id="bonusModalSub">A real AMC 8 challenge appears at the edge of the fairy map.</p>
+        </div>
+        <button class="spell-close" id="bonusModalClose" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="battle-banner">👑 Bonus Boss Battle</div>
+      <div class="reward-board">
+        <div class="reward-card">
+          <div class="bonus-pill" id="bonusMetaPill">AMC 8 Real Problem</div>
+          <div class="bonus-title-note" id="bonusWhyText"></div>
+          <div class="bonus-tags" id="bonusTagWrap"></div>
+          <div class="bonus-links" style="margin-top:12px">
+            <a id="bonusSourceLink" href="#" target="_blank" rel="noopener noreferrer">Open Real AMC 8 Problem ↗</a>
+          </div>
+          <div class="spell-note" id="bonusHintShort" style="margin-top:14px"></div>
+          <div class="spell-note" id="bonusHintLong" style="margin-top:10px"></div>
+        </div>
+        <div class="reward-card">
+          <h4 style="margin:0 0 8px">Boss Reward</h4>
+          <div class="reward-stars" id="bonusRewardStars">⭐⭐</div>
+          <div style="font-size:14px;line-height:1.7">Solve the real AMC 8 Bonus Boss, then come back and claim your extra stars once for this stop.</div>
+          <div class="reward-status wait" id="bonusRewardStatus">Not claimed yet</div>
+          <div class="spell-actions" style="margin-top:14px;flex-wrap:wrap">
+            <button class="btn btn-primary" id="claimBonusBossBtn" type="button">I Solved It · Claim Reward</button>
+            <button class="btn btn-secondary" id="bonusPracticeSpellBtn" type="button">Practice Related Spell ✨</button>
+            <button class="btn btn-secondary" id="bonusModalBackBtn" type="button">Back</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 
@@ -556,6 +702,8 @@ const S = {
   seenIntroSpells: {},
   contentLoaded: false,
   pendingLevelNo: null,
+  lastBonusLevelNo: null,
+  bonusBossWins: {},
 };
 const DB = {
   spells: [],
@@ -566,6 +714,9 @@ const DB = {
   lessonsBySpellId: {},
   plansByLevelNo: {},
   questionCacheBySpellId: {},
+  bonusBosses: [],
+  bonusBossesByKey: {},
+  bonusByLevelNo: {},
 };
 let currentQuestions = [];
 let qIndex = 0;
@@ -596,7 +747,9 @@ function saveLocal(){
     reviewLog:S.reviewLog,
     reviewMode:S.reviewMode,
     practiceSpellCode:S.practiceSpellCode,
-    seenIntroSpells:S.seenIntroSpells
+    seenIntroSpells:S.seenIntroSpells,
+    lastBonusLevelNo:S.lastBonusLevelNo,
+    bonusBossWins:S.bonusBossWins
   }));
 }
 function qs(id){ return document.getElementById(id); }
@@ -608,6 +761,9 @@ function princessImage(state='normal'){ return IMAGES[state] || IMAGES.normal; }
 function setSync(text, good=true){ const pill=qs('syncPill'); pill.textContent=text; pill.style.color = good ? '#6a6680' : '#9c5555'; }
 function show(screenId){ ['welcomeScreen','mapScreen','reviewScreen','gameScreen'].forEach(id=>qs(id).classList.toggle('hidden', id!==screenId)); }
 function heroDisplayName(){ return S.heroName || 'Princess'; }
+function calcTotalStars(){ return Object.values(S.levelStars||{}).reduce((a,b)=>a+(Number(b)||0),0) + Object.values(S.bonusBossWins||{}).reduce((a,b)=>a+(Number(b)||0),0); }
+function bonusRewardForLevel(levelNo){ const bonus=bonusBossForLevel(levelNo); return bonus ? (bonus.link.reward_stars || 2) : 0; }
+function hasClaimedBonus(levelNo){ return Number((S.bonusBossWins||{})[levelNo]||0) > 0; }
 function spellName(code){ return DB.spellsByCode[code]?.name || code.replace(/_/g,' '); }
 function accuracyFor(code){ const stat = S.topicStats[code] || {attempts:0, correct:0}; return stat.attempts ? Math.round((stat.correct/stat.attempts)*100) : 0; }
 function mastered(code){ const stat = S.topicStats[code] || {attempts:0, correct:0}; return stat.attempts > 0 && stat.correct === stat.attempts; }
@@ -627,6 +783,7 @@ function updateWelcome(){
 function updateStats(){
   qs('statHero').textContent = heroDisplayName();
   qs('statLevel').textContent = S.currentLevelNo || 1;
+  S.totalStars = calcTotalStars();
   qs('statStars').textContent = S.totalStars || 0;
   qs('statUnlocked').textContent = S.unlockedLevelNo || 1;
   qs('statTotal').textContent = DB.levels.length || 0;
@@ -658,11 +815,13 @@ async function upsertRows(table, rows, onConflict){
 }
 async function loadContent(){
   try{
-    const [spells, levels, lessons, plans] = await Promise.all([
+    const [spells, levels, lessons, plans, bonusBosses, bonusPlan] = await Promise.all([
       api('spells?select=*&status=eq.active&order=display_order.asc'),
       api('levels?select=*&status=eq.active&order=level_no.asc'),
       api('spell_lessons?select=*'),
-      api('level_spell_plan?select=*&order=level_id.asc')
+      api('level_spell_plan?select=*&order=level_id.asc'),
+      api('amc_bonus_bosses?select=*&is_active=eq.true&order=year.asc,problem_no.asc').catch(()=>[]),
+      api('level_bonus_boss_plan?select=*&order=level_id.asc').catch(()=>[])
     ]);
     DB.spells = spells;
     DB.spellsById = Object.fromEntries(spells.map(x=>[x.id,x]));
@@ -680,6 +839,14 @@ async function loadContent(){
       DB.plansByLevelNo[level.level_no].push(item);
     });
     for(const key of Object.keys(DB.plansByLevelNo)) DB.plansByLevelNo[key].sort((a,b)=>b.weight-a.weight);
+    DB.bonusBosses = bonusBosses || [];
+    DB.bonusBossesByKey = Object.fromEntries(DB.bonusBosses.map(b=>[`${b.year}-${b.problem_no}`, b]));
+    DB.bonusByLevelNo = {};
+    (bonusPlan || []).forEach(p=>{
+      const level = levels.find(l=>l.id===p.level_id);
+      const boss = DB.bonusBosses.find(b=>b.id===p.amc_bonus_boss_id);
+      if(level && boss) DB.bonusByLevelNo[level.level_no] = {...p, boss};
+    });
     S.contentLoaded = true;
     updateStats();
     return true;
@@ -738,7 +905,7 @@ async function loadPlayerState(){
       totalStars += r.stars || 0;
       if(r.completed && level.level_no > maxCompleted) maxCompleted = level.level_no;
     });
-    S.totalStars = totalStars;
+    S.totalStars = totalStars + Object.values(S.bonusBossWins||{}).reduce((a,b)=>a+(Number(b)||0),0);
     S.unlockedLevelNo = Math.min((maxCompleted || 0) + 1, Math.max(DB.levels.length,1));
     if(maxCompleted >= DB.levels.length) S.unlockedLevelNo = DB.levels.length;
     if(!progress.length) S.unlockedLevelNo = 1;
@@ -905,10 +1072,14 @@ function renderMap(){
   show('mapScreen');
   qs('mapTitle').textContent = `${heroDisplayName()}'s Sky Quest Map`;
   const chapterCount = new Set(DB.levels.map(l=>l.chapter_no)).size;
-  qs('mapSub').textContent = `${heroDisplayName()} can travel through ${DB.levels.length} story stops across ${chapterCount} chapters. Earlier spells keep returning, and each new spell appears gently with a first lesson from Sir Knight.`;
+  qs('mapSub').textContent = `${heroDisplayName()} can travel through ${DB.levels.length} glowing story stops across ${chapterCount} fairy chapters. Older spells keep spiraling back, new spells enter gently, and every few stops a real AMC 8 Bonus Boss appears with extra reward stars.`;
   const nextPlans = DB.plansByLevelNo[S.unlockedLevelNo] || [];
   const newSpells = nextPlans.filter(p=>p.role==='new_intro').map(p=>spellName(p.spell_code));
-  qs('mapSkillChipWrap').innerHTML = newSpells.length ? newSpells.map(x=>`<span class="tag">✨ ${escapeHtml(x)}</span>`).join('') : '<span class="tag">🌙 Spiral review ahead</span>';
+  const nextBonus = bonusBossForLevel(S.unlockedLevelNo);
+  qs('mapSkillChipWrap').innerHTML = [
+    ...(newSpells.length ? newSpells.map(x=>`<span class="tag">✨ ${escapeHtml(x)}</span>`) : ['<span class="tag">🌙 Spiral review ahead</span>']),
+    ...(nextBonus ? [`<span class="tag">👑 Bonus Boss · AMC ${nextBonus.boss.year} #${nextBonus.boss.problem_no}</span>`] : [])
+  ].join('');
   const wrap = qs('nodesWrap');
   const rows = chunk(DB.levels, 3);
   wrap.innerHTML = rows.map((row, idx)=>`<div class="node-row ${idx%2?'reverse':''}">${row.map(level=>nodeHtml(level)).join('')}</div>`).join('');
@@ -916,13 +1087,15 @@ function renderMap(){
   qs('mapTravelerImg').src = IMAGES.normal;
   const nextLevel = DB.levelsByNo[S.unlockedLevelNo];
   const introNames = newIntroSpellsForLevel(S.unlockedLevelNo).map(spellName);
-  qs('mapTravelerText').textContent = nextLevel ? `${heroDisplayName()} is standing near Level ${S.unlockedLevelNo}: ${nextLevel.title}. ${introNames.length ? 'A new spell is waiting: ' + introNames.join(', ') + '.' : 'This stop is mainly spiral review.'}` : `${heroDisplayName()} has reached the end of the sky road.`;
+  const bonus = bonusBossForLevel(S.unlockedLevelNo);
+  qs('mapTravelerText').textContent = nextLevel ? `${heroDisplayName()} is standing near Level ${S.unlockedLevelNo}: ${nextLevel.title}. ${introNames.length ? 'A new spell is waiting: ' + introNames.join(', ') + '. ' : 'This stop is mainly spiral review. '}${bonus ? 'A golden Bonus Boss seal nearby points to AMC ' + bonus.boss.year + ' Problem ' + bonus.boss.problem_no + '.' : ''}` : `${heroDisplayName()} has reached the end of the sky road.`;
   updateStats();
 }
 function nodeHtml(level){
   const unlocked = level.level_no <= S.unlockedLevelNo;
   const stars = S.levelStars[level.level_no] || 0;
-  return `<div class="node"><button type="button" id="level-${level.level_no}" class="node-btn ${unlocked?'':'locked'} ${stars? 'done':''}"><span class="node-num">${level.level_no}</span></button><div class="node-stars">${'⭐'.repeat(stars)}${'☆'.repeat(Math.max(0,3-stars))}</div><div class="node-label">${escapeHtml(level.title)}</div><div class="node-tag">${level.is_boss?'Boss Gate':'Story Stop'}</div></div>`;
+  const bonus = bonusBossForLevel(level.level_no);
+  return `<div class="node"><button type="button" id="level-${level.level_no}" class="node-btn ${unlocked?'':'locked'} ${stars? 'done':''}"><span class="node-num">${level.level_no}</span></button><div class="node-stars">${'⭐'.repeat(stars)}${'☆'.repeat(Math.max(0,3-stars))}</div><div class="node-label">${escapeHtml(level.title)}</div><div class="node-tag">${level.is_boss?'Boss Gate':'Story Stop'}</div>${bonus?`<div class="node-bonus">👑 AMC Bonus</div>`:''}</div>`;
 }
 async function startLevel(levelNo){
   const level = DB.levelsByNo[levelNo];
@@ -1047,8 +1220,16 @@ async function askKnight(){ const q=currentQuestions[qIndex]; showKnight(q.spell
 function nextQuestion(){ if(qIndex < currentQuestions.length - 1){ qIndex += 1; renderQuestion(); } else finishLevel(); }
 async function finishLevel(){
   qs('progressFill').style.width = '100%';
+  const bonus = bonusBossForLevel(S.currentLevelNo);
+  if(bonus){
+    qs('bonusBossPanel').classList.remove('hidden');
+    qs('bonusBossTitle').textContent = `Bonus Boss · AMC ${bonus.boss.year} Problem ${bonus.boss.problem_no}`;
+    qs('bonusBossText').textContent = bonus.boss.why_it_fits || 'Sir Knight found a real AMC 8 challenge for this stop.';
+  }else{
+    qs('bonusBossPanel').classList.add('hidden');
+  }
   qs('levelEnd').classList.remove('hidden');
-  const stars = score >= 11 ? 3 : score >= 8 ? 2 : 1;
+  const stars = score >= 11 ? 3 : score >= 8 ? 2 : score >= 5 ? 1 : 0;
   qs('starRow').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
   if(S.reviewMode){
     const spell = S.practiceSpellCode;
@@ -1058,11 +1239,13 @@ async function finishLevel(){
     qs('reviewList').innerHTML = (S.wrongBook[spell]||[]).filter(x=>!x.resolved).length ? `<li>${escapeHtml(spellName(spell))} still has saved mistakes in the Spell Book.</li>` : `<li>Beautiful work. There are no unresolved mistakes saved for this spell right now.</li>`;
   } else {
     S.levelStars[S.currentLevelNo] = Math.max(S.levelStars[S.currentLevelNo] || 0, stars);
-    S.totalStars = Object.values(S.levelStars).reduce((a,b)=>a+b,0);
+    S.totalStars = calcTotalStars();
     if(S.currentLevelNo >= S.unlockedLevelNo && S.unlockedLevelNo < DB.levels.length) S.unlockedLevelNo = S.currentLevelNo + 1;
     const plans = DB.plansByLevelNo[S.currentLevelNo] || [];
     const newOnes = plans.filter(p=>p.role==='new_intro').map(p=>spellName(p.spell_code));
     qs('endSummary').textContent = `${heroDisplayName()} answered ${score} of ${currentQuestions.length} questions correctly.`;
+    const bonusReward = bonusBossForLevel(S.currentLevelNo)?.link?.reward_stars || 0;
+    qs('rewardExplainText').textContent = `Level stars: 3 stars for 11–12 correct, 2 stars for 8–10, 1 star for 5–7, and 0 below 5.${bonusReward ? ` This stop also has an AMC Bonus Boss worth +${bonusReward} extra star${bonusReward>1?'s':''}.` : ''}`;
     qs('newLearningText').textContent = newOnes.length ? `New spell focus in this stop: ${newOnes.join(', ')}.` : 'This stop mainly spiraled earlier spells back for review.';
     const weakest = Object.keys(S.topicStats).sort((a,b)=>accuracyFor(a)-accuracyFor(b)).slice(0,4).map(spellName);
     qs('adaptiveText').textContent = weakest.length ? `Next time, the journey will quietly bring back: ${weakest.join(', ')}.` : 'No weak spells are standing out right now.';
@@ -1164,14 +1347,60 @@ function openLessonModal(code){
   qs('lessonResourceNote').textContent = lesson?.resource_note || 'Open the public lesson if your child wants to see another explanation first.';
   qs('lessonResourceLinks').innerHTML = [lesson?.khan_url ? `<a href="${lesson.khan_url}" target="_blank" rel="noopener noreferrer">📘 ${escapeHtml(lesson.resource_title || 'Khan Academy')}</a>` : '', lesson?.youtube_url ? `<a href="${lesson.youtube_url}" target="_blank" rel="noopener noreferrer">▶ YouTube</a>` : ''].join('');
   qs('lessonModal').classList.add('show');
+  qs('lessonModal').setAttribute('aria-hidden','false');
 }
-function closeLessonModal(){ qs('lessonModal').classList.remove('show'); }
+function closeLessonModal(){ qs('lessonModal').classList.remove('show'); qs('lessonModal').setAttribute('aria-hidden','true'); }
+function openBonusBoss(levelNo = S.currentLevelNo){
+  const bonus = bonusBossForLevel(levelNo);
+  if(!bonus) return;
+  S.lastBonusLevelNo = levelNo; saveLocal();
+  const boss = bonus.boss;
+  qs('bonusModalTitle').textContent = `AMC 8 Bonus Boss · ${boss.year} Problem ${boss.problem_no}`;
+  qs('bonusModalSub').textContent = `${heroDisplayName()} has reached a golden challenge gate at this story stop.`;
+  qs('bonusMetaPill').textContent = `AMC ${boss.year} · Problem ${boss.problem_no}`;
+  qs('bonusWhyText').textContent = boss.why_it_fits || '';
+  const tags = Array.isArray(boss.topic_tags) ? boss.topic_tags : String(boss.topic_tags||'').replace(/[{}]/g,'').split(',').filter(Boolean);
+  qs('bonusTagWrap').innerHTML = tags.map(t=>`<span>${escapeHtml(String(t).replaceAll('_',' '))}</span>`).join('');
+  qs('bonusHintShort').textContent = boss.knight_hint_short || 'Sir Knight suggests a calm first look before calculating anything.';
+  qs('bonusHintLong').textContent = boss.knight_hint_long || 'Read the real AMC 8 problem and see whether a picture, a table, or a smaller example helps first.';
+  qs('bonusSourceLink').href = boss.source_url;
+  const rewardStars = bonus.link?.reward_stars || 2;
+  qs('bonusRewardStars').textContent = '⭐'.repeat(rewardStars);
+  const claimed = hasClaimedBonus(levelNo);
+  const rewardBox = qs('bonusRewardStatus');
+  rewardBox.className = `reward-status ${claimed ? 'win' : 'wait'}`;
+  rewardBox.textContent = claimed ? `Reward already claimed: +${rewardStars} bonus star${rewardStars>1?'s':''}` : `Solve the real problem, then claim +${rewardStars} bonus star${rewardStars>1?'s':''}.`;
+  qs('claimBonusBossBtn').textContent = claimed ? 'Reward Already Claimed' : 'I Solved It · Claim Reward';
+  qs('claimBonusBossBtn').disabled = claimed;
+  qs('claimBonusBossBtn').onclick = ()=>claimBonusBoss(levelNo);
+  qs('bonusPracticeSpellBtn').onclick = ()=>{
+    const firstTag = tags[0] || '';
+    const mapping = {decimals:'decimals_intro', fraction_simplifying:'simplifying_fractions', arithmetic:'mixed_operations', order_of_operations:'mixed_operations', area:'area_perimeter', geometry:'area_perimeter', visual_reasoning:'area_perimeter', reflection:'graph_reading', logic:'graph_reading', data:'graph_reading', table_reasoning:'graph_reading', estimation:'mixed_operations', number_sense:'multi_digit_multiplication', patterns:'multiples', coordinates:'graph_reading', factors:'factors', reasoning:'simple_variables'};
+    const code = mapping[firstTag] || 'mixed_operations';
+    closeBonusBoss();
+    startSpellPractice(code);
+  };
+  qs('bonusModal').classList.add('show');
+  qs('bonusModal').setAttribute('aria-hidden','false');
+}
+function claimBonusBoss(levelNo = S.lastBonusLevelNo || S.currentLevelNo){
+  const bonus = bonusBossForLevel(levelNo);
+  if(!bonus || hasClaimedBonus(levelNo)) return;
+  const reward = bonus.link?.reward_stars || 2;
+  S.bonusBossWins[levelNo] = reward;
+  S.totalStars = calcTotalStars();
+  saveLocal(); updateStats();
+  openBonusBoss(levelNo);
+}
+function closeBonusBoss(){ qs('bonusModal').classList.remove('show'); qs('bonusModal').setAttribute('aria-hidden','true'); }
 function expandSpellKnight(){
   const lesson = lessonForSpell(currentSpellCode);
   if(!lesson) return;
   currentSpellLessonExpanded = !currentSpellLessonExpanded;
   qs('spellKnightTalk').textContent = currentSpellLessonExpanded ? (lesson.knight_explanation_long || lesson.knight_explanation_short || '') : (lesson.knight_explanation_short || '');
 }
+function openGuide(){ qs('guideModal').classList.add('show'); qs('guideModal').setAttribute('aria-hidden','false'); }
+function closeGuide(){ qs('guideModal').classList.remove('show'); qs('guideModal').setAttribute('aria-hidden','true'); }
 function initFX(){
   const spark=qs('sparkles'); for(let i=0;i<36;i++){ const s=document.createElement('div'); s.className='star'; s.style.left=Math.random()*100+'vw'; s.style.top=Math.random()*100+'vh'; s.style.animationDuration=(2+Math.random()*4)+'s'; s.style.animationDelay=(-Math.random()*5)+'s'; s.style.transform=`scale(${.7+Math.random()*1.4})`; spark.appendChild(s); }
   const clouds=qs('clouds'); for(let i=0;i<8;i++){ const c=document.createElement('div'); c.className='cloud'; c.style.width=(70+Math.random()*120)+'px'; c.style.height=(24+Math.random()*24)+'px'; c.style.top=(5+Math.random()*45)+'vh'; c.style.left=(-20-Math.random()*20)+'vw'; c.style.animationDuration=(28+Math.random()*28)+'s'; c.style.animationDelay=(-Math.random()*30)+'s'; clouds.appendChild(c); }
@@ -1179,6 +1408,10 @@ function initFX(){
 }
 
 qs('playerName').addEventListener('input', updateWelcome);
+qs('guideBtnMap').addEventListener('click', openGuide);
+qs('guideModalClose').addEventListener('click', closeGuide);
+qs('guideGotItBtn').addEventListener('click', closeGuide);
+qs('guideModal').addEventListener('click', e=>{ if(e.target.id==='guideModal') closeGuide(); });
 qs('saveProfileBtn').addEventListener('click', async()=>{ if(await ensurePlayer()) renderMap(); });
 qs('openMapBtn').addEventListener('click', async()=>{ if(!S.playerName && !qs('playerName').value.trim()){ alert("Please type your child's name first."); return; } if(await ensurePlayer()) renderMap(); });
 qs('wrongBookWelcomeBtn').addEventListener('click', async()=>{ if(!S.playerName && !qs('playerName').value.trim()){ alert("Please type your child's name first."); return; } if(await ensurePlayer()) renderSpellBook(); });
@@ -1198,6 +1431,10 @@ qs('checkBtn').addEventListener('click', checkAnswer);
 qs('nextBtn').addEventListener('click', nextQuestion);
 qs('knightBtn').addEventListener('click', askKnight);
 qs('mapBtn').addEventListener('click', renderMap);
+qs('openBonusBossBtn').addEventListener('click', ()=>openBonusBoss());
+qs('bonusModalClose').addEventListener('click', closeBonusBoss);
+qs('bonusModalBackBtn').addEventListener('click', closeBonusBoss);
+qs('bonusModal').addEventListener('click', e=>{ if(e.target.id==='bonusModal') closeBonusBoss(); });
 qs('backMapBtn').addEventListener('click', renderMap);
 qs('nextLevelBtn').addEventListener('click', ()=>{ if(S.reviewMode) renderSpellBook(); else renderMap(); });
 
