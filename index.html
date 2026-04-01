@@ -2,1450 +2,517 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Princess Spiral Quest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{
-  --bg1:#fff8fd;
-  --bg2:#f4efff;
-  --bg3:#edf8ff;
-  --pink:#ff8fc8;
-  --pink2:#ffb5dd;
-  --lav:#dccbff;
-  --purple:#a98bff;
-  --blue:#bfe9ff;
-  --mint:#c8f4dd;
-  --gold:#ffd96f;
-  --ink:#71536f;
-  --card:rgba(255,255,255,.84);
-  --line:rgba(255,255,255,.86);
-  --border:#f0d9ea;
-  --shadow:0 18px 40px rgba(186, 146, 196, .18);
-  --good:#77ce9c;
-  --bad:#ff8a8a;
-}
-*{box-sizing:border-box}
-html,body{margin:0;padding:0;min-height:100%;font-family:"Trebuchet MS","Avenir Next",system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 40%,var(--bg1) 100%)}
-body{overflow-x:hidden}
-button,input{font:inherit}
-a{color:#7c67d6}
-.hidden{display:none!important}
-.app{max-width:1080px;margin:0 auto;padding:16px 14px 44px;position:relative;z-index:2}
-.topbar{position:sticky;top:0;z-index:50;margin-bottom:12px}
-.topbar-inner{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,.7);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.92);border-radius:20px;padding:10px 14px;box-shadow:var(--shadow)}
-.brand{display:flex;align-items:center;gap:10px;font-weight:900}
-.brand-badge{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#fff,#ffe8f5);font-size:22px;box-shadow:0 8px 16px rgba(255,182,220,.24)}
-.stats{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.pill{padding:7px 11px;border-radius:999px;background:linear-gradient(180deg,#fff,#fff8fc);border:1px solid var(--border);font-size:13px;font-weight:800;white-space:nowrap}
-.pill-btn{cursor:pointer;color:var(--ink)}
-.cover-panel{display:grid;grid-template-columns:1.08fr .92fr;gap:18px;align-items:center;min-height:540px}
-.cover-copy{padding:8px 6px 8px 10px;position:relative;z-index:2}
-.cover-kicker{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.9);border:1px solid var(--border);font-size:12px;font-weight:900;color:#9a73a6;margin-bottom:14px}
-.cover-title{font-size:clamp(34px,5vw,60px);line-height:1.02;margin:0 0 14px;font-weight:900;color:#7a4f84;letter-spacing:-.02em}
-.cover-story{font-size:16px;line-height:1.85;margin:0 0 16px;max-width:640px}
-.cover-ribbon{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:linear-gradient(145deg,#fff,#fff6fb);border:1px solid var(--border);font-size:12px;font-weight:900;color:#8d6794;margin-bottom:18px}
-.story-card{background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.92);border-radius:24px;padding:16px 16px 14px;box-shadow:0 12px 28px rgba(186,146,196,.12);margin-bottom:16px}
-.name-wrap{display:flex;gap:10px;align-items:center;max-width:520px}
-.name-wrap .field{flex:1}
-.cover-art{position:relative;display:flex;justify-content:center;align-items:center;min-height:420px}
-.cover-orb{position:absolute;width:430px;height:430px;border-radius:50%;background:radial-gradient(circle at 50% 45%, rgba(255,255,255,.95) 0%, rgba(255,233,246,.95) 28%, rgba(221,230,255,.78) 56%, transparent 75%);filter:blur(2px)}
-.cover-art .princess-main{position:relative;z-index:2;width:min(100%,340px);height:auto;object-fit:contain;filter:drop-shadow(0 16px 26px rgba(244,162,201,.22))}
-.cover-art .knight-side{position:absolute;z-index:3;width:min(38%,160px);right:12px;bottom:6px;height:auto;object-fit:contain;filter:drop-shadow(0 14px 22px rgba(120,120,170,.18))}
-.cover-art .spark-heart{position:absolute;font-size:22px;opacity:.8;animation:floaty 3.4s ease-in-out infinite}
-.cover-art .spark-heart.a{left:14%;top:22%}.cover-art .spark-heart.b{right:18%;top:12%;animation-delay:-1.2s}.cover-art .spark-heart.c{left:8%;bottom:16%;animation-delay:-2s}
-.review-screen-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:16px;align-items:start;position:relative;z-index:2}
-.review-panel,.review-side{background:linear-gradient(180deg,rgba(255,255,255,.84),rgba(255,255,255,.72));border:1px solid rgba(255,255,255,.92);border-radius:26px;padding:18px;box-shadow:var(--shadow)}
-.review-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
-.review-title{margin:0;font-size:clamp(24px,4vw,36px);font-weight:900;color:#7d4f86}
-.review-sub{font-size:14px;line-height:1.72;margin:0 0 14px}
-.topic-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0 16px}
-.topic-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:12px 14px}
-.topic-card strong{display:block;margin-bottom:6px}
-.review-items{display:grid;gap:10px;max-height:420px;overflow:auto;padding-right:4px}
-.review-item{background:#fff;border:1px solid #f1dfea;border-radius:18px;padding:12px 14px}
-.review-item h4{margin:0 0 6px;font-size:14px}.review-item p{margin:0;font-size:13px;line-height:1.65}
-.sync-note{font-size:12px;line-height:1.65;color:#917f93;margin-top:10px}
-.empty-state{background:#fff;border:1px dashed #edd8ea;border-radius:18px;padding:18px;text-align:center;font-size:14px;line-height:1.7}
-.screen{position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.6),rgba(255,255,255,.42));border:1px solid var(--line);border-radius:30px;padding:18px;box-shadow:var(--shadow)}
-.screen::before,.screen::after{content:"";position:absolute;border-radius:50%;filter:blur(10px);opacity:.55;pointer-events:none}
-.screen::before{width:260px;height:260px;background:radial-gradient(circle,#ffdbe9 0%,transparent 72%);top:-90px;right:-90px}
-.screen::after{width:220px;height:220px;background:radial-gradient(circle,#d9ecff 0%,transparent 72%);left:-80px;bottom:-90px}
-.hero{display:grid;grid-template-columns:1.12fr .88fr;gap:16px;align-items:center;position:relative;z-index:2}
-.title{font-size:clamp(28px,4.2vw,48px);line-height:1.05;margin:0 0 10px;font-weight:900;color:#7a4f84}
-.story{font-size:15px;line-height:1.72;margin:0 0 14px;max-width:640px}
-.tag-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 18px}
-.tag{padding:7px 10px;border-radius:999px;background:#fff;border:1px solid var(--border);font-size:12px;font-weight:800}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:680px}
-.field{background:#fff;border:1.8px solid #efd8e9;border-radius:18px;padding:12px 14px}
-.field label{display:block;font-size:12px;font-weight:800;color:#8f6f8b;margin-bottom:6px}
-.field input{width:100%;border:none;outline:none;background:transparent;font-size:15px;color:var(--ink)}
-.field.full{grid-column:1 / -1}
-.note{font-size:12px;line-height:1.55;color:#957d93;margin-top:6px}
-.cta-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-.btn{border:none;border-radius:18px;padding:12px 18px;font-weight:900;cursor:pointer;transition:.18s transform,.18s box-shadow;box-shadow:0 12px 22px rgba(255,182,220,.22)}
-.btn:hover{transform:translateY(-2px)}
-.btn-primary{background:linear-gradient(145deg,var(--pink),#ffa1d5 45%,#ffc6e5);color:white}
-.btn-secondary{background:linear-gradient(145deg,#fff,#f6f1ff);border:1px solid var(--border);color:#8b6290}
-.btn-help{background:linear-gradient(145deg,#edf7ff,#ffffff);border:1px solid #d7e6ff;color:#6471a3}
-.hero-art{display:flex;justify-content:center;align-items:center;min-height:320px;position:relative}
-.floaty{animation:floaty 3.5s ease-in-out infinite}
-@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.hero-stack{position:relative;width:min(100%,390px);height:340px;display:flex;align-items:flex-end;justify-content:center}
-.hero-stack img{position:absolute;height:auto;object-fit:contain;display:block;filter:drop-shadow(0 16px 24px rgba(244,162,201,.22))}
-.hero-stack .normal{width:245px;left:20px;bottom:12px}
-.hero-stack .happy{display:none}
-.hero-stack .knight{width:170px;right:10px;bottom:0;filter:drop-shadow(0 16px 24px rgba(120,120,170,.18))}
-.sparkles,.clouds,.petals{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-.star{position:absolute;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle,#fff 0%,#fff8 45%,transparent 70%);animation:twinkle linear infinite}
-@keyframes twinkle{0%,100%{opacity:.2;transform:scale(.75)}50%{opacity:.95;transform:scale(1.2)}}
-.cloud{position:absolute;background:rgba(255,255,255,.55);border-radius:999px;filter:blur(1px);animation:drift linear infinite}
-@keyframes drift{from{transform:translateX(-15vw)}to{transform:translateX(115vw)}}
-.petal{position:absolute;font-size:16px;opacity:.65;animation:fall linear infinite}
-@keyframes fall{from{transform:translateY(-10vh) translateX(0) rotate(0deg)}to{transform:translateY(110vh) translateX(42px) rotate(210deg)}}
-.map-head{text-align:center;position:relative;z-index:2;margin-bottom:8px}
-.map-title{margin:0;font-size:clamp(24px,4vw,36px);font-weight:900;color:#7d4f86}
-.map-sub{font-size:14px;line-height:1.65;margin:8px auto 0;max-width:700px}
-.path{position:relative;max-width:860px;margin:24px auto 10px;padding:18px 8px 24px}
-.path svg{position:absolute;left:50%;top:8px;transform:translateX(-50%);width:min(100%,830px);height:100%;overflow:visible;z-index:0}
-.nodes{position:relative;z-index:2;display:flex;flex-direction:column;gap:28px}
-.node-row{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;min-height:170px}
-.node-row.reverse{flex-direction:row-reverse}
-.node{width:176px;text-align:center;position:relative;display:flex;flex-direction:column;align-items:center}
-.node-btn{width:96px;height:96px;border-radius:50%;margin:0 auto 8px;display:grid;place-items:center;border:4px solid rgba(255,255,255,.96);background:radial-gradient(circle at 35% 30%,#ffffff 0%,#fff8fc 40%,#f3efff 100%);box-shadow:0 14px 30px rgba(168,129,185,.18), inset 0 -8px 0 rgba(255,255,255,.45);position:relative;overflow:visible;cursor:pointer;transition:.18s transform,.18s opacity}
-.node-btn:hover{transform:translateY(-3px) scale(1.03)}
-.node-btn.locked{opacity:.52;cursor:not-allowed;filter:grayscale(.14)}
-.node-btn.done{background:radial-gradient(circle at 35% 30%,#ffffff 0%,#f5fff8 42%,#e8fff0 100%);border-color:#dcf5e8}
-.node-num{font-size:25px;font-weight:900;color:#8f658f;position:relative;z-index:2}
-.node-stars{font-size:13px;min-height:18px}
-.node-label{font-size:12px;font-weight:800;line-height:1.28;max-width:160px;min-height:32px;display:flex;align-items:flex-start;justify-content:center}
-.node-tag{font-size:11px;color:#9b7d9f;margin-top:4px;min-height:16px}
-.map-princess{position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);width:72px;height:auto;object-fit:contain;filter:drop-shadow(0 8px 14px rgba(255,162,208,.3));animation:floaty 2.8s ease-in-out infinite;z-index:3;pointer-events:none}
-.skill-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
-.skill-chip{padding:8px 14px;border-radius:999px;background:#fff7fd;border:1px solid var(--border);font-weight:900;font-size:13px;box-shadow:0 8px 16px rgba(255,182,220,.14)}
-.map-board{position:relative;max-width:980px;margin:18px auto 8px;padding:26px 20px 22px;border-radius:38px;background:linear-gradient(180deg,#f6fbff 0%,#f4efff 22%,#fff6fb 64%,#fffaf1 100%);border:1px solid rgba(255,255,255,.95);box-shadow:0 24px 50px rgba(160,129,190,.18), inset 0 0 0 8px rgba(255,255,255,.18);overflow:hidden}
-.map-board::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 14% 10%,rgba(255,255,255,.85) 0,transparent 14%),radial-gradient(circle at 86% 14%,rgba(255,255,255,.75) 0,transparent 12%),radial-gradient(circle at 24% 72%,rgba(255,236,247,.72) 0,transparent 18%),radial-gradient(circle at 78% 78%,rgba(234,244,255,.72) 0,transparent 18%);pointer-events:none}
-.map-board::after{content:'';position:absolute;inset:14px;border-radius:30px;border:1px dashed rgba(194,158,207,.25);pointer-events:none}
-.map-land{position:absolute;inset:auto 0 0 0;height:42%;background:radial-gradient(circle at 16% 48%,rgba(202,245,221,.98) 0, rgba(202,245,221,.98) 16%, transparent 17%),radial-gradient(circle at 78% 42%,rgba(191,233,255,.98) 0, rgba(191,233,255,.98) 14%, transparent 15%),radial-gradient(circle at 55% 55%,rgba(255,232,193,.88) 0, rgba(255,232,193,.88) 10%, transparent 11%),linear-gradient(180deg,transparent 0%,transparent 28%,#dbf7ea 29%,#dff4ff 62%,#fff4e7 100%)}
-.map-castle,.map-tower,.map-cloud-decor,.map-river,.traveler-bubble,.map-mountains,.map-forest,.map-lake,.map-village,.map-label{position:absolute;pointer-events:none}
-.map-castle{left:28px;top:28px;width:124px;height:108px;border-radius:24px 24px 10px 10px;background:linear-gradient(180deg,#fff,#ffe9f5);border:3px solid rgba(255,255,255,.96);box-shadow:0 16px 28px rgba(244,162,201,.14)}
-.map-castle::before,.map-castle::after{content:"";position:absolute;top:-24px;width:28px;height:42px;border-radius:14px 14px 6px 6px;background:linear-gradient(180deg,#fff,#f8f1ff);border:3px solid rgba(255,255,255,.95)}
-.map-castle::before{left:16px}.map-castle::after{right:16px}
-.map-castle span{position:absolute;left:50%;top:22px;transform:translateX(-50%);font-size:30px}
-.map-tower{right:36px;top:44px;width:74px;height:136px;border-radius:22px;background:linear-gradient(180deg,#fff,#f4efff);border:3px solid rgba(255,255,255,.96);box-shadow:0 16px 28px rgba(168,129,185,.12)}
-.map-tower::before{content:"";position:absolute;left:14px;right:14px;top:-18px;height:28px;border-radius:16px 16px 6px 6px;background:linear-gradient(180deg,#fff,#ffeef8);border:3px solid rgba(255,255,255,.95)}
-.map-cloud-decor{width:120px;height:44px;border-radius:999px;background:rgba(255,255,255,.72);filter:blur(0.2px)}
-.map-cloud-decor::before,.map-cloud-decor::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.8)}
-.map-cloud-decor::before{width:44px;height:44px;left:12px;top:-14px}.map-cloud-decor::after{width:56px;height:56px;right:14px;top:-24px}
-.map-cloud-decor.a{left:170px;top:26px}.map-cloud-decor.b{right:120px;top:170px;width:100px}.map-cloud-decor.c{left:80px;bottom:130px;width:110px}
-.map-river{left:50%;top:120px;transform:translateX(-50%) rotate(-8deg);width:120px;height:560px;border-radius:999px;background:linear-gradient(180deg,rgba(181,236,255,.18),rgba(181,236,255,.55),rgba(181,236,255,.14));filter:blur(0.5px)}
-.map-mountains{right:134px;top:58px;width:210px;height:120px;background:linear-gradient(180deg,rgba(236,229,255,.95),rgba(214,206,246,.95));clip-path:polygon(0 100%,17% 58%,30% 84%,48% 32%,68% 78%,85% 48%,100% 100%);opacity:.8}
-.map-forest{left:82px;bottom:110px;width:200px;height:110px;background:radial-gradient(circle at 10% 86%,#b8e5c7 0 18%,transparent 19%),radial-gradient(circle at 28% 78%,#9fd8b4 0 18%,transparent 19%),radial-gradient(circle at 46% 84%,#b8e5c7 0 18%,transparent 19%),radial-gradient(circle at 62% 76%,#9fd8b4 0 18%,transparent 19%),radial-gradient(circle at 80% 84%,#b8e5c7 0 18%,transparent 19%);opacity:.92}
-.map-lake{right:84px;bottom:128px;width:160px;height:94px;border-radius:50% 50% 46% 54%/56% 44% 56% 44%;background:linear-gradient(180deg,rgba(204,244,255,.95),rgba(163,225,245,.95));box-shadow:inset 0 0 0 8px rgba(255,255,255,.34)}
-.map-village{left:318px;top:146px;width:140px;height:74px;background:radial-gradient(circle at 16% 60%,#fff 0 10%,transparent 11%),radial-gradient(circle at 36% 50%,#ffeef8 0 12%,transparent 13%),radial-gradient(circle at 58% 58%,#fff5eb 0 12%,transparent 13%),radial-gradient(circle at 80% 54%,#f3efff 0 11%,transparent 12%);opacity:.96}
-.map-label{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.85);font-size:11px;font-weight:900;letter-spacing:.02em;color:#8f6f8f;backdrop-filter:blur(4px)}
-.map-label.a{left:72px;top:154px}.map-label.b{right:146px;top:174px}.map-label.c{left:108px;bottom:88px}.map-label.d{right:92px;bottom:96px}
-.node-bonus{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:999px;background:linear-gradient(135deg,#fff7c8,#ffd96f);border:1px solid rgba(255,255,255,.9);font-size:10px;font-weight:900;color:#846000;margin-top:5px;box-shadow:0 8px 16px rgba(255,217,111,.22)}
-.bonus-panel{margin-top:14px;padding:14px 16px;border-radius:18px;background:linear-gradient(180deg,#fff9df,#fff5f2);border:1px solid #f8e3b4;box-shadow:0 12px 20px rgba(222,191,125,.12)}
-.bonus-panel h4{margin:0 0 8px;font-size:18px;color:#8c6a2f}
-.bonus-panel p{margin:6px 0 0;line-height:1.6}
-.bonus-modal-card{max-width:860px}.bonus-pill{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:linear-gradient(135deg,#fff9d8,#ffeaaa);border:1px solid #f6d57e;font-size:12px;font-weight:900;color:#8a651f}.bonus-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.bonus-box{padding:16px;border-radius:20px;background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.95);min-height:180px}.bonus-box h4{margin:0 0 10px;font-size:18px}.bonus-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.bonus-tags span{display:inline-flex;padding:6px 10px;border-radius:999px;background:#fff5fb;border:1px solid var(--border);font-size:12px;font-weight:800}.bonus-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.bonus-links a{display:inline-flex;padding:9px 12px;border-radius:999px;background:#fff;border:1px solid var(--border);text-decoration:none;font-weight:800}.bonus-title-note{margin-top:8px;color:#8b6c92;font-size:14px;line-height:1.65}@media (max-width:720px){.bonus-grid{grid-template-columns:1fr}.map-mountains{right:84px;top:74px;width:154px;height:86px}.map-village{left:190px;top:150px;width:108px}.map-label{font-size:10px;padding:4px 8px}}
-.traveler-bubble{position:relative;right:auto;bottom:auto;left:auto;margin:8px auto 0;width:min(560px,calc(100% - 20px));background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.96);border-radius:24px;padding:12px 16px;box-shadow:0 12px 24px rgba(186,146,196,.14);display:flex;align-items:center;gap:12px;z-index:3;pointer-events:auto}
-.traveler-bubble img{width:54px;height:auto;object-fit:contain;display:block}
-.traveler-bubble div{font-size:13px;font-weight:900;line-height:1.55;max-width:100%}
-.spell-meter{margin-top:6px;font-size:11px;color:#9b7d9f;font-weight:800}
-.topic-card .mini-row{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}
-.topic-card .mastered{color:#4f9b71}.topic-card .learning{color:#a46f96}
-.topic-card .btn-mini{border-radius:999px;padding:8px 12px;background:linear-gradient(145deg,#fff,#f6f1ff);border:1px solid var(--border);font-size:12px;font-weight:900;cursor:pointer;color:#7b5a86}
-.spell-track{height:8px;border-radius:999px;background:#f2e7f0;overflow:hidden;margin-top:6px}
-.spell-fill{height:8px;border-radius:999px;background:linear-gradient(90deg,#9de4bf,#b8b0ff,#ffb2dc)}
-.review-cluster{background:#fff;border:1px solid #f1dfea;border-radius:18px;padding:12px 14px}
-.review-cluster h4{margin:0 0 8px;font-size:15px}.review-cluster p{margin:0;font-size:13px;line-height:1.65}
-.review-cluster .cluster-list{margin:8px 0 0;padding-left:18px;font-size:13px;line-height:1.6}
-.review-cluster .cluster-list li{margin:4px 0}
-.game-layout{display:grid;grid-template-columns:1fr;gap:16px;position:relative;z-index:2}
-.game-meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
-.progress{flex:1;min-width:200px;background:#fff;border:1px solid #f0d9ea;border-radius:999px;height:16px;overflow:hidden}
-.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#8fe1ff,#c3a5ff,#ff9ad2);transition:width .3s}
-.story-box{background:var(--card);border:1px solid rgba(255,255,255,.88);padding:16px;border-radius:24px}
-.scene{display:grid;grid-template-columns:.75fr 1.25fr;gap:14px;align-items:start}
-.status-card{background:linear-gradient(180deg,#fff,#fff8fc);border:1px solid var(--border);border-radius:24px;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:318px}
-.status-card img{max-width:100%;width:auto;height:auto;max-height:250px;object-fit:contain;display:block}
-.status-caption{font-size:13px;font-weight:800;margin-top:8px;text-align:center}
-.q-card{background:linear-gradient(180deg,#fffdfd,#fff8fc);border:1px solid var(--border);border-radius:24px;padding:16px}
-.q-type{display:inline-block;background:#fff;border:1px solid #f5d4e7;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;margin-bottom:8px}
-.q-text{font-size:20px;line-height:1.45;font-weight:800;margin-bottom:12px}
-.q-sub{font-size:14px;line-height:1.6;color:#8d7589;margin-top:-2px;margin-bottom:12px}
-.options{display:grid;gap:10px}
-.opt{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:16px;border:2px solid #f6dfeb;background:white;cursor:pointer;transition:.16s}
-.opt:hover{border-color:#ffb6dc;transform:translateY(-1px)}
-.opt.selected{border-color:#b98cff;background:#faf6ff}
-.opt.correct{border-color:#8fd8ac;background:#f4fff7}
-.opt.wrong{border-color:#ffaeae;background:#fff5f5}
-.opt-key{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#fff5fa;border:1px solid #f8d6e6;font-weight:900;flex:0 0 30px}
-.input-answer{width:100%;padding:13px 14px;border-radius:16px;border:2px solid #f6dfeb;background:white;font-size:17px;outline:none}
-.input-answer:focus{border-color:#b98cff}
-.row{display:flex;gap:10px;flex-wrap:wrap}
-.result{margin-top:12px;padding:12px 14px;border-radius:16px;font-weight:800;display:none}
-.result.show{display:block}.result.good{background:#f4fff7;border:1px solid #cdeed9;color:#3b7d55}.result.bad{background:#fff5f5;border:1px solid #f5cbcb;color:#9c5555}
-.explain{margin-top:12px;background:#f8f6ff;border:1px solid #e5defc;color:#6e629a;border-radius:16px;padding:12px 14px;display:none;line-height:1.65}
-.explain.show{display:block}
-.knight-box{margin-top:12px;padding:12px 14px;border-radius:18px;background:linear-gradient(180deg,#f2f7ff,#ffffff);border:1px solid #dce7ff;display:none}
-.knight-box.show{display:block}
-.knight-row{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center}
-.knight-img{max-width:100%;width:auto;height:auto;max-height:170px;object-fit:contain;display:block;margin:auto}
-.knight-talk{font-size:14px;line-height:1.65}
-.resource-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.resource-links a{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#fff;border:1px solid #dfe9ff;text-decoration:none;font-size:12px;font-weight:900}
-.end-card{text-align:center;padding:8px 0 2px}
-.star-row{font-size:34px;letter-spacing:5px}
-.review-list{text-align:left;margin:14px auto 0;max-width:640px;padding:0;list-style:none;display:grid;gap:8px}
-.review-list li{background:#fff;border:1px solid #f2dfeb;border-radius:14px;padding:10px 12px;font-size:14px}
-.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-.summary-box{padding:14px;border-radius:18px;background:linear-gradient(180deg,#fff,#fff7fd);border:1px solid var(--border);text-align:left}
-.footer-note{text-align:center;font-size:12px;color:#a1879f;margin-top:12px}
-
-.spell-page-open .btn-mini{padding:8px 12px}
-.spell-modal{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(92,70,99,.32);backdrop-filter:blur(6px)}
-.spell-modal.show{display:flex}
-.spell-shell{width:min(1040px,96vw);max-height:min(92vh,960px);overflow:auto;background:linear-gradient(180deg,#fffcfe,#fff7fd 58%,#f7f3ff 100%);border:1px solid rgba(255,255,255,.96);border-radius:34px;box-shadow:0 28px 60px rgba(122,86,133,.24);padding:22px;position:relative}
-.spell-shell::before{content:"";position:absolute;right:-30px;top:-30px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,#ffe2f1 0%,transparent 70%);opacity:.75;pointer-events:none}
-.spell-shell::after{content:"";position:absolute;left:50%;top:96px;bottom:24px;width:2px;transform:translateX(-50%);background:linear-gradient(180deg,transparent,#efd9eb 12%,#efd9eb 88%,transparent);opacity:.9;pointer-events:none}
-.spell-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px;position:relative;z-index:1}
-.spell-title{margin:0;font-size:clamp(24px,4vw,38px);font-weight:900;color:#7d4f86}
-.spell-sub{margin:6px 0 0;font-size:14px;line-height:1.75;max-width:640px}
-.spell-close{border:none;background:#fff;border:1px solid var(--border);width:42px;height:42px;border-radius:50%;font-size:22px;font-weight:900;cursor:pointer;color:#8c6794;box-shadow:0 10px 18px rgba(186,146,196,.14)}
-.spell-layout{display:grid;grid-template-columns:1.03fr .97fr;gap:18px;position:relative;z-index:1}
-.spell-page-card{background:linear-gradient(180deg,#fff,#fff8fc);border:1px solid var(--border);border-radius:28px;padding:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.75)}
-.spell-page-card h3{margin:0 0 8px;font-size:18px;color:#7d4f86}
-.spell-page-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
-.spell-page-badge{padding:7px 12px;border-radius:999px;background:#fff;border:1px solid var(--border);font-size:12px;font-weight:900;color:#8d6794}
-.spell-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
-.spell-stat{background:#fff;border:1px solid #f1dfea;border-radius:18px;padding:12px;text-align:center}
-.spell-stat strong{display:block;font-size:22px;color:#7d4f86}
-.spell-note{font-size:13px;line-height:1.7;color:#8f7990}
-.spell-rule-box,.spell-step-box{margin-top:14px;background:#fff;border:1px solid #f1dfea;border-radius:20px;padding:14px}
-.spell-rule-box strong,.spell-step-box strong{display:block;margin-bottom:8px;color:#7d4f86}
-.spell-steps{margin:0;padding-left:20px;font-size:13px;line-height:1.7}
-.spell-steps li{margin:4px 0}
-.spell-mistakes{display:grid;gap:8px;margin-top:10px}
-.spell-mistake{background:#fff;border:1px solid #f2dfeb;border-radius:16px;padding:10px 12px;font-size:13px;line-height:1.65}
-.spell-knight{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;background:linear-gradient(180deg,#f2f7ff,#ffffff);border:1px solid #dce7ff;border-radius:28px;padding:18px}
-.spell-knight img{max-width:100%;width:auto;height:auto;max-height:180px;object-fit:contain;display:block;margin:auto}
-.spell-knight h3{margin:0 0 8px;font-size:20px;color:#6471a3}
-.spell-knight p{margin:0;font-size:14px;line-height:1.75}
-.spell-resource-box{margin-top:14px;background:#fff;border:1px solid #e9e2f8;border-radius:20px;padding:14px}
-.spell-resource-box h4{margin:0 0 8px;font-size:16px;color:#7d4f86}
-.spell-resource-box .resource-links{margin-top:4px}
-.spell-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-.spell-mini-track{margin:10px 0 14px}
-@media (max-width:860px){.spell-layout{grid-template-columns:1fr}.spell-knight{grid-template-columns:1fr}.spell-stat-grid{grid-template-columns:1fr 1fr}}
-
-@media (max-width:860px){.hero,.scene,.cover-panel,.review-screen-grid{grid-template-columns:1fr}.hero-art{order:-1}.status-card{min-height:unset}.summary-grid,.form-grid{grid-template-columns:1fr}.cover-art{min-height:320px}}
-@media (max-width:900px){.spell-shell::after{display:none}.spell-layout{grid-template-columns:1fr}.spell-knight{grid-template-columns:1fr}}
-@media (max-width:720px){.node{width:128px}.node-row{min-height:160px;gap:10px}.map-board{padding:18px 12px 16px}.traveler-bubble{width:min(100%,92%)}}
-@media (max-width:520px){.app{padding:12px 10px 28px}.screen{padding:14px}.node{width:96px}.node-btn{width:72px;height:72px}.node-row{min-height:144px;gap:6px}.node-label{font-size:11px;max-width:92px;min-height:44px}.q-text{font-size:18px}.knight-row{grid-template-columns:1fr}.map-princess{width:56px}.traveler-bubble{margin-top:10px}.traveler-bubble img{width:48px}}
-
-.map-board{background:
-  radial-gradient(circle at 14% 18%, rgba(255,255,255,.78) 0 10%, transparent 11%),
-  radial-gradient(circle at 86% 16%, rgba(255,255,255,.66) 0 8%, transparent 9%),
-  radial-gradient(circle at 22% 82%, rgba(255,241,214,.8) 0 8%, transparent 9%),
-  linear-gradient(180deg,#dff4ff 0%,#ecf6ff 34%,#eefbea 60%,#f8f1da 100%) !important;overflow:hidden}
-.map-board::after{content:"";position:absolute;inset:16px;border-radius:28px;border:1px dashed rgba(255,255,255,.5);pointer-events:none}
-.map-compass{position:absolute;right:22px;bottom:22px;width:92px;height:92px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#fffdf5 0%,#ffe9b7 58%,#ffd985 100%);border:3px solid rgba(255,255,255,.9);box-shadow:0 14px 26px rgba(186,146,90,.18);font-size:36px;color:#9d6f15;transform:rotate(-10deg);z-index:1}
-.map-rainbow{position:absolute;left:46px;top:22px;width:170px;height:86px;border-radius:170px 170px 0 0/90px 90px 0 0;background:conic-gradient(from 180deg at 50% 100%, #ff9fcf 0 18%, #ffd98f 18% 34%, #fff7a7 34% 50%, #bdf0c3 50% 66%, #bfe9ff 66% 82%, #d3c4ff 82% 100%);mask:radial-gradient(circle at 50% 100%, transparent 0 48px, #000 49px);opacity:.75;filter:drop-shadow(0 8px 14px rgba(255,182,220,.18));z-index:0}
-.map-island{position:absolute;border-radius:50%;background:linear-gradient(180deg,#d9f7d4,#bfe9b0);box-shadow:inset 0 6px 10px rgba(255,255,255,.45),0 12px 20px rgba(115,172,121,.18);z-index:0}
-.map-island.a{width:92px;height:38px;left:120px;bottom:112px;transform:rotate(-8deg)}
-.map-island.b{width:78px;height:32px;right:150px;top:118px;transform:rotate(12deg)}
-.guide-row{display:flex;justify-content:center;margin-top:14px}
-.guide-btn{padding:10px 16px;border:none;border-radius:999px;background:linear-gradient(135deg,#fffefb,#ffe9f6);border:1px solid var(--border);box-shadow:var(--shadow);font-weight:900;color:#7b5577;cursor:pointer}
-.guide-modal{position:fixed;inset:0;z-index:140;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(92,70,99,.34);backdrop-filter:blur(7px)}
-.guide-modal.show{display:flex}
-.guide-card{width:min(860px,96vw);max-height:92vh;overflow:auto;background:linear-gradient(180deg,#fffdfd,#fff7fd 58%,#f3f6ff 100%);border:1px solid rgba(255,255,255,.95);border-radius:30px;box-shadow:0 28px 60px rgba(122,86,133,.24);padding:22px 22px 18px;position:relative}
-.guide-title{margin:4px 0 10px;font-size:30px;color:#7a4f84}
-.guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.guide-box{padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.82);border:1px solid var(--border)}
-.guide-box h4{margin:0 0 8px;font-size:16px}
-.guide-box p,.guide-box li{line-height:1.7;font-size:14px}
-.battle-shell{position:relative;overflow:hidden;background:linear-gradient(180deg,#fffdfa,#fff5ef 48%,#f8f2ff 100%) !important}
-.battle-shell::before{content:"";position:absolute;inset:auto -40px -40px auto;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,#ffe8ba 0%,transparent 68%);opacity:.8;pointer-events:none}
-.battle-banner{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;background:linear-gradient(135deg,#fff5c7,#ffd870);border:1px solid #f3d172;font-weight:900;color:#895f08;box-shadow:0 10px 18px rgba(225,186,81,.22)}
-.reward-board{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:14px}
-.reward-card{padding:14px 16px;border-radius:20px;background:linear-gradient(180deg,#fffefa,#fff7eb);border:1px solid #f4dfaa}
-.reward-stars{font-size:22px;letter-spacing:2px}
-.reward-status{padding:10px 12px;border-radius:14px;background:#fff;border:1px solid #f0dfb0;font-weight:800;margin-top:10px}
-.reward-status.win{background:linear-gradient(180deg,#f8fff1,#eefce4);border-color:#cfe8a5;color:#5c8b2a}
-.reward-status.wait{background:linear-gradient(180deg,#fffdf6,#fff8e7);border-color:#f0dfb0;color:#8b6b1d}
-.end-reward-note{margin-top:12px;padding:12px 14px;border-radius:16px;background:linear-gradient(180deg,#fff9ef,#fffdf8);border:1px solid #f6e1b5;font-size:14px;line-height:1.7}
-@media (max-width:760px){.guide-grid,.reward-board{grid-template-columns:1fr}.map-compass{width:74px;height:74px;font-size:28px}}
-
+  :root{
+    --line:#ead7ef;--text:#6e5688;--text2:#8a78a0;--title:#7a5796;
+    --shadow:0 20px 50px rgba(173,145,201,.16);--shadow-soft:0 12px 26px rgba(173,145,201,.12);
+  }
+  *{box-sizing:border-box} html,body{margin:0;padding:0;min-height:100%}
+  body{
+    background:
+      radial-gradient(circle at 10% 10%, #ffffff 0 12%, transparent 12%),
+      radial-gradient(circle at 85% 6%, #fff7fb 0 10%, transparent 10%),
+      linear-gradient(180deg,#f8f4fb 0%, #f6f0fb 45%, #f1eef9 100%);
+    color:var(--text);font-family:'Nunito',system-ui,sans-serif;padding:24px;
+  }
+  .app{max-width:1360px;margin:0 auto;position:relative}
+  .floating-stars:before,.floating-stars:after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.45}
+  .floating-stars:before{
+    background:
+      radial-gradient(circle at 6% 18%, #b59ad0 0 2px, transparent 2px),
+      radial-gradient(circle at 24% 42%, #d3b4d9 0 2px, transparent 2px),
+      radial-gradient(circle at 58% 19%, #c9b0d8 0 2px, transparent 2px),
+      radial-gradient(circle at 84% 22%, #d9c5e5 0 2px, transparent 2px),
+      radial-gradient(circle at 90% 76%, #d9c5e5 0 2px, transparent 2px),
+      radial-gradient(circle at 43% 75%, #c9b0d8 0 2px, transparent 2px);
+    animation: twinkle 5s ease-in-out infinite alternate;
+  }
+  .floating-stars:after{
+    background:
+      radial-gradient(circle at 14% 70%, rgba(255,255,255,.9) 0 26px, transparent 26px),
+      radial-gradient(circle at 74% 16%, rgba(255,255,255,.75) 0 40px, transparent 40px),
+      radial-gradient(circle at 94% 42%, rgba(255,255,255,.7) 0 16px, transparent 16px),
+      radial-gradient(circle at 35% 28%, rgba(255,255,255,.65) 0 18px, transparent 18px);
+    filter: blur(8px);animation: drift 9s ease-in-out infinite alternate;
+  }
+  @keyframes twinkle{from{transform:translateY(0)}to{transform:translateY(-6px);opacity:.7}}
+  @keyframes drift{from{transform:translateX(0)}to{transform:translateX(10px)}}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;background:rgba(255,255,255,.66);
+    backdrop-filter: blur(10px);border:1px solid rgba(233,218,240,.9);box-shadow:var(--shadow-soft);border-radius:28px;padding:18px 22px;position:sticky;top:12px;z-index:20
+  }
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand-badge{width:44px;height:44px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,#fce6f3,#ebe6ff);font-size:22px;box-shadow:var(--shadow-soft)}
+  .brand h1{font-size:18px;line-height:1.1;margin:0;color:var(--title);font-weight:900}
+  .brand p{margin:3px 0 0;font-size:12px;color:var(--text2);font-weight:700}
+  .top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  .chip{position:relative;display:inline-flex;align-items:center;gap:8px;background:rgba(255,251,253,.95);border:1px solid var(--line);border-radius:999px;padding:12px 16px;font-weight:800;color:var(--title);min-height:46px;box-shadow:0 8px 18px rgba(187,166,209,.08)}
+  .chip[data-tip]:hover::after,.chip[data-tip]:focus-visible::after{
+    content:attr(data-tip);position:absolute;top:calc(100% + 10px);right:0;width:230px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px 14px;color:var(--text);font-size:12px;line-height:1.5;font-weight:700;box-shadow:var(--shadow-soft);z-index:50
+  }
+  .btn,.primary-btn,.ghost-btn{border:none;cursor:pointer;border-radius:18px;font-family:inherit;font-weight:900;transition:.2s transform}
+  .btn:hover,.primary-btn:hover,.ghost-btn:hover{transform:translateY(-1px)}
+  .btn{padding:12px 16px;background:linear-gradient(180deg,#ffffff,#f8f4ff);border:1px solid var(--line);color:var(--title);box-shadow:var(--shadow-soft)}
+  .primary-btn{padding:16px 22px;background:linear-gradient(135deg,#f5a9d2,#efc7f8);color:#fff;box-shadow:0 12px 24px rgba(230,130,186,.28)}
+  .ghost-btn{padding:16px 22px;background:#f7f7ff;color:var(--title);border:1px solid var(--line)}
+  .shell{display:grid;grid-template-columns:1.05fr .95fr;gap:22px;margin-top:18px}
+  .panel{background:linear-gradient(180deg,rgba(255,255,255,.74),rgba(255,252,254,.92));border:1px solid rgba(233,218,240,.9);border-radius:34px;box-shadow:var(--shadow);overflow:hidden;position:relative}
+  .home-left{padding:30px 34px 30px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:#fff8fc;border:1px solid var(--line);color:#9a7cb0;font-size:13px;font-weight:900}
+  .home-title{margin:18px 0 12px;color:var(--title);font-size:clamp(30px,4vw,58px);line-height:1.02;font-weight:1000;letter-spacing:-1.2px}
+  .home-title small{display:block;font-size:clamp(17px,2vw,25px);line-height:1.2;color:#9b83b1;font-weight:800;letter-spacing:0;margin-top:10px}
+  .story-card{background:rgba(255,255,255,.65);border:1px solid var(--line);border-radius:26px;padding:22px 20px 18px}
+  .story-card p{margin:0;font-size:17px;line-height:1.72;color:#78648d}
+  .quote-pill{display:inline-flex;margin-top:18px;padding:10px 14px;border-radius:999px;background:#fff9fc;border:1px solid var(--line);font-weight:900;color:#8d73a3}
+  .name-row{margin-top:18px;display:grid;gap:12px}
+  .field{background:rgba(255,255,255,.84);border:1px solid var(--line);border-radius:24px;padding:18px}
+  .field label{display:block;font-size:12px;font-weight:900;color:#9a7fb3;margin-bottom:8px}
+  .field input{width:100%;border:none;outline:none;background:transparent;font-size:20px;font-weight:800;color:var(--title);font-family:inherit}
+  .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+  .guide-anchor{margin-top:14px}
+  .guide-btn{background:transparent;border:none;color:#8b73a3;font-weight:900;cursor:pointer;text-decoration:underline;text-underline-offset:4px}
+  .status-line{font-size:14px;font-weight:900;color:#8c73a6;margin-top:14px}
+  .save-pill{display:inline-flex;gap:8px;align-items:center;margin-top:12px;padding:10px 14px;border-radius:999px;background:#f7fbff;border:1px solid var(--line);font-size:13px;font-weight:900;color:#7f6a99}
+  .home-right{
+    min-height:760px;position:relative;overflow:hidden;
+    background:
+      radial-gradient(circle at 75% 18%, rgba(255,255,255,.75) 0 58px, transparent 58px),
+      linear-gradient(180deg,#e7f1ff 0%,#eef7ff 18%,#e7f6ee 18%,#e7f6ee 45%,#d9f0da 45%,#d9f0da 100%)
+  }
+  .home-right::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 72% 30%, rgba(206,223,255,.75) 0 210px, transparent 210px),radial-gradient(circle at 22% 80%, rgba(248,209,231,.42) 0 170px, transparent 170px),linear-gradient(180deg, transparent 0 58%, rgba(138,190,139,.10) 58% 100%)}
+  .hero-cloud{position:absolute;top:58px;left:72px;width:210px;height:76px;background:rgba(255,255,255,.82);border-radius:999px}
+  .hero-cloud::before,.hero-cloud::after{content:"";position:absolute;background:inherit;border-radius:50%}
+  .hero-cloud::before{width:86px;height:86px;left:20px;top:-24px}.hero-cloud::after{width:98px;height:98px;right:20px;top:-30px}
+  .mountain{position:absolute;bottom:220px;border-radius:38px 38px 0 0 / 24px 24px 0 0}
+  .m1{left:40px;width:250px;height:180px;background:linear-gradient(180deg,#cde0f8,#bdd5f0)}
+  .m2{left:190px;width:320px;height:220px;background:linear-gradient(180deg,#b7d2ec,#a9c7e6)}
+  .m3{right:26px;width:280px;height:210px;background:linear-gradient(180deg,#d0e5fa,#c2dcf6)}
+  .forest{position:absolute;bottom:172px;left:0;right:0;height:120px}
+  .tree{position:absolute;bottom:0;width:0;height:0;border-left:24px solid transparent;border-right:24px solid transparent;border-bottom:64px solid #8fb487}
+  .tree::after{content:"";position:absolute;left:-4px;bottom:-80px;width:8px;height:18px;background:#8f7b6a;border-radius:6px}
+  .lake{position:absolute;bottom:82px;left:60px;width:230px;height:80px;border-radius:999px;background:linear-gradient(180deg,#d8eeff,#c7e4ff);border:1px solid rgba(187,217,242,.8)}
+  .village{position:absolute;bottom:124px;right:82px;display:flex;gap:12px;align-items:flex-end}
+  .house{position:relative;width:52px;height:40px;background:#fff7f3;border:2px solid #ddb9c2;border-radius:10px}
+  .house::before{content:"";position:absolute;left:2px;right:2px;top:-24px;border-left:22px solid transparent;border-right:22px solid transparent;border-bottom:26px solid #f2a2bb}
+  .princess-stage{position:absolute;right:74px;bottom:152px;width:430px;height:430px;display:grid;place-items:end center}
+  .princess-aura{position:absolute;inset:24px 18px 14px;background:radial-gradient(circle at 50% 50%, rgba(226,232,255,.96), rgba(221,221,252,.56) 55%, transparent 75%)}
+  .hero-princess{position:relative;z-index:3;max-width:365px;max-height:410px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 18px 25px rgba(164,134,194,.22))}
+  .hero-knight{position:absolute;right:4px;bottom:8px;z-index:4;width:132px;height:auto}
+  .map-panel{margin-top:18px;padding:18px 18px 24px}
+  .map-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:6px 8px 14px}
+  .map-title{font-size:24px;font-weight:1000;color:var(--title)}
+  .map-sub{font-size:13px;font-weight:800;color:#9b83b1}
+  .fairy-map{position:relative;min-height:880px;border-radius:30px;overflow:hidden;border:1px solid var(--line);background:radial-gradient(circle at 78% 12%, rgba(255,255,255,.9) 0 58px, transparent 58px),linear-gradient(180deg,#dff0ff 0%,#e9f6ff 22%,#d6efd7 22%,#dff3dd 56%,#f2e5cb 56%,#f5ead7 100%)}
+  .fairy-map::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 16% 84%, rgba(254,241,246,.45) 0 180px, transparent 180px),radial-gradient(circle at 80% 66%, rgba(214,229,255,.38) 0 170px, transparent 170px),linear-gradient(135deg, transparent 0 48%, rgba(255,255,255,.23) 48% 52%, transparent 52%),linear-gradient(180deg, transparent 0 68%, rgba(172,136,87,.06) 68% 100%)}
+  .map-deco-label{position:absolute;padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.78);border:1px solid rgba(230,219,235,.9);color:#8d739f;font-weight:900;font-size:12px}
+  .label-forest{left:48px;top:148px}.label-lake{left:92px;bottom:202px}.label-village{right:98px;bottom:190px}.label-castle{right:98px;top:102px}
+  .map-castle{position:absolute;right:82px;top:136px;font-size:58px}
+  .map-compass{position:absolute;left:28px;top:30px;width:88px;height:88px;border-radius:50%;background:rgba(255,255,255,.6);border:1px solid var(--line);display:grid;place-items:center;color:#ab8abf;font-weight:1000;font-size:26px}
+  .map-rainbow{position:absolute;right:130px;top:32px;width:180px;height:96px;border-radius:0 0 180px 180px;border-top:8px solid #f3a9d2;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:none;transform:rotate(180deg);opacity:.75}
+  .road{position:absolute;left:50%;top:120px;transform:translateX(-50%);width:62%;height:640px}
+  .road svg{width:100%;height:100%}
+  .node-layer{position:absolute;inset:0;pointer-events:none}
+  .node{position:absolute;width:160px;pointer-events:auto;transform:translate(-50%,-50%);text-align:center}
+  .node-btn{width:82px;height:82px;margin:0 auto;border-radius:50%;border:4px solid #ffffff;background:linear-gradient(180deg,#fff9fd,#f3eefb);box-shadow:0 10px 24px rgba(165,139,198,.2);display:grid;place-items:center;font-size:30px;color:#9070a7;cursor:pointer;position:relative}
+  .node.locked .node-btn{background:#f0eef5;color:#c1b3cf;cursor:not-allowed;filter:saturate(.5)}
+  .node.done .node-btn{background:linear-gradient(180deg,#fff9fd,#fff4c9)}
+  .node.active .node-btn{box-shadow:0 0 0 8px rgba(241,192,222,.34), 0 14px 28px rgba(165,139,198,.24)}
+  .node .stars{margin-top:8px;font-size:14px;color:#d9b24f;letter-spacing:2px}
+  .node .name{margin-top:4px;font-size:15px;line-height:1.22;font-weight:900;color:var(--title)}
+  .node .tag{margin-top:5px;font-size:12px;font-weight:800;color:#a084ba}
+  .node .bonus{margin-top:5px;display:inline-flex;padding:5px 10px;border-radius:999px;background:#fff1f8;border:1px solid #efcbe1;font-size:11px;font-weight:900;color:#c26b9a}
+  .map-princess{position:absolute;z-index:4;width:66px;height:auto;transform:translate(-50%,-100%)}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(77,61,106,.34);display:none;place-items:center;z-index:100;padding:18px}
+  .modal-backdrop.open{display:grid}
+  .modal{width:min(720px,100%);max-height:86vh;overflow:auto;background:#fffdfd;border:1px solid var(--line);border-radius:30px;box-shadow:0 28px 70px rgba(109,88,145,.22);padding:24px}
+  .modal h3{margin:0 0 8px;color:var(--title);font-size:28px}
+  .modal p,.modal li{color:#7b668f;line-height:1.7}
+  .close-row{display:flex;justify-content:flex-end}
+  .close-btn{border:none;background:#f7f2ff;color:#8e75a7;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer}
+  .auth-box{display:grid;gap:12px}.auth-box input{width:100%;padding:16px 18px;border-radius:18px;border:1px solid var(--line);font:inherit;font-size:16px}
+  .soft{color:#9a84b0}.pill{display:inline-flex;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#fff7fc;font-size:12px;font-weight:900;color:#9a7db2}
+  @media (max-width:980px){
+    .shell{grid-template-columns:1fr}.home-right{min-height:520px}.princess-stage{right:50%;transform:translateX(50%);bottom:110px;width:330px;height:340px}.hero-princess{max-width:290px;max-height:320px}.hero-knight{width:110px}.road{width:85%}
+  }
+  @media (max-width:720px){
+    body{padding:14px}.topbar{padding:14px 16px}.top-actions{justify-content:flex-start}.home-left{padding:22px}.home-title{font-size:44px}.map-panel{padding:14px}.fairy-map{min-height:980px}.node{width:128px}.node-btn{width:72px;height:72px}.node .name{font-size:13px}
+  }
 </style>
 </head>
-<body>
-<div class="clouds" id="clouds"></div>
-<div class="sparkles" id="sparkles"></div>
-<div class="petals" id="petals"></div>
-
+<body class="floating-stars">
 <div class="app">
   <div class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <div class="brand-badge">🦄</div>
-        <div>
-          <div style="font-size:15px">Princess Spiral Quest</div>
-          <div style="font-size:11px;color:#9d8a9d;font-weight:700">a spiral-learning fairy tale adventure</div>
-        </div>
-      </div>
-      <div class="stats">
-        <div class="pill">👑 Hero <span id="statHero">Princess</span></div>
-        <div class="pill">🗺️ Level <span id="statLevel">1</span></div>
-        <div class="pill">⭐ Stars <span id="statStars">0</span></div>
-        <div class="pill">🔓 Unlocked <span id="statUnlocked">1</span>/<span id="statTotal">14</span></div>
-        <div class="pill" id="syncPill">☁️ Local</div>
-        <button class="pill pill-btn" id="wrongBookTopBtn" type="button">📖 Spell Book</button>
-      </div>
+    <div class="brand">
+      <div class="brand-badge">🦄</div>
+      <div><h1>Princess Spiral Quest</h1><p>a spiral-learning fairy tale adventure</p></div>
+    </div>
+    <div class="top-actions">
+      <div class="chip" tabindex="0" data-tip="This is the story name of the child hero. After a name is chosen, the game uses Princess + Name.">👑 <span id="heroName">Hero Princess</span></div>
+      <div class="chip" tabindex="0" data-tip="This shows the next main story level waiting for the princess.">🗺️ <span id="heroLevel">Level 1</span></div>
+      <div class="chip" tabindex="0" data-tip="Stars come from main levels and AMC Bonus Boss rewards.">⭐ <span id="heroStars">Stars 0</span></div>
+      <div class="chip" tabindex="0" data-tip="This shows how many main story levels are open right now.">🔓 <span id="heroUnlock">Unlocked 1/36</span></div>
+      <div class="chip" tabindex="0" data-tip="Cloud means the story came from the signed-in account. Local means it only lives in this browser right now.">☁️ <span id="heroSource">Local</span></div>
+      <button id="spellBookBtn" class="btn">📖 Spell Book</button>
+      <button id="authLauncher" class="btn">☁️ Sign In</button>
     </div>
   </div>
 
-  <section id="welcomeScreen" class="screen">
-    <div class="cover-panel">
-      <div class="cover-copy">
-        <div class="cover-kicker">✨ A fairy-tale math journey begins</div>
-        <h1 class="cover-title">Write your name in the sky,<br/>and the kingdom will open.</h1>
-        <div class="story-card">
-          <p class="cover-story" id="welcomeStory">Far above the Cloud-Castle Kingdom, sleeping stars have gone dim. Only one brave young princess can wake them again. She must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.</p>
-          <div class="cover-ribbon" id="storyRibbon">Tonight's tale will be told in your child's name.</div>
-        </div>
-        <div class="name-wrap">
-          <div class="field">
-            <label for="playerName">Child's Name</label>
-            <input id="playerName" placeholder="e.g. Emma" />
-          </div>
-        </div>
-        <div class="cta-row">
-          <button class="btn btn-primary" id="saveProfileBtn">Begin the Story ✨</button>
-          <button class="btn btn-secondary" id="openMapBtn">Continue the Story</button>
-          <button class="btn btn-help" id="wrongBookWelcomeBtn">Open Spell Book</button>
+  <section class="shell">
+    <div class="panel home-left">
+      <div class="eyebrow">✨ A fairy-tale math journey begins</div>
+      <h2 id="homeTitle" class="home-title">A gentler beginning for the kingdom.<small>Write one name, and the fairy tale will open.</small></h2>
+      <div class="story-card">
+        <p id="storyText">Far above the Cloud-Castle Kingdom, sleeping stars have gone dim. A young princess must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.</p>
+        <div id="storyQuote" class="quote-pill">Tonight's tale is waiting for its princess.</div>
+      </div>
+      <div id="saveMode" class="save-pill">☁️ Sign in to make cloud save automatic.</div>
+      <div id="newPlayerFields" class="name-row">
+        <div class="field">
+          <label for="childName">Child's Name</label>
+          <input id="childName" placeholder="e.g. Cynthia" />
         </div>
       </div>
-      <div class="cover-art">
-        <div class="cover-orb"></div>
-        <div class="spark-heart a">✦</div>
-        <div class="spark-heart b">♡</div>
-        <div class="spark-heart c">✧</div>
-        <img class="princess-main floaty" id="heroNormal" alt="Princess" />
-        <img class="knight-side floaty" id="heroKnight" alt="Knight helper" style="animation-delay:-1.2s" />
+      <div class="cta-row">
+        <button id="beginBtn" class="primary-btn">Begin the Story ✨</button>
+        <button id="continueBtn" class="primary-btn" style="display:none">Continue the Story ➜</button>
+        <button id="openMapBtn" class="ghost-btn">Open the Map</button>
       </div>
+      <div class="guide-anchor"><button id="guideBtn" class="guide-btn">Adventure Guide</button></div>
+      <div id="homeStatus" class="status-line"></div>
     </div>
-  </section>
 
-  <section id="mapScreen" class="screen hidden">
-    <div class="map-head">
-      <h2 class="map-title" id="mapTitle">The Sky Quest Map</h2>
-      <div class="map-sub" id="mapSub"></div>
-      <div class="skill-chips" id="mapSkillChipWrap"></div>
-    </div>
-    <div class="map-board">
-      <div class="map-land"></div>
-      <div class="map-castle"><span>🏰</span></div>
-      <div class="map-tower"></div>
-      <div class="map-cloud-decor a"></div>
-      <div class="map-cloud-decor b"></div>
-      <div class="map-cloud-decor c"></div>
-      <div class="map-river"></div>
-      <div class="map-mountains"></div>
-      <div class="map-forest"></div>
-      <div class="map-lake"></div>
-      <div class="map-village"></div>
-      <div class="map-rainbow"></div>
-      <div class="map-island a"></div>
-      <div class="map-island b"></div>
+    <div class="panel home-right">
+      <div class="hero-cloud"></div>
       <div class="map-compass">✦</div>
-      <div class="map-label a">Whisper Village</div>
-      <div class="map-label b">Starlight Peaks</div>
-      <div class="map-label c">Emerald Forest</div>
-      <div class="map-label d">Moonlake</div>
-      <div class="path">
-        <svg viewBox="0 0 820 820" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M125 65 C 285 75, 545 130, 660 178 C 770 225, 748 318, 635 354 C 455 414, 122 381, 118 468 C 114 557, 612 510, 685 590 C 760 672, 505 766, 238 736" fill="none" stroke="rgba(255,183,219,.65)" stroke-width="18" stroke-linecap="round" stroke-dasharray="1 24"/>
-          <path d="M125 65 C 285 75, 545 130, 660 178 C 770 225, 748 318, 635 354 C 455 414, 122 381, 118 468 C 114 557, 612 510, 685 590 C 760 672, 505 766, 238 736" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="7" stroke-linecap="round" stroke-dasharray="1 22"/>
-          <path d="M125 65 C 285 75, 545 130, 660 178 C 770 225, 748 318, 635 354 C 455 414, 122 381, 118 468 C 114 557, 612 510, 685 590 C 760 672, 505 766, 238 736" fill="none" stroke="rgba(191,233,255,.95)" stroke-width="4" stroke-linecap="round" stroke-dasharray="1 22"/>
+      <div class="map-rainbow"></div>
+      <div class="mountain m1"></div><div class="mountain m2"></div><div class="mountain m3"></div>
+      <div class="forest">
+        <div class="tree" style="left:28px"></div><div class="tree" style="left:78px"></div><div class="tree" style="left:132px"></div>
+        <div class="tree" style="left:214px"></div><div class="tree" style="left:282px"></div><div class="tree" style="left:356px"></div>
+        <div class="tree" style="right:260px"></div><div class="tree" style="right:186px"></div><div class="tree" style="right:114px"></div>
+      </div>
+      <div class="lake"></div>
+      <div class="village"><div class="house"></div><div class="house" style="transform:scale(1.08)"></div><div class="house" style="transform:scale(.92)"></div></div>
+      <div class="map-deco-label label-forest">Whispering Forest</div>
+      <div class="map-deco-label label-lake">Mirror Lake</div>
+      <div class="map-deco-label label-village">Star Village</div>
+      <div class="map-deco-label label-castle">Cloud-Castle</div>
+      <div class="map-castle">🏰</div>
+      <div class="princess-stage">
+        <div class="princess-aura"></div>
+        <img id="heroPrincessImg" class="hero-princess" alt="Princess" src="https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/5.png">
+        <img class="hero-knight" alt="Knight" src="https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/knight.png">
+      </div>
+    </div>
+  </section>
+
+  <section class="panel map-panel">
+    <div class="map-head">
+      <div><div class="map-title">The Fairy World Map</div><div class="map-sub" id="mapSub">Follow the glitter road through bridges, springs, gardens, towers, and castle halls.</div></div>
+      <div class="pill" id="nextHint">Next stop: Level 1</div>
+    </div>
+    <div class="fairy-map">
+      <div class="map-compass" style="left:22px;top:18px">N</div>
+      <div class="map-rainbow" style="right:60px;top:18px"></div>
+      <div class="map-deco-label label-forest">Whispering Forest</div>
+      <div class="map-deco-label label-lake">Mirror Lake</div>
+      <div class="map-deco-label label-village">Star Village</div>
+      <div class="map-deco-label label-castle">Cloud-Castle</div>
+      <div class="map-castle">🏰</div>
+      <div class="road">
+        <svg viewBox="0 0 100 1000" preserveAspectRatio="none">
+          <path d="M50 20 C 15 80, 85 130, 50 190 S 18 300, 52 360 S 86 470, 50 540 S 18 650, 50 720 S 84 830, 52 900" fill="none" stroke="#f5c3db" stroke-width="6" stroke-linecap="round"/>
+          <path d="M50 20 C 15 80, 85 130, 50 190 S 18 300, 52 360 S 86 470, 50 540 S 18 650, 50 720 S 84 830, 52 900" fill="none" stroke="#ffffff" stroke-opacity=".75" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="1 18"/>
         </svg>
-        <div class="nodes" id="nodesWrap"></div>
       </div>
-      <div class="traveler-bubble"><img id="mapTravelerImg" alt="Princess traveler" /><div id="mapTravelerText">The princess is ready to travel to the next glowing stop.</div></div>
-    </div>
-    <div class="footer-note">Each path stop blends old magic with just a little new learning.</div>
-    <div class="guide-row"><button class="guide-btn" id="guideBtnMap" type="button">📜 Adventure Guide</button></div>
-  </section>
-
-  <section id="reviewScreen" class="screen hidden">
-    <div class="review-screen-grid">
-      <div class="review-panel">
-        <div class="review-head">
-          <div>
-            <h2 class="review-title">The Royal Spell Book</h2>
-            <p class="review-sub" id="wrongBookSub">Each spell keeps its own page. Open a spell to see accuracy, review prompts, and focused practice.</p>
-          </div>
-          <div class="cta-row" style="margin-top:0">
-            <button class="btn btn-primary" id="practiceWrongBtn">Spell Practice</button>
-            <button class="btn btn-secondary" id="wrongBookBackBtn">Back to Map</button>
-          </div>
-        </div>
-        <div class="topic-grid" id="wrongTopicGrid"></div>
-        <div class="review-items" id="wrongItemList"></div>
-      </div>
-      <div class="review-side">
-        <div style="display:flex;justify-content:center;align-items:center;min-height:220px">
-          <img id="wrongBookPrincessImg" alt="Princess" style="max-width:100%;width:auto;height:auto;max-height:240px;object-fit:contain;display:block" />
-        </div>
-        <div style="font-weight:900;font-size:20px;margin-bottom:8px;color:#7d4f86">How spells are mastered</div>
-        <div style="font-size:14px;line-height:1.78">Every skill is treated like a <strong>spell</strong>. The game tracks accuracy by spell, saves mistakes by topic, and quietly mixes those spells back into later levels until the accuracy reaches <strong>100%</strong>. Then the spell is marked as mastered.</div>
-        <div class="sync-note" id="syncNote">The game can save spell progress in the browser and also sync it to Supabase, so mastery pages can follow the story across devices that use the same child name.</div>
-      </div>
+      <div id="nodeLayer" class="node-layer"></div>
     </div>
   </section>
+</div>
 
-
-  <div id="spellModal" class="spell-modal" aria-hidden="true">
-    <div class="spell-shell">
-      <div class="spell-head">
-        <div>
-          <h2 class="spell-title" id="spellModalTitle">Spell Page</h2>
-          <p class="spell-sub" id="spellModalSub">A magic page with mastery, mistakes, and knight guidance.</p>
-        </div>
-        <button class="spell-close" id="spellModalClose" type="button" aria-label="Close">×</button>
-      </div>
-      <div class="spell-layout">
-        <div class="spell-page-card">
-          <div class="spell-page-header">
-            <h3>Left Page · Spell Mastery</h3>
-            <span class="spell-page-badge" id="spellStatusBadge">Learning</span>
-          </div>
-          <div class="spell-stat-grid">
-            <div class="spell-stat"><strong id="spellAccuracy">0%</strong><span>accuracy</span></div>
-            <div class="spell-stat"><strong id="spellCorrect">0</strong><span>correct</span></div>
-            <div class="spell-stat"><strong id="spellAttempts">0</strong><span>attempts</span></div>
-            <div class="spell-stat"><strong id="spellMistakes">0</strong><span>mistakes saved</span></div>
-          </div>
-          <div class="spell-mini-track spell-track"><div id="spellModalFill" class="spell-fill" style="width:0%"></div></div>
-          <div class="spell-note" id="spellMasteryNote">This spell is still growing.</div>
-          <div class="spell-rule-box">
-            <strong>Core spell rule</strong>
-            <div class="spell-note" id="spellCoreRule">Sir Knight will write the key rule for this spell here.</div>
-          </div>
-          <div class="spell-actions">
-            <button class="btn btn-primary" id="spellPracticeBtn" type="button">Spell Practice</button>
-            <button class="btn btn-help" id="spellKnightBtn" type="button">Ask Sir Knight</button>
-            <button class="btn btn-secondary" id="spellBackBookBtn" type="button">Back to Spell Book</button>
-          </div>
-          <div style="margin-top:16px">
-            <h3>Recent story moments</h3>
-            <div id="spellMistakeList" class="spell-mistakes"></div>
-          </div>
-        </div>
-        <div class="spell-page-card">
-          <div class="spell-page-header">
-            <h3>Right Page · Sir Knight's Lesson</h3>
-            <span class="spell-page-badge">Guided help</span>
-          </div>
-          <div class="spell-knight">
-            <img id="spellKnightImg" alt="Sir Knight" />
-            <div>
-              <h3>Sir Knight's page note</h3>
-              <p id="spellKnightTalk">Sir Knight is ready to explain this spell.</p>
-            </div>
-          </div>
-          <div class="spell-step-box">
-            <strong>How to cast this spell</strong>
-            <ul class="spell-steps" id="spellStepList"></ul>
-          </div>
-          <div class="spell-resource-box">
-            <h4>Helpful public lessons</h4>
-            <div class="spell-note" id="spellResourceNote">Open a lesson when a new spell first appears or whenever review feels sticky.</div>
-            <div id="spellResourceLinks" class="resource-links"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <div id="lessonModal" class="spell-modal" aria-hidden="true">
-    <div class="spell-shell" style="max-width:900px">
-      <div class="spell-head">
-        <div>
-          <h2 class="spell-title" id="lessonModalTitle">A New Spell Appears</h2>
-          <p class="spell-sub" id="lessonModalSub">Sir Knight opens the first lesson page before the next questions begin.</p>
-        </div>
-        <button class="spell-close" id="lessonModalClose" type="button" aria-label="Close">×</button>
-      </div>
-      <div class="spell-layout">
-        <div class="spell-page-card">
-          <div class="spell-page-header">
-            <h3>First Lesson Page</h3>
-            <span class="spell-page-badge">New spell</span>
-          </div>
-          <div class="spell-rule-box">
-            <strong>What this spell means</strong>
-            <div class="spell-note" id="lessonConceptText"></div>
-          </div>
-          <div class="spell-step-box">
-            <strong>First steps with Sir Knight</strong>
-            <ul class="spell-steps" id="lessonStepList"></ul>
-          </div>
-          <div class="spell-actions">
-            <button class="btn btn-primary" id="lessonBeginBtn" type="button">Begin This Lesson ✨</button>
-            <button class="btn btn-secondary" id="lessonSkipBtn" type="button">Go to Questions</button>
-          </div>
-        </div>
-        <div class="spell-page-card">
-          <div class="spell-knight">
-            <img id="lessonKnightImg" alt="Sir Knight" />
-            <div>
-              <h3>Sir Knight's gentle note</h3>
-              <p id="lessonKnightText"></p>
-            </div>
-          </div>
-          <div class="spell-resource-box">
-            <h4>Helpful public lesson</h4>
-            <div class="spell-note" id="lessonResourceNote"></div>
-            <div id="lessonResourceLinks" class="resource-links"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <section id="gameScreen" class="screen hidden">
-    <div class="game-layout">
-      <div class="game-meta">
-        <div class="pill" id="levelTitlePill">Level 1</div>
-        <div class="pill">Question <span id="qCounter">1</span>/<span id="qTotal">12</span></div>
-        <div class="pill">Level Score <span id="qScore">0</span></div>
-        <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
-      </div>
-
-      <div class="story-box">
-        <div style="font-weight:900;font-size:18px;margin-bottom:6px" id="levelStoryTitle">Story</div>
-        <div style="line-height:1.7;font-size:14px" id="levelStoryText"></div>
-      </div>
-
-      <div class="scene">
-        <div class="status-card">
-          <img id="princessStateImg" alt="Princess status" />
-          <div class="status-caption" id="princessStateText">The princess is ready to think carefully.</div>
-        </div>
-        <div class="q-card">
-          <div class="q-type" id="qType">Question Type</div>
-          <div class="q-text" id="qText">Question</div>
-          <div class="q-sub" id="qSub"></div>
-          <div id="qArea"></div>
-          <div class="row" style="margin-top:14px">
-            <button class="btn btn-primary" id="checkBtn">Check Answer</button>
-            <button class="btn btn-help" id="knightBtn">Ask Sir Knight</button>
-            <button class="btn btn-secondary hidden" id="nextBtn">Next Question</button>
-            <button class="btn btn-secondary" id="backMapBtn">Back to Map</button>
-          </div>
-          <div id="resultBox" class="result"></div>
-          <div id="explainBox" class="explain"></div>
-          <div id="knightBox" class="knight-box">
-            <div class="knight-row">
-              <img class="knight-img" id="knightImg" alt="Sir Knight helper" />
-              <div>
-                <div style="font-weight:900;margin-bottom:6px">Sir Knight says:</div>
-                <div id="knightTalk" class="knight-talk"></div>
-                <div id="resourceLinks" class="resource-links"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="levelEnd" class="story-box hidden">
-        <div class="end-card">
-          <h3 style="margin:6px 0 8px;font-size:28px">Level Complete!</h3>
-          <div class="star-row" id="starRow">⭐</div>
-          <div style="font-weight:800;font-size:16px;margin-top:6px" id="endSummary"></div>
-          <div class="summary-grid">
-            <div class="summary-box">
-              <div style="font-weight:900;margin-bottom:6px">New learning in this level</div>
-              <div id="newLearningText" style="line-height:1.65;font-size:14px"></div>
-            </div>
-            <div class="summary-box">
-              <div style="font-weight:900;margin-bottom:6px">What will spiral back next time</div>
-              <div id="adaptiveText" style="line-height:1.65;font-size:14px"></div>
-            </div>
-          </div>
-          <ul id="reviewList" class="review-list"></ul>
-          <div id="bonusBossPanel" class="bonus-panel hidden">
-            <div class="bonus-pill">👑 AMC 8 Bonus Boss</div>
-            <h4 id="bonusBossTitle">A real AMC 8 challenge is waiting.</h4>
-            <p id="bonusBossText">Sir Knight has found a true bonus challenge from AMC 8.</p>
-            <div class="cta-row" style="margin-top:12px">
-              <button class="btn btn-primary" id="openBonusBossBtn">Open Bonus Boss</button>
-            </div>
-          </div>
-          <div class="end-reward-note" id="rewardExplainText">Level stars: 3 stars for 11–12 correct, 2 stars for 8–10, 1 star for 5–7, and 0 below 5. Bonus Boss stars are extra and can be claimed once after solving the real AMC problem.</div>
-          <div class="cta-row" style="justify-content:center;margin-top:16px">
-            <button class="btn btn-primary" id="nextLevelBtn">Go to Next Stop</button>
-            <button class="btn btn-secondary" id="mapBtn">Return to Map</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-  <div id="guideModal" class="guide-modal" aria-hidden="true">
-    <div class="guide-card">
-      <div class="spell-head">
-        <div>
-          <h2 class="guide-title">📜 Adventure Guide</h2>
-          <p class="spell-sub">A simple guide to stars, spells, reviews, and Bonus Boss rewards.</p>
-        </div>
-        <button class="spell-close" id="guideModalClose" type="button" aria-label="Close">×</button>
-      </div>
-      <div class="guide-grid">
-        <div class="guide-box">
-          <h4>How each story stop works</h4>
-          <ul>
-            <li>Each level has 12 questions.</li>
-            <li>About 5 questions are old spells for review.</li>
-            <li>About 7 questions are the newest spell work for this chapter.</li>
-            <li>Old spells come back in deeper, more varied ways.</li>
-          </ul>
-        </div>
-        <div class="guide-box">
-          <h4>Main level stars</h4>
-          <ul>
-            <li>11–12 correct → 3 stars</li>
-            <li>8–10 correct → 2 stars</li>
-            <li>5–7 correct → 1 star</li>
-            <li>0–4 correct → 0 stars</li>
-          </ul>
-        </div>
-        <div class="guide-box">
-          <h4>Spell mastery</h4>
-          <p>Each knowledge skill is a spell. A spell is mastered only when that spell's accuracy reaches <strong>100%</strong>. Wrong answers quietly return later in spiral review.</p>
-        </div>
-        <div class="guide-box">
-          <h4>Bonus Boss rewards</h4>
-          <p>Every few levels, a real AMC 8 Bonus Boss appears. Open the real problem, use Sir Knight's hints, and then claim the extra bonus stars once after solving it.</p>
-          <p>Bonus stars are added on top of normal level stars.</p>
-        </div>
-      </div>
-      <div class="cta-row" style="justify-content:center;margin-top:14px"><button class="btn btn-primary" id="guideGotItBtn" type="button">Got it ✨</button></div>
-    </div>
-  </div>
-
-  <div id="bonusModal" class="spell-modal" aria-hidden="true">
-    <div class="spell-shell bonus-modal-card">
-      <div class="spell-head">
-        <div>
-          <h2 class="spell-title" id="bonusModalTitle">AMC 8 Bonus Boss</h2>
-          <p class="spell-sub" id="bonusModalSub">A real AMC 8 challenge appears at the edge of the fairy map.</p>
-        </div>
-        <button class="spell-close" id="bonusModalClose" type="button" aria-label="Close">×</button>
-      </div>
-      <div class="battle-banner">👑 Bonus Boss Battle</div>
-      <div class="reward-board">
-        <div class="reward-card">
-          <div class="bonus-pill" id="bonusMetaPill">AMC 8 Real Problem</div>
-          <div class="bonus-title-note" id="bonusWhyText"></div>
-          <div class="bonus-tags" id="bonusTagWrap"></div>
-          <div class="bonus-links" style="margin-top:12px">
-            <a id="bonusSourceLink" href="#" target="_blank" rel="noopener noreferrer">Open Real AMC 8 Problem ↗</a>
-          </div>
-          <div class="spell-note" id="bonusHintShort" style="margin-top:14px"></div>
-          <div class="spell-note" id="bonusHintLong" style="margin-top:10px"></div>
-        </div>
-        <div class="reward-card">
-          <h4 style="margin:0 0 8px">Boss Reward</h4>
-          <div class="reward-stars" id="bonusRewardStars">⭐⭐</div>
-          <div style="font-size:14px;line-height:1.7">Solve the real AMC 8 Bonus Boss, then come back and claim your extra stars once for this stop.</div>
-          <div class="reward-status wait" id="bonusRewardStatus">Not claimed yet</div>
-          <div class="spell-actions" style="margin-top:14px;flex-wrap:wrap">
-            <button class="btn btn-primary" id="claimBonusBossBtn" type="button">I Solved It · Claim Reward</button>
-            <button class="btn btn-secondary" id="bonusPracticeSpellBtn" type="button">Practice Related Spell ✨</button>
-            <button class="btn btn-secondary" id="bonusModalBackBtn" type="button">Back</button>
-          </div>
-        </div>
-      </div>
+<div id="authModal" class="modal-backdrop">
+  <div class="modal">
+    <div class="close-row"><button class="close-btn" data-close="authModal">Close</button></div>
+    <h3>Cloud Save Sign In</h3>
+    <p class="soft">Sign in with email. After that, this browser can reopen your princess story and read the cloud save directly.</p>
+    <div class="auth-box">
+      <input id="emailInput" type="email" placeholder="your email address" />
+      <button id="sendMagicBtn" class="primary-btn">Send Magic Link</button>
+      <div id="authStatus" class="status-line"></div>
     </div>
   </div>
 </div>
 
+<div id="guideModal" class="modal-backdrop">
+  <div class="modal">
+    <div class="close-row"><button class="close-btn" data-close="guideModal">Close</button></div>
+    <h3>Adventure Guide</h3>
+    <ul>
+      <li>Each main story level uses 12 questions.</li>
+      <li>About 40% are older spells for review, and about 60% are newer spells introduced gently.</li>
+      <li>Stars come from main level results and AMC Bonus Boss rewards.</li>
+      <li>A spell is <strong>mastered</strong> when its current accuracy reaches 100%.</li>
+      <li>When a spell is new, Sir Knight gives a lesson page before the level starts.</li>
+      <li>Bonus Boss levels use AMC 8 real-problem references, plus original knight hints.</li>
+    </ul>
+  </div>
+</div>
+
+<div id="spellModal" class="modal-backdrop">
+  <div class="modal">
+    <div class="close-row"><button class="close-btn" data-close="spellModal">Close</button></div>
+    <h3>Royal Spell Book</h3>
+    <div id="spellList"></div>
+  </div>
+</div>
 
 <script>
-const STORE_KEY = 'princessSpiralQuestSupabaseV1';
 const SUPABASE_URL = 'https://hokxngwigywyutilokya.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_RQlefCTSaipW2oWnv1zz7g_gqMWsoOv';
-const IMAGE_BASE = 'https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main';
-const IMAGES = {
-  normal: `${IMAGE_BASE}/4.png`,
-  checking: `${IMAGE_BASE}/3.png`,
-  bad: `${IMAGE_BASE}/2.png`,
-  good: `${IMAGE_BASE}/1.png`,
-  knight: `${IMAGE_BASE}/knight.png`
-};
-const S = {
-  playerId: null,
-  playerName: '',
-  heroName: 'Princess',
-  currentLevelNo: 1,
-  unlockedLevelNo: 1,
-  totalStars: 0,
-  levelStars: {},
-  topicStats: {},
-  wrongBook: {},
-  reviewLog: [],
-  reviewMode: false,
-  practiceSpellCode: null,
-  seenIntroSpells: {},
-  contentLoaded: false,
-  pendingLevelNo: null,
-  lastBonusLevelNo: null,
-  bonusBossWins: {},
-};
-const DB = {
-  spells: [],
-  spellsById: {},
-  spellsByCode: {},
-  levels: [],
-  levelsByNo: {},
-  lessonsBySpellId: {},
-  plansByLevelNo: {},
-  questionCacheBySpellId: {},
-  bonusBosses: [],
-  bonusBossesByKey: {},
-  bonusByLevelNo: {},
-};
-let currentQuestions = [];
-let qIndex = 0;
-let score = 0;
-let qLocked = false;
-let currentSpellCode = null;
-let currentSpellLessonExpanded = false;
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const STORAGE_KEY = 'princess_spiral_quest_v7';
 
-function loadLocal(){
-  try{
-    const raw = localStorage.getItem(STORE_KEY);
-    if(!raw) return;
-    const data = JSON.parse(raw);
-    Object.assign(S, data || {});
-  }catch(e){}
+const state = { session:null, user:null, childName:'', princessName:'Hero Princess', playerId:null, levels:[], progress:{}, spellStats:[], cloudSource:false };
+const $ = (id) => document.getElementById(id);
+
+function localLoad(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; } }
+function localSave(patch){ localStorage.setItem(STORAGE_KEY, JSON.stringify(Object.assign({}, localLoad(), patch))); }
+function setStatus(msg){ $('homeStatus').textContent = msg || ''; }
+function sumStars(progress){ return Object.values(progress || {}).reduce((acc, row) => acc + (row.stars || 0) + (row.bonusStars || 0), 0); }
+function hasAnySave(progress){ return Object.values(progress || {}).some(v => (v.best_score || 0) > 0 || v.completed || (v.stars||0) > 0 || (v.bonusStars||0) > 0); }
+function unlockedCount(levels, progress){
+  if (!levels.length) return 1;
+  let count = 1;
+  for (let i=2;i<=levels.length;i++){ if (progress[i-1] && progress[i-1].completed) count = i; else break; }
+  return count;
 }
-function saveLocal(){
-  localStorage.setItem(STORE_KEY, JSON.stringify({
-    playerId:S.playerId,
-    playerName:S.playerName,
-    heroName:S.heroName,
-    currentLevelNo:S.currentLevelNo,
-    unlockedLevelNo:S.unlockedLevelNo,
-    totalStars:S.totalStars,
-    levelStars:S.levelStars,
-    topicStats:S.topicStats,
-    wrongBook:S.wrongBook,
-    reviewLog:S.reviewLog,
-    reviewMode:S.reviewMode,
-    practiceSpellCode:S.practiceSpellCode,
-    seenIntroSpells:S.seenIntroSpells,
-    lastBonusLevelNo:S.lastBonusLevelNo,
-    bonusBossWins:S.bonusBossWins
-  }));
+function nextPlayableLevel(levels, progress){
+  for (let i=1;i<=levels.length;i++){ if (!(progress[i] && progress[i].completed)) return i; }
+  return levels.length || 1;
 }
-function qs(id){ return document.getElementById(id); }
-function escapeHtml(s=''){ return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
-function normalizeAnswer(v){ return String(v ?? '').trim().toLowerCase().replace(/\s+/g,' ').replace(/ /g,''); }
-function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-function chunk(arr, size){ const out=[]; for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size)); return out; }
-function princessImage(state='normal'){ return IMAGES[state] || IMAGES.normal; }
-function setSync(text, good=true){ const pill=qs('syncPill'); pill.textContent=text; pill.style.color = good ? '#6a6680' : '#9c5555'; }
-function show(screenId){ ['welcomeScreen','mapScreen','reviewScreen','gameScreen'].forEach(id=>qs(id).classList.toggle('hidden', id!==screenId)); }
-function heroDisplayName(){ return S.heroName || 'Princess'; }
-function calcTotalStars(){ return Object.values(S.levelStars||{}).reduce((a,b)=>a+(Number(b)||0),0) + Object.values(S.bonusBossWins||{}).reduce((a,b)=>a+(Number(b)||0),0); }
-function bonusRewardForLevel(levelNo){ const bonus=bonusBossForLevel(levelNo); return bonus ? (bonus.link.reward_stars || 2) : 0; }
-function hasClaimedBonus(levelNo){ return Number((S.bonusBossWins||{})[levelNo]||0) > 0; }
-function spellName(code){ return DB.spellsByCode[code]?.name || code.replace(/_/g,' '); }
-function accuracyFor(code){ const stat = S.topicStats[code] || {attempts:0, correct:0}; return stat.attempts ? Math.round((stat.correct/stat.attempts)*100) : 0; }
-function mastered(code){ const stat = S.topicStats[code] || {attempts:0, correct:0}; return stat.attempts > 0 && stat.correct === stat.attempts; }
-function newIntroSpellsForLevel(levelNo){ return (DB.plansByLevelNo[levelNo] || []).filter(p=>p.role==='new_intro').map(p=>p.spell_code); }
-function refreshImages(){
-  qs('heroNormal').src = IMAGES.normal; qs('heroKnight').src = IMAGES.knight;
-  qs('wrongBookPrincessImg').src = IMAGES.normal; qs('spellKnightImg').src = IMAGES.knight; qs('lessonKnightImg').src = IMAGES.knight;
-  qs('knightImg').src = IMAGES.knight; qs('mapTravelerImg').src = IMAGES.normal;
-  qs('princessStateImg').src = IMAGES.normal;
-}
-function updateWelcome(){
-  const entered = qs('playerName').value.trim() || S.playerName || 'your child';
-  const princessName = entered ? `Princess ${entered}` : 'Princess Nova';
-  qs('welcomeStory').textContent = `Far above the Cloud-Castle Kingdom, sleeping stars have gone dim. Only ${princessName} can wake them again. She must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.`;
-  qs('storyRibbon').textContent = `Tonight's tale belongs to ${princessName}.`;
-}
-function updateStats(){
-  qs('statHero').textContent = heroDisplayName();
-  qs('statLevel').textContent = S.currentLevelNo || 1;
-  S.totalStars = calcTotalStars();
-  qs('statStars').textContent = S.totalStars || 0;
-  qs('statUnlocked').textContent = S.unlockedLevelNo || 1;
-  qs('statTotal').textContent = DB.levels.length || 0;
+function posForLevel(levelNo){
+  const positions = [[50,89],[36,84],[63,80],[48,75],[34,70],[63,66],[49,61],[37,56],[61,52],[49,47],[36,43],[63,39],[50,35],[38,31],[63,28],[49,24],[36,20],[61,17],[49,13],[36,10],[63,8],[74,13],[81,20],[76,29],[67,37],[21,24],[16,33],[22,42],[31,50],[22,58],[17,67],[23,75],[33,82],[46,86],[58,90],[72,93]];
+  const p = positions[levelNo-1] || [50,50];
+  return {x:p[0], y:p[1]};
 }
 
-async function api(path, options={}){
-  const url = `${SUPABASE_URL}/rest/v1/${path}`;
-  const headers = {
-    apikey: SUPABASE_KEY,
-    Authorization: `Bearer ${SUPABASE_KEY}`,
-    'Content-Type': 'application/json',
-    ...(options.headers || {})
-  };
-  const res = await fetch(url, {...options, headers});
-  if(!res.ok){
-    const text = await res.text();
-    throw new Error(`${res.status} ${text}`);
+async function loadLevels(){
+  const { data, error } = await supabase.from('levels').select('*').order('level_no');
+  if (error) throw error;
+  state.levels = data || [];
+}
+async function loadPlayerByName(childName){
+  const { data, error } = await supabase.from('players').select('*').eq('child_name', childName).maybeSingle();
+  if (error && error.code !== 'PGRST116') throw error;
+  return data || null;
+}
+async function ensurePlayer(childName){
+  let player = await loadPlayerByName(childName);
+  if (!player){
+    const { data, error } = await supabase.from('players').insert({ child_name: childName, princess_name: `Princess ${childName}` }).select().single();
+    if (error) throw error;
+    player = data;
   }
-  if(res.status === 204) return null;
-  return res.json();
+  state.playerId = player.id;
+  state.childName = player.child_name;
+  state.princessName = player.princess_name;
+  localSave({ childName: state.childName });
+  return player;
 }
-async function upsertRows(table, rows, onConflict){
-  if(!rows.length) return [];
-  return api(`${table}?on_conflict=${encodeURIComponent(onConflict)}`, {
-    method: 'POST',
-    headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
-    body: JSON.stringify(rows)
+async function getUserProfile(){
+  if (!state.user) return null;
+  try{
+    const { data, error } = await supabase.from('user_profiles').select('*').eq('user_id', state.user.id).maybeSingle();
+    if (error) return null;
+    return data || null;
+  } catch { return null; }
+}
+async function saveUserProfile(childName){
+  if (!state.user) return;
+  try{
+    await supabase.from('user_profiles').upsert({ user_id: state.user.id, child_name: childName, updated_at: new Date().toISOString() });
+  } catch {}
+}
+async function loadProgress(){
+  state.progress = {}; state.spellStats = [];
+  if (!state.playerId) return;
+  const { data: levelData, error: levelErr } = await supabase.from('player_level_progress').select('level_id,best_score,stars,completed').eq('player_id', state.playerId);
+  if (levelErr) throw levelErr;
+  const idToNo = Object.fromEntries((state.levels || []).map(l => [l.id, l.level_no]));
+  (levelData || []).forEach(r => {
+    const no = idToNo[r.level_id];
+    if (no) state.progress[no] = { best_score: r.best_score || 0, stars: r.stars || 0, completed: !!r.completed };
   });
-}
-async function loadContent(){
   try{
-    const [spells, levels, lessons, plans, bonusBosses, bonusPlan] = await Promise.all([
-      api('spells?select=*&status=eq.active&order=display_order.asc'),
-      api('levels?select=*&status=eq.active&order=level_no.asc'),
-      api('spell_lessons?select=*'),
-      api('level_spell_plan?select=*&order=level_id.asc'),
-      api('amc_bonus_bosses?select=*&is_active=eq.true&order=year.asc,problem_no.asc').catch(()=>[]),
-      api('level_bonus_boss_plan?select=*&order=level_id.asc').catch(()=>[])
-    ]);
-    DB.spells = spells;
-    DB.spellsById = Object.fromEntries(spells.map(x=>[x.id,x]));
-    DB.spellsByCode = Object.fromEntries(spells.map(x=>[x.code,x]));
-    DB.levels = levels;
-    DB.levelsByNo = Object.fromEntries(levels.map(x=>[x.level_no,x]));
-    DB.lessonsBySpellId = {};
-    lessons.forEach(l=>{ if(!DB.lessonsBySpellId[l.spell_id]) DB.lessonsBySpellId[l.spell_id] = []; DB.lessonsBySpellId[l.spell_id].push(l); });
-    DB.plansByLevelNo = {};
-    plans.forEach(p=>{
-      const level = levels.find(l=>l.id===p.level_id); const spell = spells.find(s=>s.id===p.spell_id);
-      if(!level || !spell) return;
-      const item = {...p, level_no: level.level_no, spell_code: spell.code, spell_name: spell.name};
-      if(!DB.plansByLevelNo[level.level_no]) DB.plansByLevelNo[level.level_no] = [];
-      DB.plansByLevelNo[level.level_no].push(item);
+    const { data: bonusData } = await supabase.from('player_question_attempts').select('level_id,selected_answer').eq('player_id', state.playerId).ilike('selected_answer', 'BONUS_CLAIM:%');
+    (bonusData || []).forEach(r => {
+      const no = idToNo[r.level_id];
+      if (!no) return;
+      const bonusStars = Number(String(r.selected_answer).split(':')[1] || 0);
+      if (!state.progress[no]) state.progress[no] = { best_score:0, stars:0, completed:false };
+      state.progress[no].bonusStars = Math.max(state.progress[no].bonusStars || 0, bonusStars);
     });
-    for(const key of Object.keys(DB.plansByLevelNo)) DB.plansByLevelNo[key].sort((a,b)=>b.weight-a.weight);
-    DB.bonusBosses = bonusBosses || [];
-    DB.bonusBossesByKey = Object.fromEntries(DB.bonusBosses.map(b=>[`${b.year}-${b.problem_no}`, b]));
-    DB.bonusByLevelNo = {};
-    (bonusPlan || []).forEach(p=>{
-      const level = levels.find(l=>l.id===p.level_id);
-      const boss = DB.bonusBosses.find(b=>b.id===p.amc_bonus_boss_id);
-      if(level && boss) DB.bonusByLevelNo[level.level_no] = {...p, boss};
-    });
-    S.contentLoaded = true;
-    updateStats();
-    return true;
-  }catch(err){
-    console.error(err);
-    setSync('☁️ Content error', false);
-    alert('I could not load the story content yet. Please check that the Supabase schema and seed finished running.');
-    return false;
-  }
-}
-async function ensurePlayer(){
-  const childName = (qs('playerName').value.trim() || S.playerName || '').trim();
-  if(!childName){ alert("Please type your child's name first."); return false; }
-  S.playerName = childName;
-  S.heroName = `Princess ${childName}`;
+  } catch {}
   try{
-    const rows = await upsertRows('players', [{child_name: childName, princess_name: S.heroName}], 'child_name');
-    S.playerId = rows?.[0]?.id || S.playerId;
-    saveLocal();
-    await loadPlayerState();
-    return true;
-  }catch(err){
-    console.error(err);
-    setSync('☁️ Local story only', false);
-    saveLocal();
-    return true;
-  }
+    const { data: spellData } = await supabase.from('player_spell_stats').select('attempts,correct,accuracy,mastered,spell_id').eq('player_id', state.playerId);
+    state.spellStats = spellData || [];
+  } catch { state.spellStats = []; }
 }
-async function loadPlayerState(){
-  if(!S.playerId) return;
-  try{
-    const [spellStats, wrongs, progress] = await Promise.all([
-      api(`player_spell_stats?select=*&player_id=eq.${S.playerId}`),
-      api(`player_wrong_questions?select=*&player_id=eq.${S.playerId}`),
-      api(`player_level_progress?select=*&player_id=eq.${S.playerId}`)
-    ]);
-    S.topicStats = {};
-    spellStats.forEach(r=>{
-      const code = DB.spellsById[r.spell_id]?.code;
-      if(code) S.topicStats[code] = {attempts:r.attempts||0, correct:r.correct||0};
-    });
-    S.wrongBook = {};
-    wrongs.forEach(r=>{
-      const code = DB.spellsById[r.spell_id]?.code;
-      if(!code) return;
-      if(!S.wrongBook[code]) S.wrongBook[code] = [];
-      S.wrongBook[code].push(r);
-    });
-    S.levelStars = {};
-    let maxCompleted = 0;
-    let totalStars = 0;
-    progress.forEach(r=>{
-      const level = DB.levels.find(l=>l.id===r.level_id);
-      if(!level) return;
-      S.levelStars[level.level_no] = r.stars || 0;
-      totalStars += r.stars || 0;
-      if(r.completed && level.level_no > maxCompleted) maxCompleted = level.level_no;
-    });
-    S.totalStars = totalStars + Object.values(S.bonusBossWins||{}).reduce((a,b)=>a+(Number(b)||0),0);
-    S.unlockedLevelNo = Math.min((maxCompleted || 0) + 1, Math.max(DB.levels.length,1));
-    if(maxCompleted >= DB.levels.length) S.unlockedLevelNo = DB.levels.length;
-    if(!progress.length) S.unlockedLevelNo = 1;
-    if(S.currentLevelNo > S.unlockedLevelNo) S.currentLevelNo = S.unlockedLevelNo;
-    setSync('☁️ Story saved');
-  }catch(err){
-    console.error(err);
-    setSync('☁️ Local story only', false);
-  }
-  saveLocal(); updateStats();
-}
-async function fetchQuestionsForSpells(spellIds){
-  const ids = [...new Set(spellIds.filter(Boolean))].filter(id=>!DB.questionCacheBySpellId[id]);
-  if(!ids.length) return;
-  const inClause = ids.join(',');
-  const rows = await api(`questions?select=*&is_active=eq.true&spell_id=in.(${inClause})&order=created_at.asc`);
-  ids.forEach(id=>DB.questionCacheBySpellId[id]=[]);
-  rows.forEach(q=>{ if(!DB.questionCacheBySpellId[q.spell_id]) DB.questionCacheBySpellId[q.spell_id]=[]; DB.questionCacheBySpellId[q.spell_id].push(q); });
-}
-function allowedDifficulties(band){
-  if(band==='concept') return ['concept'];
-  if(band==='guided') return ['concept','guided'];
-  if(band==='practice') return ['concept','guided','practice'];
-  if(band==='mixed') return ['concept','guided','practice','challenge'];
-  return ['concept','guided','practice','challenge'];
-}
-function weightedCounts(plans, total=12){
-  const counts = {}; let used = 0;
-  plans.forEach(p=>{ counts[p.spell_code] = p.min_questions || 0; used += p.min_questions || 0; });
-  let safety = 0;
-  while(used < total && safety < 200){
-    safety++;
-    const ranked = [...plans].sort((a,b)=>{
-      const deficitA = (a.max_questions||total) - (counts[a.spell_code]||0);
-      const deficitB = (b.max_questions||total) - (counts[b.spell_code]||0);
-      if(deficitB!==deficitA) return deficitB-deficitA;
-      if(b.role!==a.role){
-        const order = {new_intro:4, core:3, review:2, boss_mix:1};
-        return (order[b.role]||0) - (order[a.role]||0);
-      }
-      return Number(b.weight||0) - Number(a.weight||0);
-    });
-    let added = false;
-    for(const p of ranked){
-      if((counts[p.spell_code]||0) < (p.max_questions||total)){
-        counts[p.spell_code] = (counts[p.spell_code]||0) + 1; used++; added=true; break;
-      }
-    }
-    if(!added) break;
-  }
-  return counts;
-}
-function questionsForPlan(plan){
-  const spell = DB.spellsByCode[plan.spell_code];
-  if(!spell) return [];
-  const all = DB.questionCacheBySpellId[spell.id] || [];
-  const allowed = allowedDifficulties(plan.difficulty_band);
-  const filtered = all.filter(q=>allowed.includes(q.difficulty));
-  return filtered.length ? filtered : all;
-}
-function unresolvedWrongRows(spellCode){
-  return (S.wrongBook[spellCode] || []).filter(w=>!w.resolved).sort((a,b)=>(b.mistake_count||1)-(a.mistake_count||1));
-}
-function prioritizeWrongs(pool, spellCode){
-  const wrongIds = new Set(unresolvedWrongRows(spellCode).map(w=>w.question_id));
-  const wrongFirst = pool.filter(q=>wrongIds.has(q.id));
-  const rest = pool.filter(q=>!wrongIds.has(q.id));
-  return [...shuffle(wrongFirst), ...shuffle(rest)];
-}
-function enrichQuestion(q, spellCode, role='review'){
-  return {...q, spell_code: spellCode, spell_name: spellName(spellCode), level_role: role};
-}
-function sortQuestionsForJourney(items){
-  const difficultyOrder = {concept:0, guided:1, practice:2, challenge:3};
-  const roleOrder = {new_intro:0, core:1, review:2, boss_mix:3};
-  const seeded = items.map((q,idx)=>({...q, __idx:idx}));
-  seeded.sort((a,b)=>{
-    const r = (roleOrder[a.level_role]??9) - (roleOrder[b.level_role]??9);
-    if(r) return r;
-    const d = (difficultyOrder[a.difficulty]??9) - (difficultyOrder[b.difficulty]??9);
-    if(d) return d;
-    return (a.__idx||0) - (b.__idx||0);
-  });
-  return seeded.map(({__idx, ...rest})=>rest);
-}
-function weakestSpellCodes(limit=4){
-  return Object.keys(S.topicStats)
-    .sort((a,b)=>{
-      const wa = unresolvedWrongRows(a).length;
-      const wb = unresolvedWrongRows(b).length;
-      if(wb!==wa) return wb-wa;
-      return accuracyFor(a)-accuracyFor(b);
-    })
-    .slice(0,limit);
-}
-async function buildLevelQuestions(levelNo){
-  const plans = DB.plansByLevelNo[levelNo] || [];
-  if(!plans.length) throw new Error('No level plan found.');
-  const weakCodes = weakestSpellCodes(3);
-  const allCodes = [...new Set([...plans.map(p=>p.spell_code), ...weakCodes])];
-  await fetchQuestionsForSpells(allCodes.map(code=>DB.spellsByCode[code]?.id));
-  const counts = weightedCounts(plans, 12);
-  const selected = [];
-  const usedIds = new Set();
 
-  for(const plan of plans){
-    const need = counts[plan.spell_code] || 0;
-    if(!need) continue;
-    let pool = prioritizeWrongs(questionsForPlan(plan), plan.spell_code).filter(q=>!usedIds.has(q.id));
-    let chosen = pool.slice(0, need);
-    if(chosen.length < need){
-      const spell = DB.spellsByCode[plan.spell_code];
-      const all = shuffle(DB.questionCacheBySpellId[spell.id] || []).filter(q=>!usedIds.has(q.id));
-      chosen = [...chosen, ...all.slice(0, need - chosen.length)];
-    }
-    chosen.forEach(q=>{ usedIds.add(q.id); selected.push(enrichQuestion(q, plan.spell_code, plan.role)); });
+function updateHome(){
+  const levelNo = nextPlayableLevel(state.levels, state.progress);
+  const unlocked = unlockedCount(state.levels, state.progress);
+  const totalStars = sumStars(state.progress);
+  $('heroName').textContent = state.princessName || 'Hero Princess';
+  $('heroLevel').textContent = `Level ${levelNo}`;
+  $('heroStars').textContent = `Stars ${totalStars}`;
+  $('heroUnlock').textContent = `Unlocked ${unlocked}/${state.levels.length || 36}`;
+  $('heroSource').textContent = state.cloudSource ? 'Cloud' : 'Local';
+  const saveExists = hasAnySave(state.progress);
+  const displayName = state.childName ? `Princess ${state.childName}` : 'the princess';
+  $('storyText').textContent = state.childName
+    ? `Far above the Cloud-Castle Kingdom, sleeping stars are waiting for ${displayName}. She must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.`
+    : `Far above the Cloud-Castle Kingdom, sleeping stars have gone dim. A young princess must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.`;
+  $('storyQuote').textContent = state.childName ? (saveExists ? `${displayName}'s story is ready to continue.` : `Tonight's tale belongs to ${displayName}.`) : `Tonight's tale is waiting for its princess.`;
+  if (saveExists){
+    $('beginBtn').style.display = 'none';
+    $('continueBtn').style.display = '';
+    $('newPlayerFields').style.display = 'none';
+    $('homeTitle').innerHTML = `Welcome back, ${state.childName || 'Princess'}.<small>Your next star is already waiting in the sky.</small>`;
+  } else {
+    $('beginBtn').style.display = '';
+    $('continueBtn').style.display = 'none';
+    $('newPlayerFields').style.display = '';
+    $('homeTitle').innerHTML = `A gentler beginning for the kingdom.<small>Write one name, and the fairy tale will open.</small>`;
   }
-
-  const unresolvedWeakQuestions = [];
-  weakCodes.forEach(code=>{
-    const spell = DB.spellsByCode[code];
-    const pool = prioritizeWrongs(DB.questionCacheBySpellId[spell?.id] || [], code)
-      .filter(q=>!usedIds.has(q.id));
-    pool.forEach(q=>unresolvedWeakQuestions.push(enrichQuestion(q, code, 'review')));
-  });
-
-  const targetReviewAdds = Math.min(3, unresolvedWeakQuestions.length);
-  for(let i=0; i<targetReviewAdds && selected.length < 12; i++){
-    const q = unresolvedWeakQuestions[i];
-    if(!q || usedIds.has(q.id)) continue;
-    usedIds.add(q.id); selected.push(q);
-  }
-
-  if(selected.length < 12){
-    const fallbackCodes = [...new Set([...allCodes, ...Object.keys(DB.spellsByCode)])];
-    for(const code of fallbackCodes){
-      const spell = DB.spellsByCode[code];
-      const pool = shuffle(DB.questionCacheBySpellId[spell?.id] || []).filter(q=>!usedIds.has(q.id));
-      for(const q of pool){
-        usedIds.add(q.id);
-        selected.push(enrichQuestion(q, code, plans.find(p=>p.spell_code===code)?.role || 'review'));
-        if(selected.length >= 12) break;
-      }
-      if(selected.length >= 12) break;
-    }
-  }
-
-  if(!selected.length) throw new Error('This level has no active questions in Supabase yet.');
-  return sortQuestionsForJourney(selected).slice(0,12);
-}
-async function buildSpellPracticeQuestions(spellCode){
-  const spell = DB.spellsByCode[spellCode];
-  if(!spell) return [];
-  await fetchQuestionsForSpells([spell.id]);
-  const all = DB.questionCacheBySpellId[spell.id] || [];
-  const unresolved = prioritizeWrongs(all, spellCode);
-  const acc = accuracyFor(spellCode);
-  const allowed = acc < 50 ? ['concept','guided'] : acc < 80 ? ['guided','practice'] : ['practice','challenge','guided'];
-  const filtered = unresolved.filter(q=>allowed.includes(q.difficulty));
-  const pool = filtered.length ? filtered : unresolved;
-  return pool.slice(0, 12).map(q=>enrichQuestion(q, spellCode, 'review'));
+  $('nextHint').textContent = `Next stop: Level ${levelNo}${state.levels[levelNo-1] ? ' · ' + state.levels[levelNo-1].title : ''}`;
+  $('mapSub').textContent = saveExists ? `Your next main story stop is Level ${levelNo}. Older spells will return, and new ones will arrive gently.` : `Start the story to wake the first bridge. Older spells return often, and new ones appear slowly.`;
+  $('saveMode').textContent = state.cloudSource
+    ? `☁️ Cloud save is active. This account can reopen the same story automatically.`
+    : `☁️ Sign in to make cloud save automatic.`;
 }
 function renderMap(){
-  show('mapScreen');
-  qs('mapTitle').textContent = `${heroDisplayName()}'s Sky Quest Map`;
-  const chapterCount = new Set(DB.levels.map(l=>l.chapter_no)).size;
-  qs('mapSub').textContent = `${heroDisplayName()} can travel through ${DB.levels.length} glowing story stops across ${chapterCount} fairy chapters. Older spells keep spiraling back, new spells enter gently, and every few stops a real AMC 8 Bonus Boss appears with extra reward stars.`;
-  const nextPlans = DB.plansByLevelNo[S.unlockedLevelNo] || [];
-  const newSpells = nextPlans.filter(p=>p.role==='new_intro').map(p=>spellName(p.spell_code));
-  const nextBonus = bonusBossForLevel(S.unlockedLevelNo);
-  qs('mapSkillChipWrap').innerHTML = [
-    ...(newSpells.length ? newSpells.map(x=>`<span class="tag">✨ ${escapeHtml(x)}</span>`) : ['<span class="tag">🌙 Spiral review ahead</span>']),
-    ...(nextBonus ? [`<span class="tag">👑 Bonus Boss · AMC ${nextBonus.boss.year} #${nextBonus.boss.problem_no}</span>`] : [])
-  ].join('');
-  const wrap = qs('nodesWrap');
-  const rows = chunk(DB.levels, 3);
-  wrap.innerHTML = rows.map((row, idx)=>`<div class="node-row ${idx%2?'reverse':''}">${row.map(level=>nodeHtml(level)).join('')}</div>`).join('');
-  DB.levels.forEach(level=>{ const btn = qs(`level-${level.level_no}`); if(!btn) return; const unlocked = level.level_no <= S.unlockedLevelNo; if(unlocked) btn.addEventListener('click', ()=>startLevel(level.level_no)); });
-  qs('mapTravelerImg').src = IMAGES.normal;
-  const nextLevel = DB.levelsByNo[S.unlockedLevelNo];
-  const introNames = newIntroSpellsForLevel(S.unlockedLevelNo).map(spellName);
-  const bonus = bonusBossForLevel(S.unlockedLevelNo);
-  qs('mapTravelerText').textContent = nextLevel ? `${heroDisplayName()} is standing near Level ${S.unlockedLevelNo}: ${nextLevel.title}. ${introNames.length ? 'A new spell is waiting: ' + introNames.join(', ') + '. ' : 'This stop is mainly spiral review. '}${bonus ? 'A golden Bonus Boss seal nearby points to AMC ' + bonus.boss.year + ' Problem ' + bonus.boss.problem_no + '.' : ''}` : `${heroDisplayName()} has reached the end of the sky road.`;
-  updateStats();
-}
-function nodeHtml(level){
-  const unlocked = level.level_no <= S.unlockedLevelNo;
-  const stars = S.levelStars[level.level_no] || 0;
-  const bonus = bonusBossForLevel(level.level_no);
-  return `<div class="node"><button type="button" id="level-${level.level_no}" class="node-btn ${unlocked?'':'locked'} ${stars? 'done':''}"><span class="node-num">${level.level_no}</span></button><div class="node-stars">${'⭐'.repeat(stars)}${'☆'.repeat(Math.max(0,3-stars))}</div><div class="node-label">${escapeHtml(level.title)}</div><div class="node-tag">${level.is_boss?'Boss Gate':'Story Stop'}</div>${bonus?`<div class="node-bonus">👑 AMC Bonus</div>`:''}</div>`;
-}
-async function startLevel(levelNo){
-  const level = DB.levelsByNo[levelNo];
-  if(!level) return;
-  S.currentLevelNo = levelNo; S.reviewMode = false; S.practiceSpellCode = null;
-  saveLocal(); updateStats();
-  try{
-    currentQuestions = await buildLevelQuestions(levelNo);
-    if(!currentQuestions.length) throw new Error('No questions available for this level yet.');
-    qIndex = 0; score = 0; qLocked = false;
-    show('gameScreen');
-    qs('levelEnd').classList.add('hidden');
-    qs('levelTitlePill').textContent = `Level ${level.level_no}`;
-    qs('qTotal').textContent = currentQuestions.length;
-    qs('qScore').textContent = '0';
-    qs('levelStoryTitle').textContent = level.title;
-    qs('levelStoryText').textContent = level.story_text.replaceAll('{hero}', heroDisplayName());
-    renderQuestion();
-    const firstNew = newIntroSpellsForLevel(levelNo).find(code=>!S.seenIntroSpells[code]);
-    if(firstNew){ S.seenIntroSpells[firstNew] = true; saveLocal(); openLessonModal(firstNew); }
-  }catch(err){
-    console.error(err);
-    alert(err.message || 'This level could not load its questions yet.');
-  }
-}
-async function startSpellPractice(spellCode=null){
-  const chosen = spellCode || currentSpellCode || topWeakSpellCode();
-  if(!chosen){ alert('No spell needs practice yet.'); return; }
-  currentQuestions = await buildSpellPracticeQuestions(chosen);
-  if(!currentQuestions.length){ alert('There are no practice questions for this spell in Supabase yet.'); return; }
-  S.reviewMode = true; S.practiceSpellCode = chosen; S.currentLevelNo = S.currentLevelNo || 1; saveLocal();
-  qIndex = 0; score = 0; qLocked = false;
-  show('gameScreen');
-  qs('levelEnd').classList.add('hidden');
-  qs('levelTitlePill').textContent = 'Spell Practice';
-  qs('qTotal').textContent = currentQuestions.length;
-  qs('qScore').textContent = '0';
-  qs('levelStoryTitle').textContent = `${spellName(chosen)} Practice`;
-  qs('levelStoryText').textContent = `${heroDisplayName()} opens one spell page and practices just this magic. Saved mistakes return first, then fresh questions from the same spell appear until the spell reaches 100% accuracy.`;
-  renderQuestion();
-}
-function topWeakSpellCode(){
-  return Object.keys(S.topicStats).sort((a,b)=>accuracyFor(a)-accuracyFor(b))[0] || DB.spells[0]?.code || null;
-}
-function renderQuestion(){
-  const q = currentQuestions[qIndex]; if(!q) return;
-  qLocked = false; currentSpellCode = q.spell_code; currentSpellLessonExpanded = false;
-  qs('qCounter').textContent = String(qIndex + 1); qs('qScore').textContent = String(score);
-  qs('progressFill').style.width = `${((qIndex)/currentQuestions.length)*100}%`;
-  qs('princessStateImg').src = princessImage('checking');
-  qs('princessStateText').textContent = `${heroDisplayName()} is reading carefully.`;
-  qs('qType').textContent = q.spell_name;
-  qs('qText').textContent = q.stem;
-  qs('qSub').textContent = q.story_context || '';
-  qs('resultBox').className = 'result'; qs('resultBox').textContent='';
-  qs('explainBox').className = 'explain'; qs('explainBox').textContent='';
-  qs('knightBox').className = 'knight-box'; qs('knightTalk').textContent=''; qs('resourceLinks').innerHTML='';
-  qs('nextBtn').classList.add('hidden');
-  if(q.question_type === 'multiple_choice'){
-    const options = [q.option_a,q.option_b,q.option_c,q.option_d].filter(Boolean);
-    qs('qArea').innerHTML = `<div class="options">${options.map(opt=>`<div class="opt" data-value="${escapeHtml(opt)}"><div class="opt-key">✦</div><div>${escapeHtml(opt)}</div></div>`).join('')}</div>`;
-    [...qs('qArea').querySelectorAll('.opt')].forEach(el=>el.addEventListener('click',()=>{ if(qLocked) return; [...qs('qArea').querySelectorAll('.opt')].forEach(x=>x.classList.remove('selected')); el.classList.add('selected'); }));
-  }else{
-    qs('qArea').innerHTML = `<input id="typedAnswer" class="input-answer" placeholder="Type your answer here" />`;
-  }
-}
-function submittedAnswer(){
-  const q = currentQuestions[qIndex];
-  if(q.question_type === 'multiple_choice') return qs('qArea').querySelector('.opt.selected')?.dataset.value || '';
-  return qs('typedAnswer')?.value || '';
-}
-function isCorrect(q, raw){ return normalizeAnswer(raw) === normalizeAnswer(q.correct_answer); }
-async function checkAnswer(){
-  const q = currentQuestions[qIndex];
-  const raw = submittedAnswer();
-  if(!String(raw).trim()){ alert('Please choose or type an answer first.'); return; }
-  const ok = isCorrect(q, raw); qLocked = true;
-  const stat = S.topicStats[q.spell_code] || {attempts:0, correct:0};
-  stat.attempts += 1; if(ok) stat.correct += 1; S.topicStats[q.spell_code] = stat;
-  S.reviewLog.unshift({level:S.currentLevelNo, spell_code:q.spell_code, ok, prompt:q.stem}); S.reviewLog = S.reviewLog.slice(0,50);
-  if(ok){
-    score += 1;
-    if(S.wrongBook[q.spell_code]) S.wrongBook[q.spell_code] = S.wrongBook[q.spell_code].map(x=>x.question_id===q.id ? {...x, resolved:true} : x);
-  }else{
-    if(!S.wrongBook[q.spell_code]) S.wrongBook[q.spell_code] = [];
-    const existing = S.wrongBook[q.spell_code].find(x=>x.question_id===q.id);
-    if(existing){ existing.mistake_count = (existing.mistake_count||1)+1; existing.last_wrong_at = new Date().toISOString(); existing.resolved = false; }
-    else S.wrongBook[q.spell_code].push({question_id:q.id, spell_id:q.spell_id, mistake_count:1, last_wrong_at:new Date().toISOString(), resolved:false});
-  }
-  saveLocal(); updateStats();
-  qs('resultBox').className = `result show ${ok ? 'good':'bad'}`;
-  qs('resultBox').textContent = ok ? 'Correct! A sleeping star glows brighter.' : 'Not yet. Sir Knight can help with this spell.';
-  qs('explainBox').className = 'explain show'; qs('explainBox').textContent = q.explanation || '';
-  qs('princessStateImg').src = princessImage(ok ? 'good':'bad');
-  qs('princessStateText').textContent = ok ? `${heroDisplayName()} solved it with courage.` : `${heroDisplayName()} is learning this spell more slowly.`;
-  if(q.question_type === 'multiple_choice'){
-    [...qs('qArea').querySelectorAll('.opt')].forEach(el=>{
-      if(normalizeAnswer(el.dataset.value)===normalizeAnswer(q.correct_answer)) el.classList.add('correct');
-      if(normalizeAnswer(el.dataset.value)===normalizeAnswer(raw) && !ok) el.classList.add('wrong');
-    });
-  }
-  qs('qScore').textContent = String(score); qs('nextBtn').classList.remove('hidden');
-  await syncAttempt(q, ok, raw);
-  if(!ok) showKnight(q.spell_code, true);
-}
-function lessonForSpell(code){
-  const spell = DB.spellsByCode[code];
-  if(!spell) return null;
-  return (DB.lessonsBySpellId[spell.id] || [])[0] || null;
-}
-function showKnight(code, fromMistake=false){
-  const lesson = lessonForSpell(code);
-  qs('knightBox').className = 'knight-box show';
-  qs('knightTalk').textContent = lesson?.knight_explanation_short || `Think about the meaning of ${spellName(code)} before calculating.`;
-  if(fromMistake && lesson?.common_mistakes) qs('knightTalk').textContent += ` Watch out for this: ${lesson.common_mistakes}`;
-  const links = [];
-  if(lesson?.khan_url) links.push({label: lesson.resource_title || 'Khan Academy', url: lesson.khan_url});
-  if(lesson?.youtube_url) links.push({label: 'YouTube', url: lesson.youtube_url});
-  qs('resourceLinks').innerHTML = links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener noreferrer">📘 ${escapeHtml(l.label)}</a>`).join('');
-}
-async function askKnight(){ const q=currentQuestions[qIndex]; showKnight(q.spell_code, false); }
-function nextQuestion(){ if(qIndex < currentQuestions.length - 1){ qIndex += 1; renderQuestion(); } else finishLevel(); }
-async function finishLevel(){
-  qs('progressFill').style.width = '100%';
-  const bonus = bonusBossForLevel(S.currentLevelNo);
-  if(bonus){
-    qs('bonusBossPanel').classList.remove('hidden');
-    qs('bonusBossTitle').textContent = `Bonus Boss · AMC ${bonus.boss.year} Problem ${bonus.boss.problem_no}`;
-    qs('bonusBossText').textContent = bonus.boss.why_it_fits || 'Sir Knight found a real AMC 8 challenge for this stop.';
-  }else{
-    qs('bonusBossPanel').classList.add('hidden');
-  }
-  qs('levelEnd').classList.remove('hidden');
-  const stars = score >= 11 ? 3 : score >= 8 ? 2 : score >= 5 ? 1 : 0;
-  qs('starRow').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
-  if(S.reviewMode){
-    const spell = S.practiceSpellCode;
-    qs('endSummary').textContent = `${heroDisplayName()} answered ${score} of ${currentQuestions.length} questions correctly in Spell Practice.`;
-    qs('newLearningText').textContent = `This was a focused practice set for ${spellName(spell)}.`;
-    qs('adaptiveText').textContent = mastered(spell) ? `${spellName(spell)} is now mastered with 100% accuracy.` : `${spellName(spell)} will keep returning until every recorded attempt is correct.`;
-    qs('reviewList').innerHTML = (S.wrongBook[spell]||[]).filter(x=>!x.resolved).length ? `<li>${escapeHtml(spellName(spell))} still has saved mistakes in the Spell Book.</li>` : `<li>Beautiful work. There are no unresolved mistakes saved for this spell right now.</li>`;
-  } else {
-    S.levelStars[S.currentLevelNo] = Math.max(S.levelStars[S.currentLevelNo] || 0, stars);
-    S.totalStars = calcTotalStars();
-    if(S.currentLevelNo >= S.unlockedLevelNo && S.unlockedLevelNo < DB.levels.length) S.unlockedLevelNo = S.currentLevelNo + 1;
-    const plans = DB.plansByLevelNo[S.currentLevelNo] || [];
-    const newOnes = plans.filter(p=>p.role==='new_intro').map(p=>spellName(p.spell_code));
-    qs('endSummary').textContent = `${heroDisplayName()} answered ${score} of ${currentQuestions.length} questions correctly.`;
-    const bonusReward = bonusBossForLevel(S.currentLevelNo)?.link?.reward_stars || 0;
-    qs('rewardExplainText').textContent = `Level stars: 3 stars for 11–12 correct, 2 stars for 8–10, 1 star for 5–7, and 0 below 5.${bonusReward ? ` This stop also has an AMC Bonus Boss worth +${bonusReward} extra star${bonusReward>1?'s':''}.` : ''}`;
-    qs('newLearningText').textContent = newOnes.length ? `New spell focus in this stop: ${newOnes.join(', ')}.` : 'This stop mainly spiraled earlier spells back for review.';
-    const weakest = Object.keys(S.topicStats).sort((a,b)=>accuracyFor(a)-accuracyFor(b)).slice(0,4).map(spellName);
-    qs('adaptiveText').textContent = weakest.length ? `Next time, the journey will quietly bring back: ${weakest.join(', ')}.` : 'No weak spells are standing out right now.';
-    const wrongHere = currentQuestions.filter(q=>!isQuestionResolvedNow(q)).slice(0,6);
-    qs('reviewList').innerHTML = wrongHere.length ? wrongHere.map(q=>`<li><strong>${escapeHtml(spellName(q.spell_code))}:</strong> ${escapeHtml(q.stem)}</li>`).join('') : '<li>Beautiful work. There were no unresolved mistakes in this level.</li>';
-    await syncLevelProgress(stars);
-  }
-  saveLocal(); updateStats();
-}
-function isQuestionResolvedNow(q){
-  const saved = (S.wrongBook[q.spell_code]||[]).find(x=>x.question_id===q.id);
-  return saved ? !!saved.resolved : true;
-}
-async function syncAttempt(q, ok, selectedAnswer){
-  if(!S.playerId) return;
-  const spellId = DB.spellsByCode[q.spell_code]?.id;
-  const levelId = DB.levelsByNo[S.currentLevelNo]?.id || null;
-  try{
-    await upsertRows('player_spell_stats', [{
-      player_id: S.playerId,
-      spell_id: spellId,
-      attempts: S.topicStats[q.spell_code].attempts,
-      correct: S.topicStats[q.spell_code].correct,
-      accuracy: accuracyFor(q.spell_code),
-      mastered: mastered(q.spell_code),
-      last_practiced_at: new Date().toISOString()
-    }], 'player_id,spell_id');
-    await api('player_question_attempts', { method:'POST', body: JSON.stringify([{ player_id:S.playerId, level_id:levelId, question_id:q.id, spell_id:spellId, is_correct:ok, selected_answer:String(selectedAnswer) }]) });
-    if(ok){
-      const saved = (S.wrongBook[q.spell_code]||[]).find(x=>x.question_id===q.id);
-      if(saved){
-        await upsertRows('player_wrong_questions', [{ player_id:S.playerId, question_id:q.id, spell_id:spellId, mistake_count:saved.mistake_count||1, last_wrong_at:saved.last_wrong_at || new Date().toISOString(), resolved:true }], 'player_id,question_id');
-      }
-    } else {
-      const saved = (S.wrongBook[q.spell_code]||[]).find(x=>x.question_id===q.id);
-      await upsertRows('player_wrong_questions', [{ player_id:S.playerId, question_id:q.id, spell_id:spellId, mistake_count:saved?.mistake_count||1, last_wrong_at:new Date().toISOString(), resolved:false }], 'player_id,question_id');
+  const layer = $('nodeLayer');
+  layer.innerHTML = '';
+  const unlocked = unlockedCount(state.levels, state.progress);
+  const nextNo = nextPlayableLevel(state.levels, state.progress);
+  state.levels.forEach(level => {
+    const no = level.level_no, pos = posForLevel(no), stars = (state.progress[no]?.stars || 0), unlockedNow = no <= unlocked, active = no === nextNo, done = !!state.progress[no]?.completed;
+    const div = document.createElement('div');
+    div.className = `node ${done ? 'done':''} ${unlockedNow ? '' : 'locked'} ${active ? 'active':''}`;
+    div.style.left = pos.x + '%'; div.style.top = pos.y + '%';
+    const starStr = stars ? '⭐'.repeat(stars) : '☆☆☆';
+    const hasBonus = [4,8,12,16,20,24,28,32,36].includes(no);
+    div.innerHTML = `${active ? `<img class="map-princess" src="https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/4.png" alt="Princess pin" style="left:50%;top:-8px">` : ''}
+      <button class="node-btn" ${!unlockedNow ? 'disabled' : ''}>${no}</button>
+      <div class="stars">${starStr}</div>
+      <div class="name">${level.title}</div>
+      <div class="tag">${done ? 'Completed' : unlockedNow ? 'Open' : 'Locked'}</div>
+      ${hasBonus ? `<div class="bonus">👑 AMC Bonus</div>` : ''}`;
+    if (unlockedNow){
+      div.querySelector('.node-btn').addEventListener('click', () => {
+        alert(`This opens Level ${no}: ${level.title}.\n\nThis version focuses on cloud save, automatic profile loading, and the fairy map shell.`);
+      });
     }
-    setSync('☁️ Story saved');
-  }catch(err){ console.error(err); setSync('☁️ Local story only', false); }
-}
-async function syncLevelProgress(stars){
-  if(!S.playerId) return;
-  const levelId = DB.levelsByNo[S.currentLevelNo]?.id; if(!levelId) return;
-  try{
-    await upsertRows('player_level_progress', [{ player_id:S.playerId, level_id:levelId, best_score:score, stars, completed:true }], 'player_id,level_id');
-    setSync('☁️ Story saved');
-  }catch(err){ console.error(err); setSync('☁️ Local story only', false); }
+    layer.appendChild(div);
+  });
 }
 function renderSpellBook(){
-  show('reviewScreen');
-  qs('wrongBookSub').textContent = `Each spell has its own page. A spell is mastered only when its accuracy reaches 100%.`;
-  const orderedSpells = [...DB.spells].sort((a,b)=>{ const aw=(S.wrongBook[a.code]||[]).filter(x=>!x.resolved).length; const bw=(S.wrongBook[b.code]||[]).filter(x=>!x.resolved).length; if(bw!==aw) return bw-aw; return accuracyFor(a.code)-accuracyFor(b.code) || a.display_order-b.display_order; });
-  const cards = orderedSpells.map(sp=>{
-    const stat = S.topicStats[sp.code] || {attempts:0, correct:0};
-    const wrongCount = (S.wrongBook[sp.code] || []).filter(x=>!x.resolved).length;
-    const acc = accuracyFor(sp.code);
-    return `<div class="topic-card"><strong>${escapeHtml(sp.name)}</strong><div style="font-size:13px;line-height:1.65">Accuracy: <strong>${acc}%</strong><br/>Attempts: ${stat.attempts}<br/>Saved mistakes: ${wrongCount}</div><div class="cta-row" style="margin-top:10px"><button class="btn btn-secondary btn-mini" data-open-spell="${sp.code}">${mastered(sp.code)?'Mastered ✨':'Open Spell'}</button></div></div>`;
-  }).join('');
-  qs('wrongTopicGrid').innerHTML = cards;
-  qs('wrongItemList').innerHTML = orderedSpells.map(sp=>{
-    const unresolved = (S.wrongBook[sp.code] || []).filter(x=>!x.resolved).slice(0,4);
-    return `<div class="review-cluster"><h4>${escapeHtml(sp.name)}</h4><p>${mastered(sp.code)?'Mastered with 100% accuracy.':'Still learning.'}</p>${unresolved.length?`<ul class="cluster-list">${unresolved.map(x=>`<li>Saved mistake #${x.mistake_count}</li>`).join('')}</ul>`:'<p style="margin-top:6px">No saved mistakes right now.</p>'}</div>`;
-  }).join('');
-  qs('wrongTopicGrid').querySelectorAll('[data-open-spell]').forEach(btn=>btn.addEventListener('click',()=>openSpellModal(btn.dataset.openSpell)));
-  updateStats();
+  const list = $('spellList');
+  const stats = [...state.spellStats].sort((a,b)=> (a.mastered===b.mastered ? (a.accuracy||0)-(b.accuracy||0) : (a.mastered?1:-1)));
+  if (!stats.length){
+    list.innerHTML = `<p class="soft">Your spell pages will fill as soon as the princess answers questions and builds records in the kingdom.</p>`;
+    return;
+  }
+  list.innerHTML = stats.slice(0,12).map((s, idx) => `
+    <div style="border:1px solid var(--line);border-radius:20px;padding:14px 16px;margin-bottom:10px;background:#fffafc">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+        <strong style="color:var(--title)">Spell ${idx+1}</strong>
+        <span class="pill">${Math.round(s.accuracy || 0)}% ${s.mastered ? '· Mastered' : '· Learning'}</span>
+      </div>
+      <div class="soft" style="margin-top:8px">Correct ${s.correct || 0} / ${s.attempts || 0}</div>
+    </div>`).join('');
 }
-function openSpellModal(code){
-  currentSpellCode = code; currentSpellLessonExpanded = false;
-  const spell = DB.spellsByCode[code]; const stat = S.topicStats[code] || {attempts:0, correct:0};
-  const acc = accuracyFor(code); const lesson = lessonForSpell(code);
-  const unresolved = (S.wrongBook[code] || []).filter(x=>!x.resolved);
-  qs('spellModalTitle').textContent = spell?.name || 'Spell Page';
-  qs('spellModalSub').textContent = `This magic page shows mastery, saved mistakes, and guided help for ${spell?.name || code}.`;
-  qs('spellStatusBadge').textContent = mastered(code) ? 'Mastered' : 'Learning';
-  qs('spellAccuracy').textContent = `${acc}%`;
-  qs('spellCorrect').textContent = String(stat.correct || 0);
-  qs('spellAttempts').textContent = String(stat.attempts || 0);
-  qs('spellMistakes').textContent = String(unresolved.length);
-  qs('spellModalFill').style.width = `${Math.min(acc,100)}%`;
-  qs('spellMasteryNote').textContent = mastered(code) ? `${spell?.name} is mastered because every recorded attempt is correct.` : `${spell?.name} is still growing. This spell becomes mastered only at 100% accuracy.`;
-  qs('spellCoreRule').textContent = lesson?.concept_intro || `Sir Knight will add a concept note for ${spell?.name || code} here.`;
-  qs('spellKnightTalk').textContent = lesson?.knight_explanation_short || `Sir Knight says: name the spell first, then decide the operation calmly.`;
-  qs('spellStepList').innerHTML = (lesson?.step_by_step || '1. Read carefully. 2. Spot the numbers. 3. Choose the operation. 4. Check the answer.').split(/\s*\d+\.\s*/).filter(Boolean).map(x=>`<li>${escapeHtml(x.trim())}</li>`).join('');
-  qs('spellResourceNote').textContent = lesson?.resource_note || 'Open a public lesson whenever this spell feels new or sticky.';
-  qs('spellResourceLinks').innerHTML = [lesson?.khan_url ? `<a href="${lesson.khan_url}" target="_blank" rel="noopener noreferrer">📘 ${escapeHtml(lesson.resource_title || 'Khan Academy')}</a>` : '', lesson?.youtube_url ? `<a href="${lesson.youtube_url}" target="_blank" rel="noopener noreferrer">▶ YouTube</a>` : ''].join('');
-  qs('spellMistakeList').innerHTML = unresolved.length ? unresolved.map(x=>`<div class="spell-mistake">Saved mistake · tried ${x.mistake_count} time(s) · last seen ${new Date(x.last_wrong_at).toLocaleDateString()}</div>`).join('') : '<div class="spell-mistake">No unresolved mistakes are saved for this spell right now.</div>';
-  qs('spellModal').classList.add('show');
+async function loadCloudOrLocalProfile(){
+  const local = localLoad();
+  state.childName = local.childName || '';
+  if (state.childName) state.princessName = `Princess ${state.childName}`;
+  const { data:{ session } } = await supabase.auth.getSession();
+  state.session = session;
+  state.user = session?.user || null;
+  $('authLauncher').textContent = state.user ? '☁️ Signed In' : '☁️ Sign In';
+  state.cloudSource = !!state.user;
+
+  if (state.user){
+    const profile = await getUserProfile();
+    if (profile?.child_name){
+      state.childName = profile.child_name;
+      state.princessName = `Princess ${state.childName}`;
+      localSave({ childName: state.childName });
+    }
+  }
+  if (state.childName){
+    await ensurePlayer(state.childName);
+    await loadProgress();
+  }
+  updateHome();
+  renderMap();
+  renderSpellBook();
 }
-function closeSpellModal(){ qs('spellModal').classList.remove('show'); }
-function openLessonModal(code){
-  const spell = DB.spellsByCode[code];
-  const lesson = lessonForSpell(code);
-  qs('lessonModalTitle').textContent = `A New Spell Appears: ${spell?.name || code}`;
-  qs('lessonModalSub').textContent = `${heroDisplayName()} has reached the first stop for ${spell?.name || code}. Sir Knight opens a gentle lesson page before the questions begin.`;
-  qs('lessonConceptText').textContent = lesson?.concept_intro || `This is the first idea behind ${spell?.name || code}.`;
-  qs('lessonKnightText').textContent = lesson?.knight_explanation_long || lesson?.knight_explanation_short || `Sir Knight will guide this new spell one careful step at a time.`;
-  const steps = (lesson?.step_by_step || '1. Read the idea. 2. Watch the pattern. 3. Try an easy example. 4. Practice with care.').split(/\s*\d+\.\s*/).filter(Boolean);
-  qs('lessonStepList').innerHTML = steps.map(x=>`<li>${escapeHtml(x.trim())}</li>`).join('');
-  qs('lessonResourceNote').textContent = lesson?.resource_note || 'Open the public lesson if your child wants to see another explanation first.';
-  qs('lessonResourceLinks').innerHTML = [lesson?.khan_url ? `<a href="${lesson.khan_url}" target="_blank" rel="noopener noreferrer">📘 ${escapeHtml(lesson.resource_title || 'Khan Academy')}</a>` : '', lesson?.youtube_url ? `<a href="${lesson.youtube_url}" target="_blank" rel="noopener noreferrer">▶ YouTube</a>` : ''].join('');
-  qs('lessonModal').classList.add('show');
-  qs('lessonModal').setAttribute('aria-hidden','false');
+async function beginStory(){
+  const name = (($('childName').value || state.childName || '') + '').trim();
+  if (!name){ setStatus("Please enter the child's name first."); return; }
+  setStatus('Opening the story...');
+  await ensurePlayer(name);
+  await saveUserProfile(name);
+  await loadProgress();
+  updateHome();
+  renderMap();
+  setStatus(`Welcome, Princess ${name}. The first road is ready.`);
 }
-function closeLessonModal(){ qs('lessonModal').classList.remove('show'); qs('lessonModal').setAttribute('aria-hidden','true'); }
-function openBonusBoss(levelNo = S.currentLevelNo){
-  const bonus = bonusBossForLevel(levelNo);
-  if(!bonus) return;
-  S.lastBonusLevelNo = levelNo; saveLocal();
-  const boss = bonus.boss;
-  qs('bonusModalTitle').textContent = `AMC 8 Bonus Boss · ${boss.year} Problem ${boss.problem_no}`;
-  qs('bonusModalSub').textContent = `${heroDisplayName()} has reached a golden challenge gate at this story stop.`;
-  qs('bonusMetaPill').textContent = `AMC ${boss.year} · Problem ${boss.problem_no}`;
-  qs('bonusWhyText').textContent = boss.why_it_fits || '';
-  const tags = Array.isArray(boss.topic_tags) ? boss.topic_tags : String(boss.topic_tags||'').replace(/[{}]/g,'').split(',').filter(Boolean);
-  qs('bonusTagWrap').innerHTML = tags.map(t=>`<span>${escapeHtml(String(t).replaceAll('_',' '))}</span>`).join('');
-  qs('bonusHintShort').textContent = boss.knight_hint_short || 'Sir Knight suggests a calm first look before calculating anything.';
-  qs('bonusHintLong').textContent = boss.knight_hint_long || 'Read the real AMC 8 problem and see whether a picture, a table, or a smaller example helps first.';
-  qs('bonusSourceLink').href = boss.source_url;
-  const rewardStars = bonus.link?.reward_stars || 2;
-  qs('bonusRewardStars').textContent = '⭐'.repeat(rewardStars);
-  const claimed = hasClaimedBonus(levelNo);
-  const rewardBox = qs('bonusRewardStatus');
-  rewardBox.className = `reward-status ${claimed ? 'win' : 'wait'}`;
-  rewardBox.textContent = claimed ? `Reward already claimed: +${rewardStars} bonus star${rewardStars>1?'s':''}` : `Solve the real problem, then claim +${rewardStars} bonus star${rewardStars>1?'s':''}.`;
-  qs('claimBonusBossBtn').textContent = claimed ? 'Reward Already Claimed' : 'I Solved It · Claim Reward';
-  qs('claimBonusBossBtn').disabled = claimed;
-  qs('claimBonusBossBtn').onclick = ()=>claimBonusBoss(levelNo);
-  qs('bonusPracticeSpellBtn').onclick = ()=>{
-    const firstTag = tags[0] || '';
-    const mapping = {decimals:'decimals_intro', fraction_simplifying:'simplifying_fractions', arithmetic:'mixed_operations', order_of_operations:'mixed_operations', area:'area_perimeter', geometry:'area_perimeter', visual_reasoning:'area_perimeter', reflection:'graph_reading', logic:'graph_reading', data:'graph_reading', table_reasoning:'graph_reading', estimation:'mixed_operations', number_sense:'multi_digit_multiplication', patterns:'multiples', coordinates:'graph_reading', factors:'factors', reasoning:'simple_variables'};
-    const code = mapping[firstTag] || 'mixed_operations';
-    closeBonusBoss();
-    startSpellPractice(code);
-  };
-  qs('bonusModal').classList.add('show');
-  qs('bonusModal').setAttribute('aria-hidden','false');
-}
-function claimBonusBoss(levelNo = S.lastBonusLevelNo || S.currentLevelNo){
-  const bonus = bonusBossForLevel(levelNo);
-  if(!bonus || hasClaimedBonus(levelNo)) return;
-  const reward = bonus.link?.reward_stars || 2;
-  S.bonusBossWins[levelNo] = reward;
-  S.totalStars = calcTotalStars();
-  saveLocal(); updateStats();
-  openBonusBoss(levelNo);
-}
-function closeBonusBoss(){ qs('bonusModal').classList.remove('show'); qs('bonusModal').setAttribute('aria-hidden','true'); }
-function expandSpellKnight(){
-  const lesson = lessonForSpell(currentSpellCode);
-  if(!lesson) return;
-  currentSpellLessonExpanded = !currentSpellLessonExpanded;
-  qs('spellKnightTalk').textContent = currentSpellLessonExpanded ? (lesson.knight_explanation_long || lesson.knight_explanation_short || '') : (lesson.knight_explanation_short || '');
-}
-function openGuide(){ qs('guideModal').classList.add('show'); qs('guideModal').setAttribute('aria-hidden','false'); }
-function closeGuide(){ qs('guideModal').classList.remove('show'); qs('guideModal').setAttribute('aria-hidden','true'); }
-function initFX(){
-  const spark=qs('sparkles'); for(let i=0;i<36;i++){ const s=document.createElement('div'); s.className='star'; s.style.left=Math.random()*100+'vw'; s.style.top=Math.random()*100+'vh'; s.style.animationDuration=(2+Math.random()*4)+'s'; s.style.animationDelay=(-Math.random()*5)+'s'; s.style.transform=`scale(${.7+Math.random()*1.4})`; spark.appendChild(s); }
-  const clouds=qs('clouds'); for(let i=0;i<8;i++){ const c=document.createElement('div'); c.className='cloud'; c.style.width=(70+Math.random()*120)+'px'; c.style.height=(24+Math.random()*24)+'px'; c.style.top=(5+Math.random()*45)+'vh'; c.style.left=(-20-Math.random()*20)+'vw'; c.style.animationDuration=(28+Math.random()*28)+'s'; c.style.animationDelay=(-Math.random()*30)+'s'; clouds.appendChild(c); }
-  const petals=qs('petals'); for(let i=0;i<18;i++){ const p=document.createElement('div'); p.className='petal'; p.textContent=['✿','❀','✦'][i%3]; p.style.left=Math.random()*100+'vw'; p.style.animationDuration=(8+Math.random()*8)+'s'; p.style.animationDelay=(-Math.random()*10)+'s'; petals.appendChild(p); }
+function continueStory(){
+  if (!state.childName) return;
+  setStatus(`Continuing the story for Princess ${state.childName}.`);
+  document.querySelector('.map-panel').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-qs('playerName').addEventListener('input', updateWelcome);
-qs('guideBtnMap').addEventListener('click', openGuide);
-qs('guideModalClose').addEventListener('click', closeGuide);
-qs('guideGotItBtn').addEventListener('click', closeGuide);
-qs('guideModal').addEventListener('click', e=>{ if(e.target.id==='guideModal') closeGuide(); });
-qs('saveProfileBtn').addEventListener('click', async()=>{ if(await ensurePlayer()) renderMap(); });
-qs('openMapBtn').addEventListener('click', async()=>{ if(!S.playerName && !qs('playerName').value.trim()){ alert("Please type your child's name first."); return; } if(await ensurePlayer()) renderMap(); });
-qs('wrongBookWelcomeBtn').addEventListener('click', async()=>{ if(!S.playerName && !qs('playerName').value.trim()){ alert("Please type your child's name first."); return; } if(await ensurePlayer()) renderSpellBook(); });
-qs('wrongBookTopBtn').addEventListener('click', renderSpellBook);
-qs('wrongBookBackBtn').addEventListener('click', renderMap);
-qs('practiceWrongBtn').addEventListener('click', ()=>startSpellPractice());
-qs('spellModalClose').addEventListener('click', closeSpellModal);
-qs('spellBackBookBtn').addEventListener('click', closeSpellModal);
-qs('spellPracticeBtn').addEventListener('click', ()=>{ closeSpellModal(); startSpellPractice(currentSpellCode); });
-qs('spellKnightBtn').addEventListener('click', expandSpellKnight);
-qs('spellModal').addEventListener('click', e=>{ if(e.target.id==='spellModal') closeSpellModal(); });
-qs('lessonModalClose').addEventListener('click', closeLessonModal);
-qs('lessonSkipBtn').addEventListener('click', closeLessonModal);
-qs('lessonBeginBtn').addEventListener('click', closeLessonModal);
-qs('lessonModal').addEventListener('click', e=>{ if(e.target.id==='lessonModal') closeLessonModal(); });
-qs('checkBtn').addEventListener('click', checkAnswer);
-qs('nextBtn').addEventListener('click', nextQuestion);
-qs('knightBtn').addEventListener('click', askKnight);
-qs('mapBtn').addEventListener('click', renderMap);
-qs('openBonusBossBtn').addEventListener('click', ()=>openBonusBoss());
-qs('bonusModalClose').addEventListener('click', closeBonusBoss);
-qs('bonusModalBackBtn').addEventListener('click', closeBonusBoss);
-qs('bonusModal').addEventListener('click', e=>{ if(e.target.id==='bonusModal') closeBonusBoss(); });
-qs('backMapBtn').addEventListener('click', renderMap);
-qs('nextLevelBtn').addEventListener('click', ()=>{ if(S.reviewMode) renderSpellBook(); else renderMap(); });
-
-(async function init(){
-  loadLocal(); refreshImages(); initFX();
-  if(S.playerName){ qs('playerName').value = S.playerName; }
-  updateWelcome(); updateStats(); show('welcomeScreen');
-  const ok = await loadContent();
-  if(ok && S.playerName){ await ensurePlayer(); updateWelcome(); updateStats(); }
-})();
+$('beginBtn').addEventListener('click', beginStory);
+$('continueBtn').addEventListener('click', continueStory);
+$('openMapBtn').addEventListener('click', () => document.querySelector('.map-panel').scrollIntoView({behavior:'smooth'}));
+$('guideBtn').addEventListener('click', () => $('guideModal').classList.add('open'));
+$('spellBookBtn').addEventListener('click', () => $('spellModal').classList.add('open'));
+$('authLauncher').addEventListener('click', () => $('authModal').classList.add('open'));
+document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', () => $(btn.dataset.close).classList.remove('open')));
+$('sendMagicBtn').addEventListener('click', async () => {
+  const email = $('emailInput').value.trim();
+  if (!email){ $('authStatus').textContent = 'Please enter an email address first.'; return; }
+  $('authStatus').textContent = 'Sending magic link...';
+  const { error } = await supabase.auth.signInWithOtp({ email, options:{ emailRedirectTo: window.location.href.split('#')[0] } });
+  $('authStatus').textContent = error ? error.message : 'Magic link sent. Open your email and come back to this page after signing in.';
+});
+supabase.auth.onAuthStateChange(async (_event, session) => {
+  state.session = session;
+  state.user = session?.user || null;
+  $('authLauncher').textContent = state.user ? '☁️ Signed In' : '☁️ Sign In';
+  state.cloudSource = !!state.user;
+  await loadCloudOrLocalProfile();
+});
+async function init(){
+  try{
+    await loadLevels();
+    await loadCloudOrLocalProfile();
+  }catch(err){
+    console.error(err);
+    setStatus('The kingdom could not load yet. Please check Supabase tables and try refreshing.');
+  }
+}
+init();
 </script>
-
 </body>
 </html>
