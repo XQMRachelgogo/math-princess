@@ -688,6 +688,16 @@ body{
         state.childName = row.child_name || '';
         state.princessName = row.princess_name || (state.childName ? `Princess ${state.childName}` : 'Hero Princess');
         localSave({ childName: state.childName });
+      } else {
+        const { data: profileData } = await state.client
+          .from('user_profiles')
+          .select('player_id, child_name')
+          .eq('user_id', state.user.id)
+          .maybeSingle();
+        if (profileData?.child_name) {
+          state.childName = profileData.child_name || '';
+          localSave({ childName: state.childName });
+        }
       }
     }
 
@@ -755,34 +765,44 @@ body{
     setStatus('Opening the story...');
     let row;
 
-    if (state.user) {
-      const { data, error } = await state.client.rpc('link_current_user_to_player', { p_child_name: name });
-      if (error || !data || !data.length) {
-        console.error(error);
-        setStatus('The story could not be linked to this account yet.');
-        return;
-      }
-      row = data[0];
-    } else {
-      const { data, error } = await state.client.rpc('get_or_create_player', { p_child_name: name });
-      if (error || !data || !data.length) {
-        console.error(error);
-        setStatus('The story could not be opened yet.');
-        return;
-      }
-      row = data[0];
+    const { data, error } = await state.client.rpc('get_or_create_player', { p_child_name: name });
+    if (error || !data || !data.length) {
+      console.error(error);
+      setStatus('The story could not be opened yet.');
+      return;
     }
+    row = data[0];
 
     state.playerId = row.player_id;
     state.childName = row.child_name;
     state.princessName = row.princess_name;
     localSave({ childName: state.childName });
 
+    if (state.user) {
+      const profilePayload = {
+        user_id: state.user.id,
+        player_id: state.playerId,
+        child_name: state.childName,
+        updated_at: new Date().toISOString()
+      };
+      const { error: profileError } = await state.client
+        .from('user_profiles')
+        .upsert(profilePayload, { onConflict: 'user_id' });
+      if (profileError) {
+        console.error(profileError);
+        setStatus('The story opened, but cloud linking is not ready yet. Your local save still works on this browser.');
+      }
+    }
+
     await loadPlayerState();
     applyTopbar();
     applyHome();
     renderMap();
-    setStatus(`Welcome, Princess ${state.childName}. The first road is ready.`);
+    if (!state.user) {
+      setStatus(`Welcome, Princess ${state.childName}. The first road is ready.`);
+    } else {
+      setStatus(`Welcome, Princess ${state.childName}. This account is now linked to the story.`);
+    }
     openLevelDetail(state.currentLevelNo);
   }
 
