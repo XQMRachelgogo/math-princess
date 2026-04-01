@@ -129,6 +129,7 @@ body{
 .princess-aura{position:absolute;inset:24px 18px 14px;background:radial-gradient(circle at 50% 50%, rgba(226,232,255,.96), rgba(221,221,252,.56) 55%, transparent 75%)}
 .hero-princess{position:relative;z-index:3;max-width:365px;max-height:410px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 18px 25px rgba(164,134,194,.22))}
 .hero-knight{position:absolute;right:4px;bottom:8px;z-index:4;width:132px;height:auto}
+.hero-cloud,.mountain,.forest,.lake,.village,.map-deco-label,.map-castle{opacity:.38}
 
 .modal-backdrop{
   position:fixed;inset:0;background:rgba(77,61,106,.34);display:none;place-items:center;z-index:100;padding:18px
@@ -152,22 +153,26 @@ body{
 .boss-btns,.modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 
 .map-shell{
-  position:relative;min-height:860px;border-radius:26px;overflow:hidden;border:1px solid var(--line);
+  position:relative;height:min(72vh,820px);border-radius:26px;overflow:auto;border:1px solid var(--line);
+  background:#fff;
+}
+.map-canvas{
+  position:relative;min-height:1200px;
   background:
     radial-gradient(circle at 78% 12%, rgba(255,255,255,.9) 0 58px, transparent 58px),
-    linear-gradient(180deg,#dff0ff 0%,#e9f6ff 22%,#d6efd7 22%,#dff3dd 56%,#f2e5cb 56%,#f5ead7 100%)
+    linear-gradient(180deg,#dff0ff 0%,#e9f6ff 22%,#d6efd7 22%,#dff3dd 56%,#f2e5cb 56%,#f5ead7 100%);
 }
-.map-shell::before{
+.map-canvas::before{
   content:"";position:absolute;inset:0;pointer-events:none;
   background:
     radial-gradient(circle at 16% 84%, rgba(254,241,246,.45) 0 180px, transparent 180px),
     radial-gradient(circle at 80% 66%, rgba(214,229,255,.38) 0 170px, transparent 170px),
-    linear-gradient(135deg, transparent 0 48%, rgba(255,255,255,.23) 48% 52%, transparent 52%)
+    linear-gradient(135deg, transparent 0 48%, rgba(255,255,255,.23) 48% 52%, transparent 52%);
 }
 .map-legend{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:14px}
-.map-road{position:absolute;left:50%;top:86px;transform:translateX(-50%);width:56%;height:690px}
+.map-road{position:absolute;left:50%;top:86px;transform:translateX(-50%);width:56%;height:1000px;z-index:1}
 .map-road svg{width:100%;height:100%}
-.map-layer{position:absolute;inset:0}
+.map-layer{position:absolute;inset:0;z-index:2}
 .map-node{
   position:absolute;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;
   display:grid;place-items:center;border:4px solid #fff;background:linear-gradient(180deg,#fff9fd,#f3eefb);
@@ -184,6 +189,7 @@ body{
 .map-starline{position:absolute;left:50%;top:calc(100% + 6px);transform:translateX(-50%);font-size:12px;color:var(--gold);letter-spacing:2px;white-space:nowrap}
 .map-bonus{position:absolute;left:50%;top:calc(100% + 24px);transform:translateX(-50%);font-size:10px;font-weight:900;color:#c26b9a;background:#fff1f8;border:1px solid #efcbe1;border-radius:999px;padding:4px 8px;white-space:nowrap}
 .map-princess{position:absolute;z-index:4;width:56px;height:auto;transform:translate(-50%,-92%)}
+.map-node-title{text-shadow:0 1px 0 rgba(255,255,255,.9), 0 0 10px rgba(255,255,255,.55)}
 .auth-box{display:grid;gap:12px}
 .auth-box input{width:100%;padding:16px 18px;border-radius:18px;border:1px solid var(--line);font:inherit;font-size:16px}
 .option{
@@ -213,7 +219,8 @@ body{
   .home-left{padding:22px}
   .home-title{font-size:42px}
   .grid2{grid-template-columns:1fr}
-  .map-shell{min-height:980px}
+  .map-shell{height:70vh}
+  .map-canvas{min-height:1180px}
 }
 </style>
 </head>
@@ -329,16 +336,18 @@ body{
       </div>
       <div class="pill" id="mapNextHint">Next stop: Level 1</div>
     </div>
-    <div class="map-shell">
-      <div class="map-road">
-        <svg viewBox="0 0 100 1000" preserveAspectRatio="none">
-          <path d="M50 20 C 15 80, 85 130, 50 190 S 18 300, 52 360 S 86 470, 50 540 S 18 650, 50 720 S 84 830, 52 900"
-                fill="none" stroke="#f5c3db" stroke-width="6" stroke-linecap="round"/>
-          <path d="M50 20 C 15 80, 85 130, 50 190 S 18 300, 52 360 S 86 470, 50 540 S 18 650, 50 720 S 84 830, 52 900"
-                fill="none" stroke="#ffffff" stroke-opacity=".75" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="1 18"/>
-        </svg>
+    <div id="mapShell" class="map-shell">
+      <div class="map-canvas">
+        <div class="map-road">
+          <svg viewBox="0 0 100 1000" preserveAspectRatio="none">
+            <path d="M50 20 C 15 80, 85 130, 50 190 S 18 300, 52 360 S 86 470, 50 540 S 18 650, 50 720 S 84 830, 52 900"
+                  fill="none" stroke="#f5c3db" stroke-width="6" stroke-linecap="round"/>
+            <path d="M50 20 C 15 80, 85 130, 50 190 S 18 300, 52 360 S 86 470, 50 540 S 18 650, 50 720 S 84 830, 52 900"
+                  fill="none" stroke="#ffffff" stroke-opacity=".75" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="1 18"/>
+          </svg>
+        </div>
+        <div id="mapLayer" class="map-layer"></div>
       </div>
-      <div id="mapLayer" class="map-layer"></div>
     </div>
   </div>
 </div>
@@ -624,6 +633,20 @@ body{
 
       layer.appendChild(node);
 
+      const title = document.createElement('div');
+      title.className = 'map-node-title';
+      title.textContent = level.title || `Level ${no}`;
+      title.style.position = 'absolute';
+      title.style.left = `${pos.x}%`;
+      title.style.top = `${pos.y + 4.4}%`;
+      title.style.transform = 'translateX(-50%)';
+      title.style.fontSize = '12px';
+      title.style.fontWeight = '900';
+      title.style.color = 'var(--title)';
+      title.style.whiteSpace = 'nowrap';
+      title.style.pointerEvents = 'none';
+      layer.appendChild(title);
+
       if (active) {
         const pin = document.createElement('img');
         pin.src = 'https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/4.png';
@@ -633,6 +656,14 @@ body{
         layer.appendChild(pin);
       }
     });
+
+    const shell = $('mapShell');
+    const activeNode = shell.querySelector('.map-node.active') || shell.querySelector('.map-node');
+    if (activeNode) {
+      requestAnimationFrame(() => {
+        activeNode.scrollIntoView({block:'center', inline:'center', behavior:'smooth'});
+      });
+    }
   }
 
   async function initClient() {
@@ -813,6 +844,10 @@ body{
     if (!state.levels.length) {
       try { await loadContentTables(); } catch (e) { console.error(e); }
     }
+    if (!state.levels.length) {
+      setStatus('The kingdom map is still loading. Please refresh once and try again.');
+      return;
+    }
     openMapModal();
   }
 
@@ -825,8 +860,8 @@ body{
     if (!state.levels.length) {
       try { await loadContentTables(); } catch (e) { console.error(e); }
     }
-    renderMap();
     $('mapModal').classList.add('open');
+    renderMap();
   }
 
   async function toggleAuth() {
