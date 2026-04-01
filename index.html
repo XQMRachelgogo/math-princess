@@ -517,20 +517,21 @@ body{
 
   function applyHome() {
     const saveExists = hasAnySave(state.progress);
+    const hasStory = !!state.playerId || !!state.childName;
     const displayName = state.childName ? `Princess ${state.childName}` : 'the princess';
     $('storyText').textContent = state.childName
       ? `Far above the Cloud-Castle Kingdom, sleeping stars are waiting for ${displayName}. She must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.`
       : `Far above the Cloud-Castle Kingdom, sleeping stars have gone dim. A young princess must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.`;
 
     $('storyQuote').textContent = state.childName
-      ? (saveExists ? `${displayName}'s story is ready to continue.` : `Tonight's tale belongs to ${displayName}.`)
+      ? ((saveExists || hasStory) ? `${displayName}'s story is ready to continue.` : `Tonight's tale belongs to ${displayName}.`)
       : `Tonight's tale is waiting for its princess.`;
 
     $('saveMode').textContent = state.user
       ? '☁️ Cloud save is active. This account can reopen the same story automatically.'
       : '☁️ Sign in to make cloud save automatic.';
 
-    if (saveExists) {
+    if (saveExists || hasStory) {
       $('homeTitle').innerHTML = `Welcome back, ${state.childName || 'Princess'}.<small>Your next star is waiting just beyond the next gate.</small>`;
       $('nameSection').classList.add('hidden');
       $('startBtn').classList.add('hidden');
@@ -803,13 +804,13 @@ body{
     } else {
       setStatus(`Welcome, Princess ${state.childName}. This account is now linked to the story.`);
     }
-    openLevelDetail(state.currentLevelNo);
+    openMapModal();
   }
 
   function continueJourney() {
     if (!state.levels.length) return;
     setStatus(`Continuing the story for Princess ${state.childName}.`);
-    openLevelDetail(state.currentLevelNo);
+    openMapModal();
   }
 
   async function openSpellBook() {
