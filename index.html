@@ -339,7 +339,7 @@ a{color:#7c67d6}
           <img id="wrongBookPrincessImg" alt="Princess" style="max-width:100%;width:auto;height:auto;max-height:240px;object-fit:contain;display:block" />
         </div>
         <div style="font-weight:900;font-size:20px;margin-bottom:8px;color:#7d4f86">How spells are mastered</div>
-        <div style="font-size:14px;line-height:1.78">Every skill is treated like a <strong>spell</strong>. The game tracks accuracy by spell, groups mistakes by topic, and keeps bringing that spell back until the accuracy reaches <strong>100%</strong>. Then the spell is marked as mastered.</div>
+        <div style="font-size:14px;line-height:1.78">Every skill is treated like a <strong>spell</strong>. The game tracks accuracy by spell, saves mistakes by topic, and quietly mixes those spells back into later levels until the accuracy reaches <strong>100%</strong>. Then the spell is marked as mastered.</div>
         <div class="sync-note" id="syncNote">The game can save spell progress in the browser and also sync it to Supabase, so mastery pages can follow the story across devices that use the same child name.</div>
       </div>
     </div>
@@ -403,6 +403,53 @@ a{color:#7c67d6}
             <h4>Helpful public lessons</h4>
             <div class="spell-note" id="spellResourceNote">Open a lesson when a new spell first appears or whenever review feels sticky.</div>
             <div id="spellResourceLinks" class="resource-links"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="lessonModal" class="spell-modal" aria-hidden="true">
+    <div class="spell-shell" style="max-width:900px">
+      <div class="spell-head">
+        <div>
+          <h2 class="spell-title" id="lessonModalTitle">A New Spell Appears</h2>
+          <p class="spell-sub" id="lessonModalSub">Sir Knight opens the first lesson page before the next questions begin.</p>
+        </div>
+        <button class="spell-close" id="lessonModalClose" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="spell-layout">
+        <div class="spell-page-card">
+          <div class="spell-page-header">
+            <h3>First Lesson Page</h3>
+            <span class="spell-page-badge">New spell</span>
+          </div>
+          <div class="spell-rule-box">
+            <strong>What this spell means</strong>
+            <div class="spell-note" id="lessonConceptText"></div>
+          </div>
+          <div class="spell-step-box">
+            <strong>First steps with Sir Knight</strong>
+            <ul class="spell-steps" id="lessonStepList"></ul>
+          </div>
+          <div class="spell-actions">
+            <button class="btn btn-primary" id="lessonBeginBtn" type="button">Begin This Lesson ✨</button>
+            <button class="btn btn-secondary" id="lessonSkipBtn" type="button">Go to Questions</button>
+          </div>
+        </div>
+        <div class="spell-page-card">
+          <div class="spell-knight">
+            <img id="lessonKnightImg" alt="Sir Knight" />
+            <div>
+              <h3>Sir Knight's gentle note</h3>
+              <p id="lessonKnightText"></p>
+            </div>
+          </div>
+          <div class="spell-resource-box">
+            <h4>Helpful public lesson</h4>
+            <div class="spell-note" id="lessonResourceNote"></div>
+            <div id="lessonResourceLinks" class="resource-links"></div>
           </div>
         </div>
       </div>
@@ -480,764 +527,688 @@ a{color:#7c67d6}
   </section>
 </div>
 
+
 <script>
-const STORE_KEY = 'princessSpiralQuestV5';
+const STORE_KEY = 'princessSpiralQuestSupabaseV1';
 const SUPABASE_URL = 'https://hokxngwigywyutilokya.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_RQlefCTSaipW2oWnv1zz7g_gqMWsoOv';
-const TOPIC_LABELS = {
-  multiMultiply:'multi-digit multiplication',
-  divide1:'one-digit division',
-  fracMultiply:'fraction multiplication',
-  fracDecimal:'fraction-to-decimal',
-  areaPerimeter:'area & perimeter',
-  divide2:'two-digit division',
-  mixedOps:'mixed operations',
-  factors:'factors & multiples',
-  simplify:'simplifying fractions',
-  fractionAddSub:'fraction addition & subtraction',
-  mixedNumbers:'mixed numbers',
-  decimals:'decimals',
-  data:'data & graphing',
-  conversions:'unit conversion',
-  variables:'simple variables',
-  gcfLcm:'GCF & LCM'
+const IMAGE_BASE = 'https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main';
+const IMAGES = {
+  normal: `${IMAGE_BASE}/4.png`,
+  checking: `${IMAGE_BASE}/3.png`,
+  bad: `${IMAGE_BASE}/2.png`,
+  good: `${IMAGE_BASE}/1.png`,
+  knight: `${IMAGE_BASE}/knight.png`
 };
-const LEVELS = [
-  {id:1, title:'Meadow of Morning Stars', tag:'Review', story:'At dawn, {hero} leaves the Cloud-Castle gates. The first meadow is filled with market stalls, ribbon gardens, and tiny bridges. The puzzles feel familiar, because this stop is about warming up old magic before the real climb begins.', newTopics:[], practice:['multiMultiply','divide1','fracMultiply','fracDecimal','areaPerimeter'], weights:{multiMultiply:3,divide1:2,fracMultiply:2,fracDecimal:2,areaPerimeter:3}},
-  {id:2, title:'Bridge of Brave Division', tag:'New Spell', story:'A misty bridge blocks the road. To cross it, {hero} must learn a brand-new spell: dividing by a two-digit number. Sir Knight rides beside the bridge and teaches how to estimate the quotient before writing it down.', newTopics:['divide2'], practice:['divide2','multiMultiply','divide1','areaPerimeter','fracMultiply'], weights:{divide2:5,multiMultiply:2,divide1:2,areaPerimeter:2,fracMultiply:1}},
-  {id:3, title:'Lantern Road', tag:'Spiral', story:'Lanterns light the path through a sleepy village. Now the new division spell appears again, mixed with old skills, so {hero} learns to stay steady even when the questions change shape.', newTopics:['mixedOps'], practice:['divide2','multiMultiply','mixedOps','areaPerimeter','fracDecimal','fracMultiply'], weights:{divide2:4,multiMultiply:2,mixedOps:2,areaPerimeter:2,fracDecimal:1,fracMultiply:1}},
-  {id:4, title:'Forest of Factor Foxes', tag:'New Spell', story:'The foxes of the forest only let travelers pass if they can sort numbers into factors, multiples, and primes. {hero} must notice patterns, not just calculate.', newTopics:['factors'], practice:['factors','divide2','mixedOps','multiMultiply','fracMultiply','areaPerimeter'], weights:{factors:4,divide2:3,mixedOps:1,multiMultiply:2,fracMultiply:1,areaPerimeter:1}},
-  {id:5, title:'Spring of Silver Fractions', tag:'New Spell', story:'At a silver spring, water flows through fraction-shaped stones. Sir Knight explains how to simplify fractions and spot equivalent ones, while old multiplication and division spells still appear in the stream.', newTopics:['simplify'], practice:['simplify','factors','divide2','fracMultiply','fracDecimal','multiMultiply'], weights:{simplify:4,factors:2,divide2:2,fracMultiply:2,fracDecimal:1,multiMultiply:1}},
-  {id:6, title:'Picnic of Common Plates', tag:'New Spell', story:'A royal picnic needs fair sharing. Slices of pie, lengths of ribbon, and cups of juice all need fraction addition and subtraction. Some plates match already; some need a common denominator first.', newTopics:['fractionAddSub'], practice:['fractionAddSub','simplify','divide2','fracMultiply','mixedOps','areaPerimeter'], weights:{fractionAddSub:5,simplify:2,divide2:2,fracMultiply:1,mixedOps:1,areaPerimeter:1}},
-  {id:7, title:'Hill of Hidden Wholes', tag:'New Spell', story:'Near the hilltop, fractions grow bigger than one whole. {hero} learns to change mixed numbers and improper fractions back and forth while earlier fraction skills spiral through the path.', newTopics:['mixedNumbers'], practice:['mixedNumbers','fractionAddSub','simplify','divide2','fracDecimal','multiMultiply'], weights:{mixedNumbers:4,fractionAddSub:3,simplify:2,divide2:1,fracDecimal:1,multiMultiply:1}},
-  {id:8, title:'Harbor of Shining Decimals', tag:'New Spell', story:'Tiny lantern boats float across the harbor carrying prices, lengths, and measurements written as decimals. {hero} starts by reading, comparing, and adding simple decimals connected to familiar fractions.', newTopics:['decimals'], practice:['decimals','mixedNumbers','fractionAddSub','fracDecimal','divide2','areaPerimeter'], weights:{decimals:5,mixedNumbers:1,fractionAddSub:2,fracDecimal:2,divide2:1,areaPerimeter:1}},
-  {id:9, title:'Market of Moon Coins', tag:'Spiral', story:'The moon market is busy. Shopping problems mix money, decimals, multiplication, and division. This stop strengthens decimal thinking while old number sense keeps returning.', newTopics:[], practice:['decimals','divide2','mixedOps','fractionAddSub','multiMultiply','factors'], weights:{decimals:4,divide2:2,mixedOps:2,fractionAddSub:1,multiMultiply:2,factors:1}},
-  {id:10, title:'Rainbow Data Garden', tag:'New Spell', story:'Flowers bloom into bar graphs and neat little data cards. {hero} begins reading simple charts and finding mean, median, and mode in friendly real-world settings.', newTopics:['data'], practice:['data','decimals','fractionAddSub','divide2','areaPerimeter','factors'], weights:{data:5,decimals:2,fractionAddSub:1,divide2:1,areaPerimeter:1,factors:2}},
-  {id:11, title:'Clocktower Pass', tag:'New Spell', story:'The pass is full of clocks, rulers, and maps. To keep climbing, {hero} must convert time and length units while using earlier operations with confidence.', newTopics:['conversions'], practice:['conversions','data','decimals','divide2','mixedOps','multiMultiply'], weights:{conversions:5,data:1,decimals:2,divide2:2,mixedOps:1,multiMultiply:1}},
-  {id:12, title:'Crystal Gate of Symbols', tag:'New Spell', story:'Near the crystal gate, little symbols begin to stand for numbers. Sir Knight shows that a letter can hide a number, and the job is simply to find the mystery value.', newTopics:['variables'], practice:['variables','conversions','decimals','fractionAddSub','divide2','factors'], weights:{variables:4,conversions:2,decimals:2,fractionAddSub:1,divide2:2,factors:1}},
-  {id:13, title:'Castle of Number Keys', tag:'New Spell', story:'The castle doors open only with number keys. {hero} now learns greatest common factor and least common multiple while revisiting factors and fraction simplification.', newTopics:['gcfLcm'], practice:['gcfLcm','variables','factors','simplify','fractionAddSub','decimals'], weights:{gcfLcm:4,variables:1,factors:3,simplify:2,fractionAddSub:1,decimals:1}},
-  {id:14, title:'Royal Spiral Gate', tag:'Final Spiral', story:'At the final gate, the whole journey spirals together. {hero} uses old skills, newer skills, and careful reasoning to wake the last sleeping stars above the kingdom.', newTopics:[], practice:['divide2','fractionAddSub','decimals','data','conversions','variables','gcfLcm','areaPerimeter'], weights:{divide2:2,fractionAddSub:2,decimals:2,data:1,conversions:2,variables:1,gcfLcm:1,areaPerimeter:1}}
-];
-const RESOURCE_MAP = {
-  divide2:[
-    {label:'Khan: Intro to dividing by 2-digits', url:'https://www.khanacademy.org/math/5th-engage-ny/engage-5th-module-2/5th-module-2-topic-f/v/introduction-to-dividing-by-2-digits'},
-    {label:'Khan: Dividing by a two-digit number', url:'https://www.khanacademy.org/math/5th-engage-ny/engage-5th-module-2/5th-module-2-topic-f/v/dividing-by-a-two-digit-number'},
-    {label:'Khan: Practice 2-digit division', url:'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-arithmetic-operations/cc-6th-div-whole-numbers/e/division_3'}
-  ],
-  mixedOps:[
-    {label:'Khan: Intro to order of operations', url:'https://www.khanacademy.org/v/introduction-to-order-of-operations'},
-    {label:'Khan: Order of operations review', url:'https://www.khanacademy.org/math/cc-sixth-grade-math/x0267d782%3Acc-6th-exponents-and-order-of-operations/x0267d782%3Amore-on-order-of-operations/a/order-of-operations-review'}
-  ],
-  factors:[
-    {label:'Khan: Factors, multiples and patterns', url:'https://www.khanacademy.org/math/cc-fourth-grade-math/imp-factors-multiples-and-patterns'},
-    {label:'Khan: Understanding factor pairs', url:'https://www.khanacademy.org/math/cc-fourth-grade-math/imp-factors-multiples-and-patterns/imp-factors-and-multiples/v/understanding-factor-pairs'},
-    {label:'Khan: Prime and composite numbers', url:'https://www.khanacademy.org/math/cc-fourth-grade-math/imp-factors-multiples-and-patterns/imp-prime-and-composite-numbers/a/prime-composite-numbers'}
-  ],
-  simplify:[
-    {label:'Khan: Equivalent fractions and comparing fractions', url:'https://www.khanacademy.org/math/cc-fourth-grade-math/comparing-fractions-and-equivalent-fractions'},
-    {label:'Khan: Simplify fractions practice', url:'https://www.khanacademy.org/math/arithmetic-home/arith-review-fractions/visualizing-equiv-frac/e/simplifying_fractions'}
-  ],
-  fractionAddSub:[
-    {label:'Khan: Add and subtract fractions unit', url:'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-fractions-3'},
-    {label:'Khan: Unlike denominators video', url:'https://www.khanacademy.org/math/5th-engage-ny/engage-5th-module-3/5th-module-3-topic-d/v/adding-and-subtracting-multiple-fractions-with-unlike-denominators'},
-    {label:'Khan: Fraction word problem', url:'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-fractions-3/imp-adding-and-subtracting-fractions-with-unlike-denominators-word-problems/v/adding-fractions-with-unlike-denominators-word-problem'}
-  ],
-  mixedNumbers:[
-    {label:'Khan: Add and subtract fractions unit', url:'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-fractions-3'},
-    {label:'Khan: Fraction unit with mixed numbers', url:'https://www.khanacademy.org/standards/CCSS.Math/5.NF'}
-  ],
-  decimals:[
-    {label:'Khan: 4th-grade decimals', url:'https://www.khanacademy.org/math/cc-fourth-grade-math/imp-decimals'},
-    {label:'Khan: Decimal operations unit', url:'https://www.khanacademy.org/math/5th-grade-illustrative-mathematics/xe7a2395079b692f7%3Aplace-value-patterns-and-decimal-operations'}
-  ],
-  conversions:[
-    {label:'Khan: Measurement and data unit', url:'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-measurement-and-data-3'},
-    {label:'Khan: Unit conversion practice', url:'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-measurement-and-data-3/imp-unit-conversion/e/converting-units'}
-  ],
-  data:[
-    {label:'Khan: Mean, median, and mode practice', url:'https://www.khanacademy.org/math/statistics-probability/summarizing-quantitative-data/mean-median-basics/e/mean_median_and_mode'},
-    {label:'Khan: Statistics overview', url:'https://www.khanacademy.org/math/statistics-probability/summarizing-quantitative-data'}
-  ],
-  variables:[
-    {label:'Khan: Writing expressions with parentheses', url:'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-expressions-and-variables/cc-6th-writing-expressions/v/writing-expressions-parentheses'}
-  ],
-  gcfLcm:[
-    {label:'Khan: Factors and multiples', url:'https://www.khanacademy.org/math/pre-algebra/pre-algebra-factors-multiples'},
-    {label:'Khan: Prime factorization intro', url:'https://www.khanacademy.org/math/pre-algebra/pre-algebra-factors-multiples/pre-algebra-prime-factorization-prealg/v/prime-factorization-exercise'}
-  ]
+const S = {
+  playerId: null,
+  playerName: '',
+  heroName: 'Princess',
+  currentLevelNo: 1,
+  unlockedLevelNo: 1,
+  totalStars: 0,
+  levelStars: {},
+  topicStats: {},
+  wrongBook: {},
+  reviewLog: [],
+  reviewMode: false,
+  practiceSpellCode: null,
+  seenIntroSpells: {},
+  contentLoaded: false,
+  pendingLevelNo: null,
 };
-const TOPIC_INTRO = {
-  divide2:'Try estimating first. Ask: about how many times does the divisor fit? Then multiply, subtract, and bring down.',
-  mixedOps:'Parentheses first. Then multiplication and division. Last, addition and subtraction.',
-  factors:'A factor divides a number evenly. A multiple is what you get when you skip-count by that number.',
-  simplify:'If the top and bottom share a common factor, divide both by that factor to make the fraction simpler.',
-  fractionAddSub:'If denominators match, add or subtract the numerators. If they do not match, rename the fractions first.',
-  mixedNumbers:'A mixed number has a whole and a fraction. An improper fraction has a top number at least as large as the bottom.',
-  decimals:'Line up place values. Tenths go with tenths. Hundredths go with hundredths.',
-  data:'Mean is the share-equal average. Median is the middle number. Mode is the number seen most often.',
-  conversions:'Use known facts like 1 meter = 100 centimeters and 1 hour = 60 minutes before solving.',
-  variables:'A letter is just a mystery box. Undo what was done to the box to find the number inside.',
-  gcfLcm:'GCF is the biggest factor numbers share. LCM is the first multiple they share.'
+const DB = {
+  spells: [],
+  spellsById: {},
+  spellsByCode: {},
+  levels: [],
+  levelsByNo: {},
+  lessonsBySpellId: {},
+  plansByLevelNo: {},
+  questionCacheBySpellId: {},
 };
-const TOPIC_EXPLAIN = {
-  divide2:'Start with estimation. Ask what friendly multiple of the divisor is close to the first part of the dividend. Write one quotient digit at a time, multiply back, subtract, and bring the next digit down. If there is something left at the end, that leftover is the remainder.',
-  mixedOps:'This spell is about staying calm in the right order. Work inside parentheses first. After that, multiplication and division happen before addition and subtraction. Reading the whole expression before starting often prevents small mistakes.',
-  factors:'Factors build a number, while multiples grow from a number. To find factors, test numbers that divide evenly. To find multiples, skip-count. Prime numbers have exactly two factors, and composite numbers have more.',
-  simplify:'A fraction is simplified when the numerator and denominator have no greater common factor besides 1. Look for a shared factor, then divide both parts by the same number so the value stays equal but the fraction becomes easier to read.',
-  fractionAddSub:'Fractions can only be added or subtracted directly when they are talking about equal-sized parts. If denominators do not match, first rename the fractions with a common denominator. Then keep the denominator and combine the numerators.',
-  mixedNumbers:'A mixed number shows whole parts and fractional parts together. To turn it into an improper fraction, multiply the whole number by the denominator and then add the numerator. To go back, divide and let the remainder become the numerator.',
-  decimals:'Each digit in a decimal has a place value. When comparing or computing, line up the decimal points so tenths and hundredths stay in the correct places. Money models and familiar fractions like 1/2 = 0.5 can make decimal ideas feel concrete.',
-  data:'Mean, median, and mode each tell a different story. Mean shares the total equally. Median looks for the middle number after sorting. Mode is the value that appears most often. Choosing the right one depends on what question the data is answering.',
-  conversions:'Unit conversions start with a known fact. Use that relationship like a bridge: 1 meter = 100 centimeters, 1 hour = 60 minutes. Then multiply or divide depending on whether you are moving to a smaller unit or a larger one.',
-  variables:'A variable is a letter standing in for a number. Treat it like a mystery box. Undo the operations around it in the opposite order to reveal the hidden value.',
-  gcfLcm:'GCF helps when you want the biggest shared factor, and LCM helps when you want the first shared multiple. Listing factors or skip-counting multiples both work, and prime factorization can become a faster method later.'
-}
-const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/';
-const defaultState = {playerName:'',heroName:'Princess Nova',assetBase:GITHUB_RAW_BASE,unlocked:1,totalStars:0,currentLevel:1,levelStars:{},weakTopics:{},reviewLog:[],newTopicSeen:{},wrongBank:{},topicStats:{},deviceId:'',lastSyncedAt:'',reviewMode:false};
-let currentSpellTopic = null;
-function topicRecentMistakes(topic){ return (S.reviewLog||[]).filter(item=>item.topic===topic && !item.ok).slice(0,8); }
-const SPELL_STEPS = {
-  divide2:['Estimate the quotient first so the answer size makes sense.','Divide from left to right and place each digit of the quotient carefully.','Multiply back, subtract, then bring down the next digit.'],
-  multiMultiply:['Look for repeated equal groups in the story problem.','Multiply one place value at a time.','Check if your answer is reasonable with estimation.'],
-  divide1:['Think of the total as equal groups.','Use a multiplication fact to check the quotient.','Make sure every item is shared with none left over unless the story says remainder.'],
-  fracMultiply:['Multiply the numerators and multiply the denominators.','Simplify if possible.','Ask whether the answer should be smaller than 1, equal to 1, or greater than 1.'],
-  fracDecimal:['Match benchmark fractions like 1/2, 1/4, and 3/4 to decimals you know.','Think about money or hundredths when helpful.','Check whether the decimal makes sense for the fraction size.'],
-  areaPerimeter:['Area covers the inside of a shape.','Perimeter measures the distance around the edge.','Read the question carefully so you choose the right one.'],
-  mixedOps:['Work inside parentheses first.','Then do multiplication and division before addition and subtraction.','Move step by step instead of trying to do everything at once.'],
-  factors:['Ask which numbers divide evenly into the given number.','Use divisibility rules to test quickly.','Pair factors together so none are missed.'],
-  simplify:['Find a common factor for the numerator and denominator.','Divide both parts by the same number.','Keep going until no greater common factor remains.'],
-  fractionAddSub:['Make the denominators the same first.','Add or subtract only the numerators.','Simplify the final fraction if needed.'],
-  mixedNumbers:['Change between mixed numbers and improper fractions carefully.','Keep the whole number and fraction parts organized.','Simplify the fraction part at the end when needed.'],
-  decimals:['Line up decimal points before computing.','Use place value to compare digits.','Estimate to check whether your decimal answer is reasonable.'],
-  data:['Read every value before calculating.','For mean, add then divide by the number of data points.','For median, order the numbers first.'],
-  conversions:['Write the unit relationship first.','Multiply or divide depending on whether you move to a smaller or larger unit.','Label the unit in your final answer.'],
-  variables:['Treat the variable like a mystery number.','Undo operations step by step.','Check by substituting your answer back in.'],
-  gcfLcm:['For GCF, list factors and find the greatest one in common.','For LCM, list multiples and find the smallest match.','Decide whether the problem is about grouping or repeating cycles.']
-};
-function getSpellSteps(topic){
-  return SPELL_STEPS[topic] || ['Read the story carefully.','Notice the numbers and what they mean.','Solve step by step and check if the answer makes sense.'];
-}
-function getSpellCoreRule(topic){
-  return TOPIC_INTRO[topic] || TOPIC_EXPLAIN[topic] || 'This spell grows stronger when the same skill is solved correctly again and again.';
-}
+let currentQuestions = [];
+let qIndex = 0;
+let score = 0;
+let qLocked = false;
+let currentSpellCode = null;
+let currentSpellLessonExpanded = false;
 
-function getSpellPageNote(topic){ const pct=topicAccuracy(topic); const attempts=topicStatsFor(topic).attempts; if(pct===100 && attempts>0) return `This spell is fully mastered right now. Keep meeting it on the road so the magic stays strong.`; if(attempts===0) return `This spell has not been tested yet. When it first appears, Sir Knight will help explain it.`; if(pct>=80) return `This spell is almost glowing at full strength. A few clean runs can bring it to 100%.`; if(pct>=50) return `This spell is waking up. Review the idea, then practice in small calm steps.`; return `This spell still needs gentle support. Slow down, use the knight note, and try again with confidence.`; }
-let syncStatus = 'Local only';
-let S = loadState();
-let currentQuestions = []; let qIndex = 0; let score = 0; let qLocked = false; let currentSelection = null;
-
-function loadState(){
-  try{ const raw = localStorage.getItem(STORE_KEY); return raw ? Object.assign(structuredClone(defaultState), JSON.parse(raw)) : structuredClone(defaultState); }
-  catch(e){ return structuredClone(defaultState); }
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    Object.assign(S, data || {});
+  }catch(e){}
 }
-function saveState(){ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }
-function structuredClone(obj){ return JSON.parse(JSON.stringify(obj)); }
-function slugifyName(name){ return String(name||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60) || 'princess-player'; }
-function ensureDeviceId(){ if(!S.deviceId){ S.deviceId = 'dev-' + Math.random().toString(36).slice(2,10); saveState(); } }
-function setSyncStatus(text){ syncStatus = text; const el=document.getElementById('syncPill'); if(el) el.textContent = '☁️ ' + text; }
-function escapeHtml(str){ return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
-function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
-function pick(arr){ return arr[rand(0,arr.length-1)]; }
-function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
-function lcm(a,b){ return Math.abs(a*b)/gcd(a,b); }
-function simplifyFrac(n,d){ const g=gcd(n,d); return [n/g,d/g]; }
-function fracToStr(n,d){ return `${n}/${d}`; }
-function mixedToImproper(w,n,d){ return w*d+n; }
-function decimalString(n){ return Number(n).toFixed(2).replace(/0$/,'').replace(/\.0$/,''); }
-function normalizeAnswer(v){ return String(v).trim().toLowerCase().replace(/\s+/g,''); }
-function topicLabel(key){ return TOPIC_LABELS[key] || key; }
-function topicStatsFor(key){ return S.topicStats[key] || {correct:0,attempts:0}; }
-function topicAccuracy(key){ const s=topicStatsFor(key); return s.attempts ? Math.round((s.correct/s.attempts)*100) : 0; }
-function topicMastered(key){ const s=topicStatsFor(key); return s.attempts>0 && topicAccuracy(key)===100; }
-function getAssetPath(file){
-  const base = (S.assetBase || GITHUB_RAW_BASE).trim();
-  const slash = base.endsWith('/') ? '' : '/';
-  return base + slash + file;
-}
-function refreshImages(){
-  const heroNormal=document.getElementById('heroNormal');
-  const heroKnight=document.getElementById('heroKnight');
-  if(heroNormal) heroNormal.src = getAssetPath('4.png');
-  if(heroKnight) heroKnight.src = getAssetPath('knight.png');
-  const wrongBookPrincess=document.getElementById('wrongBookPrincessImg');
-  if(wrongBookPrincess) wrongBookPrincess.src = getAssetPath('3.png');
-  const mapTraveler=document.getElementById('mapTravelerImg');
-  if(mapTraveler) mapTraveler.src = getAssetPath('4.png');
-  document.getElementById('knightImg').src = getAssetPath('knight.png');
-}
-function princessImage(state){
-  const file = state === 'good' ? '1.png' : state === 'bad' ? '2.png' : state === 'thinking' ? '3.png' : '4.png';
-  return getAssetPath(file);
-}
-function updateStats(){
-  document.getElementById('statHero').textContent = S.heroName || 'Princess';
-  document.getElementById('statLevel').textContent = S.currentLevel;
-  document.getElementById('statStars').textContent = S.totalStars;
-  document.getElementById('statUnlocked').textContent = S.unlocked;
-  document.getElementById('statTotal').textContent = LEVELS.length;
-  setSyncStatus(syncStatus);
-}
-function setWelcome(){
-  document.getElementById('playerName').value = S.playerName || '';
-  const hero = escapeHtml(S.heroName || 'Princess Nova');
-  const child = escapeHtml(S.playerName || 'your child');
-  document.getElementById('welcomeStory').innerHTML = `<strong>${hero}</strong> is the name the kingdom will whisper tonight. As the story begins, the princess must cross glowing bridges, visit markets and gardens, and wake the sleeping stars by solving practical math puzzles. Old skills return like familiar magic, and new spells appear one careful step at a time while a winged knight watches over the journey.`;
-  const ribbon=document.getElementById('storyRibbon');
-  if(ribbon) ribbon.textContent = S.playerName ? `Tonight's tale is about ${child}.` : `Tonight's tale will be told in your child's name.`;
-}
-async function saveProfile(openMapAfter=true){
-  const rawName = document.getElementById('playerName').value.trim() || S.playerName || 'Nova';
-  const cleanName = rawName.replace(/^princess\s+/i,'').trim() || 'Nova';
-  S.playerName = cleanName;
-  S.heroName = `Princess ${cleanName}`;
-  S.assetBase = GITHUB_RAW_BASE;
-  ensureDeviceId();
-  saveState(); refreshImages(); updateStats(); setWelcome();
-  await pullRemoteState();
-  await syncStateToSupabase();
-  if(openMapAfter) renderMap();
-}
-function switchScreen(id){
-  ['welcomeScreen','mapScreen','reviewScreen','gameScreen'].forEach(x=>document.getElementById(x).classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-}
-function renderMap(){
-  switchScreen('mapScreen'); updateStats(); refreshImages();
-  const hero = S.heroName || 'Princess Nova';
-  document.getElementById('mapTitle').textContent = `${hero}'s Enchanted Quest Map`;
-  document.getElementById('mapSub').textContent = `A real journey winds through meadows, bridges, towers, and crystal gates. Each stop has 12 mixed questions, and each spell grows stronger until its accuracy reaches 100%.`;
-  const chips = document.getElementById('mapSkillChipWrap');
-  const weak = Object.entries(S.weakTopics).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([k])=>`Coming back soon: ${topicLabel(k)}`);
-  const mastered = Object.keys(S.topicStats).filter(topicMastered).slice(0,2).map(k=>`Mastered spell: ${topicLabel(k)}`);
-  const defaults = ['First new spell: two-digit division','Every stop mixes old and new magic'];
-  const chipData = weak.concat(mastered).slice(0,4);
-  chips.innerHTML = (chipData.length ? chipData : defaults).map(t=>`<span class="skill-chip">${escapeHtml(t)}</span>`).join('');
-  document.getElementById('mapTravelerText').textContent = weak.length ? `${hero} is traveling onward, and the next road will gently revisit ${weak.map(w=>w.replace('Coming back soon: ','')).join(' and ')}.` : `${hero} is traveling onward with steady magic and glowing confidence.`;
-  const wrap = document.getElementById('nodesWrap'); wrap.innerHTML='';
-  for(let i=0;i<LEVELS.length;i+=3){
-    const rowEl=document.createElement('div'); rowEl.className='node-row'+((i/3)%2?' reverse':'');
-    LEVELS.slice(i,i+3).forEach(level=>{
-      const unlocked = level.id <= S.unlocked; const stars = S.levelStars[level.id]||0; const active = level.id===S.currentLevel;
-      const levelTopics = [...new Set(level.practice)];
-      const levelMastered = levelTopics.filter(topicMastered).length;
-      const node = document.createElement('div'); node.className='node';
-      node.innerHTML = `<div class="node-btn ${unlocked?'':'locked'} ${stars?'done':''}" data-id="${level.id}"><div class="node-num">${level.id}</div>${active&&unlocked?`<img class="map-princess" alt="" src="${princessImage('normal')}">`:''}</div><div class="node-stars">${stars ? '⭐'.repeat(stars) : '☆☆☆'}</div><div class="node-label">${escapeHtml(level.title)}</div><div class="node-tag">${escapeHtml(level.tag)}</div><div class="spell-meter">${levelMastered}/${levelTopics.length} spells at 100%</div>`;
-      const btn=node.querySelector('.node-btn'); if(unlocked){ btn.addEventListener('click',()=>startLevel(level.id)); }
-      rowEl.appendChild(node);
-    });
-    wrap.appendChild(rowEl);
-  }
-}
-function weightedPick(weights){
-  const keys = Object.keys(weights); const total = keys.reduce((s,k)=>s+weights[k],0); let r=Math.random()*total;
-  for(const k of keys){ r-=weights[k]; if(r<=0) return k; }
-  return keys[keys.length-1];
-}
-function pickAdaptiveTopics(level){
-  const weak = Object.entries(S.weakTopics).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k])=>k);
-  const allowed = new Set(level.practice);
-  return weak.filter(k=>allowed.has(k)).slice(0,3);
-}
-function buildLevelQuestions(levelId){
-  const level = LEVELS[levelId-1];
-  const topics = [];
-  const adapt = pickAdaptiveTopics(level);
-  adapt.forEach(t=>topics.push(t));
-  while(topics.length < 12){ topics.push(weightedPick(level.weights)); }
-  topics.sort(()=>Math.random()-.5);
-  const seenIntro = level.newTopics.find(t=>!S.newTopicSeen[t]);
-  if(seenIntro && !topics.includes(seenIntro)) topics[1] = seenIntro;
-  return topics.map((topic,idx)=>generateQuestion(topic, levelId, idx));
-}
-function makeChoice(topic, prompt, options, correctIndex, explanation, sub=''){
-  return {format:'choice', topic, prompt, options, correct: String(correctIndex), explanation, sub};
-}
-function makeInput(topic, prompt, answer, explanation, sub='', accept=[]){
-  return {format:'input', topic, prompt, answer:String(answer), accept:accept.map(String), explanation, sub};
-}
-function distractorsForDivision(correct){
-  const base=[correct-10,correct-1,correct+1,correct+10].filter(n=>n>0 && n!==correct);
-  while(base.length<3){ base.push(correct+rand(2,9)); }
-  return shuffle([correct,...base.slice(0,3)]).map(String);
-}
-function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-
-function generateQuestion(topic, levelId, idx){
-  switch(topic){
-    case 'multiMultiply': return qMultiMultiply(levelId);
-    case 'divide1': return qDivide1();
-    case 'fracMultiply': return qFracMultiply();
-    case 'fracDecimal': return qFracDecimal();
-    case 'areaPerimeter': return qAreaPerimeter(levelId);
-    case 'divide2': return qDivide2(levelId);
-    case 'mixedOps': return qMixedOps();
-    case 'factors': return qFactors();
-    case 'simplify': return qSimplify();
-    case 'fractionAddSub': return qFractionAddSub(levelId);
-    case 'mixedNumbers': return qMixedNumbers();
-    case 'decimals': return qDecimals(levelId);
-    case 'data': return qData();
-    case 'conversions': return qConversions();
-    case 'variables': return qVariables();
-    case 'gcfLcm': return qGcfLcm();
-    default: return qMultiMultiply(levelId);
-  }
-}
-
-async function supabaseRequest(path, options={}){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    ...options,
-    headers:{
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-      'Content-Type':'application/json',
-      ...(options.headers||{})
-    }
-  });
-  if(!res.ok) throw new Error(`Supabase ${res.status}`);
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
-}
-function exportRemoteState(){
-  return {
+function saveLocal(){
+  localStorage.setItem(STORE_KEY, JSON.stringify({
+    playerId:S.playerId,
     playerName:S.playerName,
     heroName:S.heroName,
-    assetBase:GITHUB_RAW_BASE,
-    unlocked:S.unlocked,
+    currentLevelNo:S.currentLevelNo,
+    unlockedLevelNo:S.unlockedLevelNo,
     totalStars:S.totalStars,
-    currentLevel:S.currentLevel,
     levelStars:S.levelStars,
-    weakTopics:S.weakTopics,
-    reviewLog:S.reviewLog,
-    newTopicSeen:S.newTopicSeen,
-    wrongBank:S.wrongBank,
     topicStats:S.topicStats,
-    deviceId:S.deviceId,
-    lastSyncedAt:new Date().toISOString(),
-    reviewMode:S.reviewMode
-  };
+    wrongBook:S.wrongBook,
+    reviewLog:S.reviewLog,
+    reviewMode:S.reviewMode,
+    practiceSpellCode:S.practiceSpellCode,
+    seenIntroSpells:S.seenIntroSpells
+  }));
 }
-async function syncStateToSupabase(){
-  if(!S.playerName) return;
+function qs(id){ return document.getElementById(id); }
+function escapeHtml(s=''){ return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+function normalizeAnswer(v){ return String(v ?? '').trim().toLowerCase().replace(/\s+/g,' ').replace(/ /g,''); }
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function chunk(arr, size){ const out=[]; for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size)); return out; }
+function princessImage(state='normal'){ return IMAGES[state] || IMAGES.normal; }
+function setSync(text, good=true){ const pill=qs('syncPill'); pill.textContent=text; pill.style.color = good ? '#6a6680' : '#9c5555'; }
+function show(screenId){ ['welcomeScreen','mapScreen','reviewScreen','gameScreen'].forEach(id=>qs(id).classList.toggle('hidden', id!==screenId)); }
+function heroDisplayName(){ return S.heroName || 'Princess'; }
+function spellName(code){ return DB.spellsByCode[code]?.name || code.replace(/_/g,' '); }
+function accuracyFor(code){ const stat = S.topicStats[code] || {attempts:0, correct:0}; return stat.attempts ? Math.round((stat.correct/stat.attempts)*100) : 0; }
+function mastered(code){ const stat = S.topicStats[code] || {attempts:0, correct:0}; return stat.attempts > 0 && stat.correct === stat.attempts; }
+function newIntroSpellsForLevel(levelNo){ return (DB.plansByLevelNo[levelNo] || []).filter(p=>p.role==='new_intro').map(p=>p.spell_code); }
+function refreshImages(){
+  qs('heroNormal').src = IMAGES.normal; qs('heroKnight').src = IMAGES.knight;
+  qs('wrongBookPrincessImg').src = IMAGES.normal; qs('spellKnightImg').src = IMAGES.knight; qs('lessonKnightImg').src = IMAGES.knight;
+  qs('knightImg').src = IMAGES.knight; qs('mapTravelerImg').src = IMAGES.normal;
+  qs('princessStateImg').src = IMAGES.normal;
+}
+function updateWelcome(){
+  const entered = qs('playerName').value.trim() || S.playerName || 'your child';
+  const princessName = entered ? `Princess ${entered}` : 'Princess Nova';
+  qs('welcomeStory').textContent = `Far above the Cloud-Castle Kingdom, sleeping stars have gone dim. Only ${princessName} can wake them again. She must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.`;
+  qs('storyRibbon').textContent = `Tonight's tale belongs to ${princessName}.`;
+}
+function updateStats(){
+  qs('statHero').textContent = heroDisplayName();
+  qs('statLevel').textContent = S.currentLevelNo || 1;
+  qs('statStars').textContent = S.totalStars || 0;
+  qs('statUnlocked').textContent = S.unlockedLevelNo || 1;
+  qs('statTotal').textContent = DB.levels.length || 0;
+}
+
+async function api(path, options={}){
+  const url = `${SUPABASE_URL}/rest/v1/${path}`;
+  const headers = {
+    apikey: SUPABASE_KEY,
+    Authorization: `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    ...(options.headers || {})
+  };
+  const res = await fetch(url, {...options, headers});
+  if(!res.ok){
+    const text = await res.text();
+    throw new Error(`${res.status} ${text}`);
+  }
+  if(res.status === 204) return null;
+  return res.json();
+}
+async function upsertRows(table, rows, onConflict){
+  if(!rows.length) return [];
+  return api(`${table}?on_conflict=${encodeURIComponent(onConflict)}`, {
+    method: 'POST',
+    headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(rows)
+  });
+}
+async function loadContent(){
   try{
-    setSyncStatus('Syncing...'); updateStats();
-    const payload = { player_name: slugifyName(S.playerName), display_name: S.playerName, state_json: exportRemoteState(), updated_at: new Date().toISOString() };
-    await supabaseRequest('princess_profiles', {
-      method:'POST',
-      headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
-      body: JSON.stringify(payload)
+    const [spells, levels, lessons, plans] = await Promise.all([
+      api('spells?select=*&status=eq.active&order=display_order.asc'),
+      api('levels?select=*&status=eq.active&order=level_no.asc'),
+      api('spell_lessons?select=*'),
+      api('level_spell_plan?select=*&order=level_id.asc')
+    ]);
+    DB.spells = spells;
+    DB.spellsById = Object.fromEntries(spells.map(x=>[x.id,x]));
+    DB.spellsByCode = Object.fromEntries(spells.map(x=>[x.code,x]));
+    DB.levels = levels;
+    DB.levelsByNo = Object.fromEntries(levels.map(x=>[x.level_no,x]));
+    DB.lessonsBySpellId = {};
+    lessons.forEach(l=>{ if(!DB.lessonsBySpellId[l.spell_id]) DB.lessonsBySpellId[l.spell_id] = []; DB.lessonsBySpellId[l.spell_id].push(l); });
+    DB.plansByLevelNo = {};
+    plans.forEach(p=>{
+      const level = levels.find(l=>l.id===p.level_id); const spell = spells.find(s=>s.id===p.spell_id);
+      if(!level || !spell) return;
+      const item = {...p, level_no: level.level_no, spell_code: spell.code, spell_name: spell.name};
+      if(!DB.plansByLevelNo[level.level_no]) DB.plansByLevelNo[level.level_no] = [];
+      DB.plansByLevelNo[level.level_no].push(item);
     });
-    S.lastSyncedAt = payload.updated_at;
-    saveState();
-    setSyncStatus('Synced'); updateStats();
+    for(const key of Object.keys(DB.plansByLevelNo)) DB.plansByLevelNo[key].sort((a,b)=>b.weight-a.weight);
+    S.contentLoaded = true;
+    updateStats();
+    return true;
   }catch(err){
-    console.warn(err); setSyncStatus('Sync failed'); updateStats();
+    console.error(err);
+    setSync('☁️ Content error', false);
+    alert('I could not load the story content yet. Please check that the Supabase schema and seed finished running.');
+    return false;
   }
 }
-async function pullRemoteState(){
-  if(!S.playerName) return;
+async function ensurePlayer(){
+  const childName = (qs('playerName').value.trim() || S.playerName || '').trim();
+  if(!childName){ alert("Please type your child's name first."); return false; }
+  S.playerName = childName;
+  S.heroName = `Princess ${childName}`;
   try{
-    setSyncStatus('Loading...'); updateStats();
-    const rows = await supabaseRequest(`princess_profiles?player_name=eq.${encodeURIComponent(slugifyName(S.playerName))}&select=state_json,updated_at`);
-    if(rows && rows[0] && rows[0].state_json){
-      const remote = rows[0].state_json;
-      const remoteTime = new Date(rows[0].updated_at || remote.lastSyncedAt || 0).getTime();
-      const localTime = new Date(S.lastSyncedAt || 0).getTime();
-      if(remoteTime > localTime){
-        S = Object.assign(structuredClone(defaultState), remote, {playerName: remote.playerName || S.playerName, heroName: remote.heroName || `Princess ${S.playerName}`, assetBase:GITHUB_RAW_BASE});
-        ensureDeviceId(); saveState(); refreshImages(); setWelcome();
+    const rows = await upsertRows('players', [{child_name: childName, princess_name: S.heroName}], 'child_name');
+    S.playerId = rows?.[0]?.id || S.playerId;
+    saveLocal();
+    await loadPlayerState();
+    return true;
+  }catch(err){
+    console.error(err);
+    setSync('☁️ Local story only', false);
+    saveLocal();
+    return true;
+  }
+}
+async function loadPlayerState(){
+  if(!S.playerId) return;
+  try{
+    const [spellStats, wrongs, progress] = await Promise.all([
+      api(`player_spell_stats?select=*&player_id=eq.${S.playerId}`),
+      api(`player_wrong_questions?select=*&player_id=eq.${S.playerId}`),
+      api(`player_level_progress?select=*&player_id=eq.${S.playerId}`)
+    ]);
+    S.topicStats = {};
+    spellStats.forEach(r=>{
+      const code = DB.spellsById[r.spell_id]?.code;
+      if(code) S.topicStats[code] = {attempts:r.attempts||0, correct:r.correct||0};
+    });
+    S.wrongBook = {};
+    wrongs.forEach(r=>{
+      const code = DB.spellsById[r.spell_id]?.code;
+      if(!code) return;
+      if(!S.wrongBook[code]) S.wrongBook[code] = [];
+      S.wrongBook[code].push(r);
+    });
+    S.levelStars = {};
+    let maxCompleted = 0;
+    let totalStars = 0;
+    progress.forEach(r=>{
+      const level = DB.levels.find(l=>l.id===r.level_id);
+      if(!level) return;
+      S.levelStars[level.level_no] = r.stars || 0;
+      totalStars += r.stars || 0;
+      if(r.completed && level.level_no > maxCompleted) maxCompleted = level.level_no;
+    });
+    S.totalStars = totalStars;
+    S.unlockedLevelNo = Math.min((maxCompleted || 0) + 1, Math.max(DB.levels.length,1));
+    if(maxCompleted >= DB.levels.length) S.unlockedLevelNo = DB.levels.length;
+    if(!progress.length) S.unlockedLevelNo = 1;
+    if(S.currentLevelNo > S.unlockedLevelNo) S.currentLevelNo = S.unlockedLevelNo;
+    setSync('☁️ Story saved');
+  }catch(err){
+    console.error(err);
+    setSync('☁️ Local story only', false);
+  }
+  saveLocal(); updateStats();
+}
+async function fetchQuestionsForSpells(spellIds){
+  const ids = [...new Set(spellIds.filter(Boolean))].filter(id=>!DB.questionCacheBySpellId[id]);
+  if(!ids.length) return;
+  const inClause = ids.join(',');
+  const rows = await api(`questions?select=*&is_active=eq.true&spell_id=in.(${inClause})&order=created_at.asc`);
+  ids.forEach(id=>DB.questionCacheBySpellId[id]=[]);
+  rows.forEach(q=>{ if(!DB.questionCacheBySpellId[q.spell_id]) DB.questionCacheBySpellId[q.spell_id]=[]; DB.questionCacheBySpellId[q.spell_id].push(q); });
+}
+function allowedDifficulties(band){
+  if(band==='concept') return ['concept'];
+  if(band==='guided') return ['concept','guided'];
+  if(band==='practice') return ['concept','guided','practice'];
+  if(band==='mixed') return ['concept','guided','practice','challenge'];
+  return ['concept','guided','practice','challenge'];
+}
+function weightedCounts(plans, total=12){
+  const counts = {}; let used = 0;
+  plans.forEach(p=>{ counts[p.spell_code] = p.min_questions || 0; used += p.min_questions || 0; });
+  let safety = 0;
+  while(used < total && safety < 200){
+    safety++;
+    const ranked = [...plans].sort((a,b)=>{
+      const deficitA = (a.max_questions||total) - (counts[a.spell_code]||0);
+      const deficitB = (b.max_questions||total) - (counts[b.spell_code]||0);
+      if(deficitB!==deficitA) return deficitB-deficitA;
+      if(b.role!==a.role){
+        const order = {new_intro:4, core:3, review:2, boss_mix:1};
+        return (order[b.role]||0) - (order[a.role]||0);
+      }
+      return Number(b.weight||0) - Number(a.weight||0);
+    });
+    let added = false;
+    for(const p of ranked){
+      if((counts[p.spell_code]||0) < (p.max_questions||total)){
+        counts[p.spell_code] = (counts[p.spell_code]||0) + 1; used++; added=true; break;
       }
     }
-    setSyncStatus('Synced'); updateStats();
-  }catch(err){
-    console.warn(err); setSyncStatus('Local only'); updateStats();
+    if(!added) break;
   }
+  return counts;
 }
-function renderWrongBook(){
-  switchScreen('reviewScreen');
-  refreshImages(); updateStats();
-  const sub = document.getElementById('wrongBookSub');
-  sub.textContent = S.playerName ? `${S.heroName} keeps one page for each spell. A spell is marked mastered only when its accuracy reaches 100%.` : 'Each spell has its own page with accuracy, recent mistakes, and a practice button.';
-  const topicGrid=document.getElementById('wrongTopicGrid');
-  const topics = [...new Set([...Object.keys(S.topicStats||{}), ...Object.keys(S.wrongBank||{}), ...Object.keys(S.weakTopics||{})])];
-  const sorted = topics.sort((a,b)=>{
-    const am = topicMastered(a) ? 1 : 0; const bm = topicMastered(b) ? 1 : 0;
-    if(am!==bm) return am-bm;
-    return (S.weakTopics[b]||0)-(S.weakTopics[a]||0) || topicLabel(a).localeCompare(topicLabel(b));
+function questionsForPlan(plan){
+  const spell = DB.spellsByCode[plan.spell_code];
+  if(!spell) return [];
+  const all = DB.questionCacheBySpellId[spell.id] || [];
+  const allowed = allowedDifficulties(plan.difficulty_band);
+  const filtered = all.filter(q=>allowed.includes(q.difficulty));
+  return filtered.length ? filtered : all;
+}
+function unresolvedWrongRows(spellCode){
+  return (S.wrongBook[spellCode] || []).filter(w=>!w.resolved).sort((a,b)=>(b.mistake_count||1)-(a.mistake_count||1));
+}
+function prioritizeWrongs(pool, spellCode){
+  const wrongIds = new Set(unresolvedWrongRows(spellCode).map(w=>w.question_id));
+  const wrongFirst = pool.filter(q=>wrongIds.has(q.id));
+  const rest = pool.filter(q=>!wrongIds.has(q.id));
+  return [...shuffle(wrongFirst), ...shuffle(rest)];
+}
+function enrichQuestion(q, spellCode, role='review'){
+  return {...q, spell_code: spellCode, spell_name: spellName(spellCode), level_role: role};
+}
+function sortQuestionsForJourney(items){
+  const difficultyOrder = {concept:0, guided:1, practice:2, challenge:3};
+  const roleOrder = {new_intro:0, core:1, review:2, boss_mix:3};
+  const seeded = items.map((q,idx)=>({...q, __idx:idx}));
+  seeded.sort((a,b)=>{
+    const r = (roleOrder[a.level_role]??9) - (roleOrder[b.level_role]??9);
+    if(r) return r;
+    const d = (difficultyOrder[a.difficulty]??9) - (difficultyOrder[b.difficulty]??9);
+    if(d) return d;
+    return (a.__idx||0) - (b.__idx||0);
   });
-  if(sorted.length){
-    topicGrid.innerHTML = sorted.map(topic=>{
-      const stats = topicStatsFor(topic); const pct = topicAccuracy(topic); const mastery = topicMastered(topic);
-      const wrong = S.wrongBank[topic] || {count:0};
-      return `<div class="topic-card"><div class="mini-row"><strong>${escapeHtml(topicLabel(topic))}</strong><span class="${mastery?'mastered':'learning'}">${mastery?'Mastered ✨':'Learning'}</span></div><div>${stats.correct}/${stats.attempts} correct · ${pct}% accuracy</div><div class="spell-track"><div class="spell-fill" style="width:${pct}%"></div></div><div style="margin-top:8px;font-size:12px;color:#9b7d9f">${wrong.count||0} saved mistake${wrong.count===1?'':'s'} · ${S.weakTopics[topic]||0} review weight</div><div class="spell-page-open"><button class="btn-mini open-spell-page" type="button" data-topic="${topic}">Open Spell Page</button><button class="btn-mini spell-practice-card" type="button" data-topic="${topic}">Spell Practice</button></div></div>`;
-    }).join('');
-    topicGrid.querySelectorAll('.open-spell-page').forEach(btn=>btn.addEventListener('click',()=>openSpellModal(btn.dataset.topic)));
-    topicGrid.querySelectorAll('.spell-practice-card').forEach(btn=>btn.addEventListener('click',()=>startWrongPractice(btn.dataset.topic)));
-  } else {
-    topicGrid.innerHTML = '<div class="empty-state" style="grid-column:1/-1">No spell pages yet. Once the journey begins, each skill will get its own page here.</div>';
-  }
-  const list=document.getElementById('wrongItemList');
-  const grouped = {};
-  S.reviewLog.filter(item=>!item.ok).forEach(item=>{ (grouped[item.topic] ||= []).push(item); });
-  const groups = Object.keys(grouped).sort((a,b)=>(S.weakTopics[b]||0)-(S.weakTopics[a]||0));
-  if(groups.length){
-    list.innerHTML = groups.map(topic=>{
-      const items = grouped[topic].slice(0,4);
-      const pct = topicAccuracy(topic);
-      return `<div class="review-cluster"><h4>${escapeHtml(topicLabel(topic))} · ${pct}% accuracy</h4><p>${topicMastered(topic)?'This spell is mastered right now, but its page stays here as a memory book.':'This spell still needs more clean runs before it is mastered.'}</p><div class="spell-page-open"><button class="btn-mini open-spell-cluster" type="button" data-topic="${topic}">Open Spell Page</button><button class="btn-mini spell-practice-cluster" type="button" data-topic="${topic}">Spell Practice</button></div><ul class="cluster-list">${items.map(item=>`<li>Level ${item.level}: ${escapeHtml(item.prompt)}</li>`).join('')}</ul></div>`;
-    }).join('');
-  } else {
-    list.innerHTML = '<div class="empty-state">The Spell Book is still empty. That means the journey has been smooth so far.</div>';
-  }
-  list.querySelectorAll('.open-spell-cluster').forEach(btn=>btn.addEventListener('click',()=>openSpellModal(btn.dataset.topic)));
-  list.querySelectorAll('.spell-practice-cluster').forEach(btn=>btn.addEventListener('click',()=>startWrongPractice(btn.dataset.topic)));
+  return seeded.map(({__idx, ...rest})=>rest);
 }
-function openSpellModal(topic){
-  currentSpellTopic = topic;
-  const stats = topicStatsFor(topic);
-  const pct = topicAccuracy(topic);
-  const mistakes = S.wrongBank[topic] || {count:0};
-  const mastered = topicMastered(topic);
-  document.getElementById('spellModalTitle').textContent = `${topicLabel(topic)} Spell`;
-  document.getElementById('spellModalSub').textContent = `${S.heroName || 'Princess Nova'} keeps a magic page for this skill. Accuracy must reach 100% before the spell is fully mastered.`;
-  document.getElementById('spellAccuracy').textContent = `${pct}%`;
-  document.getElementById('spellCorrect').textContent = String(stats.correct || 0);
-  document.getElementById('spellAttempts').textContent = String(stats.attempts || 0);
-  document.getElementById('spellMistakes').textContent = String(mistakes.count || 0);
-  document.getElementById('spellModalFill').style.width = `${pct}%`;
-  document.getElementById('spellMasteryNote').textContent = getSpellPageNote(topic);
-  document.getElementById('spellStatusBadge').textContent = mastered ? 'Mastered ✨' : 'Learning';
-  document.getElementById('spellCoreRule').textContent = getSpellCoreRule(topic);
-  document.getElementById('spellKnightImg').src = getAssetPath('knight.png');
-  document.getElementById('spellKnightTalk').textContent = [TOPIC_INTRO[topic] || '', TOPIC_EXPLAIN[topic] || 'Sir Knight says to name the skill, notice the important numbers, and solve step by step.'].filter(Boolean).join(' ');
-  document.getElementById('spellStepList').innerHTML = getSpellSteps(topic).map(step=>`<li>${escapeHtml(step)}</li>`).join('');
-  const links = RESOURCE_MAP[topic] || [];
-  document.getElementById('spellResourceLinks').innerHTML = links.length ? links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener noreferrer">📘 ${escapeHtml(l.label)}</a>`).join('') : '<span class="spell-note">No public lesson link is attached yet for this spell.</span>';
-  const list = document.getElementById('spellMistakeList');
-  const recent = topicRecentMistakes(topic);
-  list.innerHTML = recent.length ? recent.map(item=>`<div class="spell-mistake"><strong>Level ${item.level}</strong><br>${escapeHtml(item.prompt)}</div>`).join('') : `<div class="spell-mistake">No recent wrong answers are saved for this spell yet. Once this spell appears in the story, its tricky moments will be written here.</div>`;
-  document.getElementById('spellModal').classList.add('show');
-  document.getElementById('spellModal').setAttribute('aria-hidden','false');
+function weakestSpellCodes(limit=4){
+  return Object.keys(S.topicStats)
+    .sort((a,b)=>{
+      const wa = unresolvedWrongRows(a).length;
+      const wb = unresolvedWrongRows(b).length;
+      if(wb!==wa) return wb-wa;
+      return accuracyFor(a)-accuracyFor(b);
+    })
+    .slice(0,limit);
 }
-function closeSpellModal(){
-  document.getElementById('spellModal').classList.remove('show');
-  document.getElementById('spellModal').setAttribute('aria-hidden','true');
-}
-async function expandSpellKnight(){
-  if(!currentSpellTopic) return;
-  const extra = await fetchKnightHint({topic:currentSpellTopic, prompt:`Help with ${topicLabel(currentSpellTopic)}`});
-  document.getElementById('spellKnightTalk').textContent = [TOPIC_INTRO[currentSpellTopic] || '', TOPIC_EXPLAIN[currentSpellTopic] || '', extra].filter(Boolean).join(' ');
-}
+async function buildLevelQuestions(levelNo){
+  const plans = DB.plansByLevelNo[levelNo] || [];
+  if(!plans.length) throw new Error('No level plan found.');
+  const weakCodes = weakestSpellCodes(3);
+  const allCodes = [...new Set([...plans.map(p=>p.spell_code), ...weakCodes])];
+  await fetchQuestionsForSpells(allCodes.map(code=>DB.spellsByCode[code]?.id));
+  const counts = weightedCounts(plans, 12);
+  const selected = [];
+  const usedIds = new Set();
 
-function startWrongPractice(topic=null){
-  const available = topic ? [topic] : Object.entries(S.weakTopics).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k])=>k);
-  if(!available.length){ alert('There are no spell pages to practice yet.'); return; }
-  const chosen = topic || available[0];
-  currentQuestions = [];
-  for(let i=0;i<8;i++) currentQuestions.push(generateQuestion(chosen, S.currentLevel || 1, i));
-  S.reviewMode = true;
-  qIndex=0; score=0; qLocked=false; currentSelection=null;
-  document.getElementById('levelEnd').classList.add('hidden');
-  document.getElementById('levelTitlePill').textContent = 'Spell Practice';
-  document.getElementById('levelStoryTitle').textContent = `${topicLabel(chosen)} Spell Practice`;
-  document.getElementById('levelStoryText').textContent = `${S.heroName || 'Princess Nova'} is practicing the ${topicLabel(chosen)} spell. This focused set will help the spell move toward 100% accuracy.`;
-  document.getElementById('princessStateImg').src = princessImage('thinking');
-  document.getElementById('princessStateText').textContent = `${S.heroName || 'Princess Nova'} is polishing one spell at a time.`;
-  switchScreen('gameScreen');
+  for(const plan of plans){
+    const need = counts[plan.spell_code] || 0;
+    if(!need) continue;
+    let pool = prioritizeWrongs(questionsForPlan(plan), plan.spell_code).filter(q=>!usedIds.has(q.id));
+    let chosen = pool.slice(0, need);
+    if(chosen.length < need){
+      const spell = DB.spellsByCode[plan.spell_code];
+      const all = shuffle(DB.questionCacheBySpellId[spell.id] || []).filter(q=>!usedIds.has(q.id));
+      chosen = [...chosen, ...all.slice(0, need - chosen.length)];
+    }
+    chosen.forEach(q=>{ usedIds.add(q.id); selected.push(enrichQuestion(q, plan.spell_code, plan.role)); });
+  }
+
+  const unresolvedWeakQuestions = [];
+  weakCodes.forEach(code=>{
+    const spell = DB.spellsByCode[code];
+    const pool = prioritizeWrongs(DB.questionCacheBySpellId[spell?.id] || [], code)
+      .filter(q=>!usedIds.has(q.id));
+    pool.forEach(q=>unresolvedWeakQuestions.push(enrichQuestion(q, code, 'review')));
+  });
+
+  const targetReviewAdds = Math.min(3, unresolvedWeakQuestions.length);
+  for(let i=0; i<targetReviewAdds && selected.length < 12; i++){
+    const q = unresolvedWeakQuestions[i];
+    if(!q || usedIds.has(q.id)) continue;
+    usedIds.add(q.id); selected.push(q);
+  }
+
+  if(selected.length < 12){
+    const fallbackCodes = [...new Set([...allCodes, ...Object.keys(DB.spellsByCode)])];
+    for(const code of fallbackCodes){
+      const spell = DB.spellsByCode[code];
+      const pool = shuffle(DB.questionCacheBySpellId[spell?.id] || []).filter(q=>!usedIds.has(q.id));
+      for(const q of pool){
+        usedIds.add(q.id);
+        selected.push(enrichQuestion(q, code, plans.find(p=>p.spell_code===code)?.role || 'review'));
+        if(selected.length >= 12) break;
+      }
+      if(selected.length >= 12) break;
+    }
+  }
+
+  if(!selected.length) throw new Error('This level has no active questions in Supabase yet.');
+  return sortQuestionsForJourney(selected).slice(0,12);
+}
+async function buildSpellPracticeQuestions(spellCode){
+  const spell = DB.spellsByCode[spellCode];
+  if(!spell) return [];
+  await fetchQuestionsForSpells([spell.id]);
+  const all = DB.questionCacheBySpellId[spell.id] || [];
+  const unresolved = prioritizeWrongs(all, spellCode);
+  const acc = accuracyFor(spellCode);
+  const allowed = acc < 50 ? ['concept','guided'] : acc < 80 ? ['guided','practice'] : ['practice','challenge','guided'];
+  const filtered = unresolved.filter(q=>allowed.includes(q.difficulty));
+  const pool = filtered.length ? filtered : unresolved;
+  return pool.slice(0, 12).map(q=>enrichQuestion(q, spellCode, 'review'));
+}
+function renderMap(){
+  show('mapScreen');
+  qs('mapTitle').textContent = `${heroDisplayName()}'s Sky Quest Map`;
+  const chapterCount = new Set(DB.levels.map(l=>l.chapter_no)).size;
+  qs('mapSub').textContent = `${heroDisplayName()} can travel through ${DB.levels.length} story stops across ${chapterCount} chapters. Earlier spells keep returning, and each new spell appears gently with a first lesson from Sir Knight.`;
+  const nextPlans = DB.plansByLevelNo[S.unlockedLevelNo] || [];
+  const newSpells = nextPlans.filter(p=>p.role==='new_intro').map(p=>spellName(p.spell_code));
+  qs('mapSkillChipWrap').innerHTML = newSpells.length ? newSpells.map(x=>`<span class="tag">✨ ${escapeHtml(x)}</span>`).join('') : '<span class="tag">🌙 Spiral review ahead</span>';
+  const wrap = qs('nodesWrap');
+  const rows = chunk(DB.levels, 3);
+  wrap.innerHTML = rows.map((row, idx)=>`<div class="node-row ${idx%2?'reverse':''}">${row.map(level=>nodeHtml(level)).join('')}</div>`).join('');
+  DB.levels.forEach(level=>{ const btn = qs(`level-${level.level_no}`); if(!btn) return; const unlocked = level.level_no <= S.unlockedLevelNo; if(unlocked) btn.addEventListener('click', ()=>startLevel(level.level_no)); });
+  qs('mapTravelerImg').src = IMAGES.normal;
+  const nextLevel = DB.levelsByNo[S.unlockedLevelNo];
+  const introNames = newIntroSpellsForLevel(S.unlockedLevelNo).map(spellName);
+  qs('mapTravelerText').textContent = nextLevel ? `${heroDisplayName()} is standing near Level ${S.unlockedLevelNo}: ${nextLevel.title}. ${introNames.length ? 'A new spell is waiting: ' + introNames.join(', ') + '.' : 'This stop is mainly spiral review.'}` : `${heroDisplayName()} has reached the end of the sky road.`;
+  updateStats();
+}
+function nodeHtml(level){
+  const unlocked = level.level_no <= S.unlockedLevelNo;
+  const stars = S.levelStars[level.level_no] || 0;
+  return `<div class="node"><button type="button" id="level-${level.level_no}" class="node-btn ${unlocked?'':'locked'} ${stars? 'done':''}"><span class="node-num">${level.level_no}</span></button><div class="node-stars">${'⭐'.repeat(stars)}${'☆'.repeat(Math.max(0,3-stars))}</div><div class="node-label">${escapeHtml(level.title)}</div><div class="node-tag">${level.is_boss?'Boss Gate':'Story Stop'}</div></div>`;
+}
+async function startLevel(levelNo){
+  const level = DB.levelsByNo[levelNo];
+  if(!level) return;
+  S.currentLevelNo = levelNo; S.reviewMode = false; S.practiceSpellCode = null;
+  saveLocal(); updateStats();
+  try{
+    currentQuestions = await buildLevelQuestions(levelNo);
+    if(!currentQuestions.length) throw new Error('No questions available for this level yet.');
+    qIndex = 0; score = 0; qLocked = false;
+    show('gameScreen');
+    qs('levelEnd').classList.add('hidden');
+    qs('levelTitlePill').textContent = `Level ${level.level_no}`;
+    qs('qTotal').textContent = currentQuestions.length;
+    qs('qScore').textContent = '0';
+    qs('levelStoryTitle').textContent = level.title;
+    qs('levelStoryText').textContent = level.story_text.replaceAll('{hero}', heroDisplayName());
+    renderQuestion();
+    const firstNew = newIntroSpellsForLevel(levelNo).find(code=>!S.seenIntroSpells[code]);
+    if(firstNew){ S.seenIntroSpells[firstNew] = true; saveLocal(); openLessonModal(firstNew); }
+  }catch(err){
+    console.error(err);
+    alert(err.message || 'This level could not load its questions yet.');
+  }
+}
+async function startSpellPractice(spellCode=null){
+  const chosen = spellCode || currentSpellCode || topWeakSpellCode();
+  if(!chosen){ alert('No spell needs practice yet.'); return; }
+  currentQuestions = await buildSpellPracticeQuestions(chosen);
+  if(!currentQuestions.length){ alert('There are no practice questions for this spell in Supabase yet.'); return; }
+  S.reviewMode = true; S.practiceSpellCode = chosen; S.currentLevelNo = S.currentLevelNo || 1; saveLocal();
+  qIndex = 0; score = 0; qLocked = false;
+  show('gameScreen');
+  qs('levelEnd').classList.add('hidden');
+  qs('levelTitlePill').textContent = 'Spell Practice';
+  qs('qTotal').textContent = currentQuestions.length;
+  qs('qScore').textContent = '0';
+  qs('levelStoryTitle').textContent = `${spellName(chosen)} Practice`;
+  qs('levelStoryText').textContent = `${heroDisplayName()} opens one spell page and practices just this magic. Saved mistakes return first, then fresh questions from the same spell appear until the spell reaches 100% accuracy.`;
   renderQuestion();
 }
-function qMultiMultiply(level){
-  const a = level < 6 ? rand(12,48) : rand(18,76);
-  const b = level < 4 ? rand(3,9) : rand(11,24);
-  const contexts = [
-    ['tickets', '$', 'museum tickets cost'],
-    ['stickers', '', 'packs hold'],
-    ['flowers', '', 'gardens have'],
-    ['cookies', '', 'boxes hold']
-  ];
-  const [thing,prefix,phrase] = pick(contexts);
-  const correct = a*b;
-  const options = shuffle([correct, correct+a, correct+b, correct+10].map(String));
-  return makeChoice('multiMultiply', `A school shop sells ${a} packs. Each pack has ${b} ${thing}. How many ${thing} are there altogether?`, options, options.indexOf(String(correct)), `${a} × ${b} = ${correct}. This is a multiplication situation because the same group repeats ${a} times.`);
-}
-function qDivide1(){
-  const total = rand(36,96); const d = pick([3,4,6,8]); const adjusted = total - (total % d);
-  return makeInput('divide1', `${adjusted} pencils are shared equally among ${d} students. How many pencils does each student get?`, adjusted/d, `${adjusted} ÷ ${d} = ${adjusted/d}. Divide the total into ${d} equal groups.`);
-}
-function qFracMultiply(){
-  const d = pick([2,3,4,5,6,8]); const n = rand(1,d-1); const mult = pick([2,3,4,5]); const [sn,sd] = simplifyFrac(n*mult,d);
-  return makeChoice('fracMultiply', `One ribbon piece is ${n}/${d} meter long. Mia uses ${mult} equal pieces. How many meters of ribbon does she use in all?`, shuffle([`${sn}/${sd}`, `${n*mult}/${d+1}`, `${n+mult}/${d}`, `${mult}/${d}`]), 0, `${mult} × ${n}/${d} = ${n*mult}/${d}. In simplest form, that is ${sn}/${sd}.`);
-}
-function qFracDecimal(){
-  const map = [['1/2','0.5'],['1/4','0.25'],['3/4','0.75'],['1/5','0.2'],['1/10','0.1']];
-  const [f,d] = pick(map);
-  const choices = shuffle([d,'0.4','0.6','0.8']);
-  return makeChoice('fracDecimal', `Which decimal is equal to ${f}?`, choices, choices.indexOf(d), `${f} = ${d}. This is a useful benchmark fraction-decimal pair to remember.`);
-}
-function qAreaPerimeter(level){
-  if(Math.random()<0.5){
-    const l = rand(5,14), w = rand(3,11); const area=l*w;
-    const options = shuffle([String(area), String(2*(l+w)), String(l+w), String(area+w)]);
-    return makeChoice('areaPerimeter', `A flower bed is ${l} m long and ${w} m wide. What is its area?`, options, options.indexOf(String(area)), `Area = length × width = ${l} × ${w} = ${area} square meters.`);
-  }
-  const s = rand(4,13); const p=4*s;
-  return makeInput('areaPerimeter', `A square garden has side length ${s} m. What is its perimeter?`, p, `A square has 4 equal sides, so perimeter = 4 × ${s} = ${p}.`);
-}
-function qDivide2(level){
-  const d = rand(12,29); let q = rand(3, level<4?9:18); let r = Math.random()<0.4 ? rand(1,d-1) : 0; let dividend=d*q+r;
-  if(Math.random()<0.5){
-    return makeInput('divide2', `${dividend} books are packed equally into boxes of ${d}. How many full boxes can be made?${r?` Write only the whole-number quotient.`:''}`, q, `${dividend} ÷ ${d} = ${q}${r?` remainder ${r}`:''}. ${d} fits into ${dividend} exactly ${q} times${r?`, with ${r} left over`:''}.`, r?`There will be ${r} left over after making full boxes.`:'');
-  }
-  const context = r ? `A driver has ${dividend} students and each van holds ${d} students. How many vans are needed?` : `A baker places ${dividend} cupcakes equally onto ${d} trays. How many cupcakes go on each tray?`;
-  const correct = r ? q+1 : q;
-  const explanation = r ? `${dividend} ÷ ${d} = ${q} remainder ${r}. Because students need a seat, you must round up to ${correct} vans.` : `${dividend} ÷ ${d} = ${q}. Each tray gets ${q} cupcakes.`;
-  const options = shuffle([String(correct), String(q), String(q+2), String(Math.max(1,q-1))]);
-  return makeChoice('divide2', context, options, options.indexOf(String(correct)), explanation, r ? 'This is a “need enough groups” problem, so a remainder means one more group is needed.' : 'This is an equal-sharing division problem.');
-}
-function qMixedOps(){
-  const a=rand(18,60), b=pick([3,4,5,6,7,8,9]), c=rand(10,28); const expr = `${a} - ${c} ÷ ${b}`; const value = a - c/b; const adjusted = Number.isInteger(value);
-  if(adjusted){
-    const opts = shuffle([String(value), String((a-c)/b), String(a-c), String(a+b-c)]);
-    return makeChoice('mixedOps', `Find the value of ${expr}.`, opts, opts.indexOf(String(value)), `Division comes first: ${c} ÷ ${b} = ${c/b}. Then ${a} - ${c/b} = ${value}.`);
-  }
-  const x=rand(3,7), y=rand(4,8), z=rand(10,30); const answer = x*(y+z);
-  return makeInput('mixedOps', `Evaluate ${x} × (${y} + ${z}).`, answer, `Parentheses first: ${y} + ${z} = ${y+z}. Then multiply by ${x}: ${x} × ${y+z} = ${answer}.`);
-}
-function qFactors(){
-  const mode = rand(1,4);
-  if(mode===1){ const n=pick([24,30,36,42,48]); const f=pick([2,3,4,6]); return makeChoice('factors', `Which number is a factor of ${n}?`, shuffle([String(f), String(f+1), String(f+5), String(f+7)]), 0, `${f} is a factor because ${n} ÷ ${f} is a whole number.`); }
-  if(mode===2){ const n=pick([5,6,7,8]); const m=n*pick([3,4,5]); const opts=shuffle([String(m),String(m+1),String(m+2),String(m+3)]); return makeChoice('factors', `Which number is a multiple of ${n}?`, opts, opts.indexOf(String(m)), `A multiple of ${n} is found by multiplying ${n} by a whole number. ${n} × ${m/n} = ${m}.`); }
-  if(mode===3){ const p=pick([11,13,17,19,23]); const c=pick([21,27,33,35]); const opts=shuffle([String(p),String(c),String(c+2),String(c+4)]); return makeChoice('factors', `Which number is prime?`, opts, opts.indexOf(String(p)), `${p} has exactly 2 factors: 1 and ${p}.`); }
-  const num=pick([30,45,60,75,90]); return makeInput('factors', `A number is divisible by 5 and by 3. One such number is ${num}. Type "yes" if ${num} fits both rules.`, 'yes', `${num} ends in 0 or 5, so it is divisible by 5. Its digits add to a multiple of 3, so it is divisible by 3.`, 'Divisibility can be checked with patterns.',['y']);
-}
-function qSimplify(){
-  const d=pick([8,10,12,14,15,16,18,20]); const factor=pick([2,3,4,5]); let n=rand(1,Math.floor(d/factor)-1)*factor; let den=d; if(gcd(n,den)===1) { n*=2; den*=2; }
-  const [sn,sd]=simplifyFrac(n,den);
-  return makeInput('simplify', `Write ${n}/${den} in simplest form.`, `${sn}/${sd}`, `Both ${n} and ${den} can be divided by ${gcd(n,den)}. So ${n}/${den} = ${sn}/${sd}.`, '', [`${sn} / ${sd}`]);
-}
-function qFractionAddSub(level){
-  const add = Math.random()<0.5;
-  const like = level < 8 ? Math.random()<0.6 : Math.random()<0.35;
-  let d1=pick([2,3,4,5,6,8]), d2=like?d1:pick([2,3,4,5,6,8]);
-  if(!like && d2===d1) d2 = pick([2,3,4,5,6,8].filter(x=>x!==d1));
-  let n1=rand(1,d1-1), n2=rand(1,d2-1);
-  let num,den;
-  if(add){ den=lcm(d1,d2); num=n1*(den/d1)+n2*(den/d2); }
-  else{ den=lcm(d1,d2); const a=n1*(den/d1), b=n2*(den/d2); if(a<b){ [n1,n2,d1,d2] = [n2,n1,d2,d1]; } num=n1*(den/d1)-n2*(den/d2); }
-  const [sn,sd]=simplifyFrac(num,den);
-  const action = add?'in all':'left';
-  const prompt = add ? `Lina drank ${n1}/${d1} liter of water in the morning and ${n2}/${d2} liter in the afternoon. How much did she drink in all?` : `A ribbon is ${n1}/${d1} meter long. ${n2}/${d2} meter is cut off. How much ribbon is left?`;
-  return makeInput('fractionAddSub', prompt, `${sn}/${sd}`, `Rewrite the fractions with a common denominator of ${den}. Then ${add?'add':'subtract'} the numerators. The result is ${num}/${den} = ${sn}/${sd}.`, like ? 'These fractions may already have the same denominator.' : 'Find a common denominator first.', [`${sn} / ${sd}`]);
-}
-function qMixedNumbers(){
-  if(Math.random()<0.5){
-    const w=rand(1,4), d=pick([2,3,4,5,6,8]), n=rand(1,d-1), improper=mixedToImproper(w,n,d);
-    const opts=shuffle([`${improper}/${d}`,`${w+n}/${d}`,`${w*d}/${d}`,`${improper+1}/${d}`]);
-    return makeChoice('mixedNumbers', `Which improper fraction is equal to ${w} ${n}/${d}?`, opts, opts.indexOf(`${improper}/${d}`), `${w} wholes = ${w*d}/${d}. Then add ${n}/${d} to get ${improper}/${d}.`);
-  }
-  const d=pick([2,3,4,5,6,8]), w=rand(1,4), n=rand(1,d-1), improper=mixedToImproper(w,n,d);
-  return makeInput('mixedNumbers', `Write ${improper}/${d} as a mixed number.`, `${w} ${n}/${d}`, `${improper} ÷ ${d} = ${w} remainder ${n}, so the mixed number is ${w} ${n}/${d}.`, '', [`${w}${n}/${d}`,`${w}_${n}/${d}`]);
-}
-function qDecimals(level){
-  const mode = rand(1,4);
-  if(mode===1){ const val=pick([0.5,0.25,0.75,0.2,0.1]); const label = {'0.5':'one-half','0.25':'one-quarter','0.75':'three-quarters','0.2':'one-fifth','0.1':'one-tenth'}[String(val)]; const opts=shuffle([String(val),'0.4','0.6','0.8']); return makeChoice('decimals', `Which decimal matches the benchmark fraction idea "${label}"?`, opts, opts.indexOf(String(val)), `${val} is the decimal form of ${label}.`); }
-  if(mode===2){ const a = Number((rand(10,98)/10).toFixed(1)); const b = Number((rand(10,98)/10).toFixed(1)); const greater = a>b?a:b; const opts=shuffle([decimalString(a),decimalString(b),decimalString(greater+0.1),decimalString(Math.min(a,b)-0.1)]); return makeChoice('decimals', `Which number is greatest?`, opts, opts.indexOf(decimalString(greater)), `Compare the whole-number parts first, then the tenths.`); }
-  if(mode===3){ const a=Number((rand(10,59)/10).toFixed(1)); const b=Number((rand(10,39)/10).toFixed(1)); const sum=decimalString(a+b); return makeInput('decimals', `A pencil costs $${decimalString(a)} and an eraser costs $${decimalString(b)}. What is the total cost?`, sum, `${decimalString(a)} + ${decimalString(b)} = $${sum}. Line up the decimal points.`); }
-  const a=Number((pick([12,14,16,18,20,24,30])/10).toFixed(1)); const times=pick([2,3,4]); const product=decimalString(a*times); return makeChoice('decimals', `A ribbon is ${decimalString(a)} m long. ${times} equal ribbons are used. What is the total length?`, shuffle([product,decimalString(a+times),decimalString(a*times+0.2),decimalString(a*times-0.2)]), 0, `${decimalString(a)} × ${times} = ${product}.`);
-}
-function qData(){
-  const mode = rand(1,4);
-  if(mode===1){ const arr=[rand(4,10),rand(5,11),rand(6,12),rand(7,13)]; const mean=(arr.reduce((a,b)=>a+b,0))/arr.length; return makeInput('data', `The basket counts are ${arr.join(', ')}. What is the mean number of baskets?`, mean, `Add the numbers: ${arr.reduce((a,b)=>a+b,0)}. Then divide by ${arr.length}. The mean is ${mean}.`); }
-  if(mode===2){ const arr=shuffle([2,5,7,9,11]); return makeInput('data', `Find the median of these numbers: ${arr.join(', ')}.`, 7, `Put the numbers in order. The middle number is 7.`); }
-  if(mode===3){ const arr=[4,5,5,6,7,7,7,9]; return makeChoice('data', `What is the mode of 4, 5, 5, 6, 7, 7, 7, 9?`, ['5','6','7','9'], 2, `The mode is the number that appears most often. 7 appears 3 times.`); }
-  return makeChoice('data', `A chart shows book sales: Monday 6, Tuesday 8, Wednesday 5, Thursday 9. Which day sold the most books?`, ['Monday','Tuesday','Wednesday','Thursday'], 3, `Thursday has the greatest value: 9.`);
-}
-function qConversions(){
-  const mode=rand(1,4);
-  if(mode===1){ const m=pick([2.5,3,3.5,4]); return makeInput('conversions', `${m} meters equals how many centimeters?`, m*100, `1 meter = 100 centimeters, so ${m} × 100 = ${m*100}.`); }
-  if(mode===2){ const h=pick([1.5,2,2.5,3]); return makeInput('conversions', `${h} hours equals how many minutes?`, h*60, `1 hour = 60 minutes, so ${h} × 60 = ${h*60}.`); }
-  if(mode===3){ const d=pick([18,24,30,36]), t=pick([3,4,6]); return makeChoice('conversions', `A bike travels ${d} miles in ${t} hours. What is its speed?`, shuffle([String(d/t),String(d-t),String(d+t),String(t)]), 0, `Speed = distance ÷ time = ${d} ÷ ${t} = ${d/t}.`); }
-  const cm=pick([120,250,340,470]); return makeChoice('conversions', `Which is equal to ${cm} centimeters?`, shuffle([`${cm/100} m`, `${cm/10} m`, `${cm*10} m`, `${cm/1000} m`]), 0, `${cm} centimeters ÷ 100 = ${cm/100} meters.`);
-}
-function qVariables(){
-  if(Math.random()<0.5){ const x=rand(6,21), a=rand(3,12), result=x+a; return makeInput('variables', `A jewel box is labeled x. If x + ${a} = ${result}, what is x?`, x, `To find x, undo the +${a}. ${result} - ${a} = ${x}.`); }
-  const n=rand(4,12), result=n*pick([2,3,4]); const factor=result/n; return makeInput('variables', `${factor}n = ${result}. What is n?`, n, `Undo multiplication by dividing: ${result} ÷ ${factor} = ${n}.`);
-}
-function qGcfLcm(){
-  if(Math.random()<0.5){ const a=pick([12,18,20,24,30]), b=pick([18,24,28,30,36]); const g=gcd(a,b); return makeChoice('gcfLcm', `What is the greatest common factor of ${a} and ${b}?`, shuffle([String(g),String(Math.max(1,g-1)),String(g+2),String(lcm(a,b))]), 0, `List the common factors of ${a} and ${b}. The greatest one is ${g}.`); }
-  const a=pick([4,5,6,8]), b=pick([6,9,10,12]); const L=lcm(a,b); return makeInput('gcfLcm', `What is the least common multiple of ${a} and ${b}?`, L, `Skip-count by both numbers until you reach the first common multiple. That is ${L}.`);
-}
-
-function startLevel(levelId){
-  S.currentLevel = levelId; saveState(); updateStats();
-  currentQuestions = buildLevelQuestions(levelId); qIndex=0; score=0; qLocked=false; currentSelection=null;
-  document.getElementById('levelEnd').classList.add('hidden');
-  document.getElementById('levelTitlePill').textContent = `Level ${levelId}: ${LEVELS[levelId-1].title}`;
-  document.getElementById('levelStoryTitle').textContent = `Story Stop ${levelId}`;
-  document.getElementById('levelStoryText').textContent = LEVELS[levelId-1].story.replaceAll('{hero}', S.heroName || 'Princess Nova');
-  document.getElementById('princessStateImg').src = princessImage('normal');
-  document.getElementById('princessStateText').textContent = `${S.heroName || 'Princess Nova'} is listening carefully and looking for patterns.`;
-  switchScreen('gameScreen');
-  renderQuestion();
+function topWeakSpellCode(){
+  return Object.keys(S.topicStats).sort((a,b)=>accuracyFor(a)-accuracyFor(b))[0] || DB.spells[0]?.code || null;
 }
 function renderQuestion(){
-  const q = currentQuestions[qIndex]; qLocked=false; currentSelection=null;
-  document.getElementById('qCounter').textContent = qIndex+1; document.getElementById('qTotal').textContent = currentQuestions.length; document.getElementById('qScore').textContent = score;
-  document.getElementById('progressFill').style.width = `${(qIndex/currentQuestions.length)*100}%`;
-  document.getElementById('qType').textContent = topicLabel(q.topic);
-  document.getElementById('qText').textContent = q.prompt;
-  document.getElementById('qSub').textContent = q.sub || '';
-  const area = document.getElementById('qArea'); area.innerHTML='';
-  if(q.format==='choice'){
-    const box=document.createElement('div'); box.className='options';
-    q.options.forEach((opt,i)=>{
-      const el=document.createElement('div'); el.className='opt'; el.innerHTML=`<div class="opt-key">${String.fromCharCode(65+i)}</div><div>${escapeHtml(opt)}</div>`;
-      el.addEventListener('click',()=>{ if(qLocked) return; [...box.children].forEach(c=>c.classList.remove('selected')); el.classList.add('selected'); currentSelection=String(i); });
-      box.appendChild(el);
-    });
-    area.appendChild(box);
-  } else {
-    const input=document.createElement('input'); input.className='input-answer'; input.id='answerInput'; input.placeholder='Type your answer here'; area.appendChild(input);
-  }
-  const result=document.getElementById('resultBox'); result.className='result'; result.textContent='';
-  const explain=document.getElementById('explainBox'); explain.className='explain'; explain.textContent='';
-  const knight=document.getElementById('knightBox'); knight.classList.remove('show'); document.getElementById('resourceLinks').innerHTML=''; document.getElementById('knightTalk').textContent='';
-  document.getElementById('nextBtn').classList.add('hidden');
-  if(LEVELS[S.currentLevel-1].newTopics.includes(q.topic) && !S.newTopicSeen[q.topic]){
-    showKnightIntro(q.topic);
+  const q = currentQuestions[qIndex]; if(!q) return;
+  qLocked = false; currentSpellCode = q.spell_code; currentSpellLessonExpanded = false;
+  qs('qCounter').textContent = String(qIndex + 1); qs('qScore').textContent = String(score);
+  qs('progressFill').style.width = `${((qIndex)/currentQuestions.length)*100}%`;
+  qs('princessStateImg').src = princessImage('checking');
+  qs('princessStateText').textContent = `${heroDisplayName()} is reading carefully.`;
+  qs('qType').textContent = q.spell_name;
+  qs('qText').textContent = q.stem;
+  qs('qSub').textContent = q.story_context || '';
+  qs('resultBox').className = 'result'; qs('resultBox').textContent='';
+  qs('explainBox').className = 'explain'; qs('explainBox').textContent='';
+  qs('knightBox').className = 'knight-box'; qs('knightTalk').textContent=''; qs('resourceLinks').innerHTML='';
+  qs('nextBtn').classList.add('hidden');
+  if(q.question_type === 'multiple_choice'){
+    const options = [q.option_a,q.option_b,q.option_c,q.option_d].filter(Boolean);
+    qs('qArea').innerHTML = `<div class="options">${options.map(opt=>`<div class="opt" data-value="${escapeHtml(opt)}"><div class="opt-key">✦</div><div>${escapeHtml(opt)}</div></div>`).join('')}</div>`;
+    [...qs('qArea').querySelectorAll('.opt')].forEach(el=>el.addEventListener('click',()=>{ if(qLocked) return; [...qs('qArea').querySelectorAll('.opt')].forEach(x=>x.classList.remove('selected')); el.classList.add('selected'); }));
+  }else{
+    qs('qArea').innerHTML = `<input id="typedAnswer" class="input-answer" placeholder="Type your answer here" />`;
   }
 }
-function getSubmittedAnswer(q){
-  if(q.format==='choice') return currentSelection;
-  return document.getElementById('answerInput').value;
+function submittedAnswer(){
+  const q = currentQuestions[qIndex];
+  if(q.question_type === 'multiple_choice') return qs('qArea').querySelector('.opt.selected')?.dataset.value || '';
+  return qs('typedAnswer')?.value || '';
 }
-function isCorrectAnswer(q, raw){
-  if(q.format==='choice') return String(raw)===String(q.correct);
-  const norm=normalizeAnswer(raw);
-  return norm===normalizeAnswer(q.answer) || (q.accept||[]).some(x=>normalizeAnswer(x)===norm);
-}
-function checkAnswer(){
-  const q=currentQuestions[qIndex]; const raw=getSubmittedAnswer(q);
-  if(raw===null || raw===undefined || String(raw).trim()===''){ alert('Please choose or type an answer first.'); return; }
-  const ok=isCorrectAnswer(q,raw); qLocked=true;
-  const result=document.getElementById('resultBox'); const explain=document.getElementById('explainBox');
-  result.className='result show '+(ok?'good':'bad'); result.textContent = ok ? 'Correct! A sleeping star glows brighter.' : 'Not yet. Let’s learn from this one.';
-  explain.className='explain show'; explain.textContent = q.explanation;
-  document.getElementById('princessStateImg').src = princessImage(ok?'good':'bad');
-  document.getElementById('princessStateText').textContent = ok ? `${S.heroName || 'Princess Nova'} solved it with courage.` : `${S.heroName || 'Princess Nova'} is pausing, thinking, and trying again next time.`;
-  if(q.format==='choice'){
-    const opts=[...document.querySelectorAll('.opt')];
-    opts.forEach((el,i)=>{ if(String(i)===String(q.correct)) el.classList.add('correct'); if(String(i)===String(raw) && !ok) el.classList.add('wrong'); });
-  }
-  const stats = S.topicStats[q.topic] || {correct:0,attempts:0};
-  stats.attempts += 1;
-  if(ok) stats.correct += 1;
-  S.topicStats[q.topic] = stats;
+function isCorrect(q, raw){ return normalizeAnswer(raw) === normalizeAnswer(q.correct_answer); }
+async function checkAnswer(){
+  const q = currentQuestions[qIndex];
+  const raw = submittedAnswer();
+  if(!String(raw).trim()){ alert('Please choose or type an answer first.'); return; }
+  const ok = isCorrect(q, raw); qLocked = true;
+  const stat = S.topicStats[q.spell_code] || {attempts:0, correct:0};
+  stat.attempts += 1; if(ok) stat.correct += 1; S.topicStats[q.spell_code] = stat;
+  S.reviewLog.unshift({level:S.currentLevelNo, spell_code:q.spell_code, ok, prompt:q.stem}); S.reviewLog = S.reviewLog.slice(0,50);
   if(ok){
-    score++; S.totalStars += 1; S.weakTopics[q.topic] = Math.max(0,(S.weakTopics[q.topic]||0)-1);
-    if(topicAccuracy(q.topic)===100) S.weakTopics[q.topic] = 0;
-  } else {
-    S.weakTopics[q.topic] = (S.weakTopics[q.topic]||0)+2;
-    const prev = S.wrongBank[q.topic] || {count:0, samplePrompt:q.prompt, lastLevel:S.currentLevel, explanation:q.explanation};
-    S.wrongBank[q.topic] = {count:(prev.count||0)+1, samplePrompt:q.prompt, lastLevel:S.currentLevel, explanation:q.explanation};
+    score += 1;
+    if(S.wrongBook[q.spell_code]) S.wrongBook[q.spell_code] = S.wrongBook[q.spell_code].map(x=>x.question_id===q.id ? {...x, resolved:true} : x);
+  }else{
+    if(!S.wrongBook[q.spell_code]) S.wrongBook[q.spell_code] = [];
+    const existing = S.wrongBook[q.spell_code].find(x=>x.question_id===q.id);
+    if(existing){ existing.mistake_count = (existing.mistake_count||1)+1; existing.last_wrong_at = new Date().toISOString(); existing.resolved = false; }
+    else S.wrongBook[q.spell_code].push({question_id:q.id, spell_id:q.spell_id, mistake_count:1, last_wrong_at:new Date().toISOString(), resolved:false});
   }
-  S.reviewLog.unshift({level:S.currentLevel, topic:q.topic, ok, prompt:q.prompt});
-  S.reviewLog = S.reviewLog.slice(0,40);
-  saveState(); updateStats(); document.getElementById('qScore').textContent=score;
-  document.getElementById('nextBtn').classList.remove('hidden');
-  if(!ok) showKnightIntro(q.topic, true);
-  S.newTopicSeen[q.topic] = S.newTopicSeen[q.topic] || LEVELS[S.currentLevel-1].newTopics.includes(q.topic);
-  saveState();
+  saveLocal(); updateStats();
+  qs('resultBox').className = `result show ${ok ? 'good':'bad'}`;
+  qs('resultBox').textContent = ok ? 'Correct! A sleeping star glows brighter.' : 'Not yet. Sir Knight can help with this spell.';
+  qs('explainBox').className = 'explain show'; qs('explainBox').textContent = q.explanation || '';
+  qs('princessStateImg').src = princessImage(ok ? 'good':'bad');
+  qs('princessStateText').textContent = ok ? `${heroDisplayName()} solved it with courage.` : `${heroDisplayName()} is learning this spell more slowly.`;
+  if(q.question_type === 'multiple_choice'){
+    [...qs('qArea').querySelectorAll('.opt')].forEach(el=>{
+      if(normalizeAnswer(el.dataset.value)===normalizeAnswer(q.correct_answer)) el.classList.add('correct');
+      if(normalizeAnswer(el.dataset.value)===normalizeAnswer(raw) && !ok) el.classList.add('wrong');
+    });
+  }
+  qs('qScore').textContent = String(score); qs('nextBtn').classList.remove('hidden');
+  await syncAttempt(q, ok, raw);
+  if(!ok) showKnight(q.spell_code, true);
 }
-function showKnightIntro(topic, fromMistake=false){
-  const knight=document.getElementById('knightBox'); knight.classList.add('show');
-  const intro = TOPIC_INTRO[topic] || `Think about the meaning of ${topicLabel(topic)} before calculating.`;
-  const extra = fromMistake ? ' This topic will spiral back soon so you can practice it again.' : ' This is a new idea on the journey, so it is okay to slow down here.';
-  document.getElementById('knightTalk').textContent = intro + extra;
-  const links = RESOURCE_MAP[topic] || [];
-  document.getElementById('resourceLinks').innerHTML = links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener noreferrer">📘 ${escapeHtml(l.label)}</a>`).join('');
+function lessonForSpell(code){
+  const spell = DB.spellsByCode[code];
+  if(!spell) return null;
+  return (DB.lessonsBySpellId[spell.id] || [])[0] || null;
 }
-async function fetchKnightHint(question){
-  return `Try to name the math idea first: ${topicLabel(question.topic)}. Then look for the important numbers, decide the operation, and check whether the answer makes sense in the story. If it is a new spell, use one calm step at a time instead of rushing.`;
+function showKnight(code, fromMistake=false){
+  const lesson = lessonForSpell(code);
+  qs('knightBox').className = 'knight-box show';
+  qs('knightTalk').textContent = lesson?.knight_explanation_short || `Think about the meaning of ${spellName(code)} before calculating.`;
+  if(fromMistake && lesson?.common_mistakes) qs('knightTalk').textContent += ` Watch out for this: ${lesson.common_mistakes}`;
+  const links = [];
+  if(lesson?.khan_url) links.push({label: lesson.resource_title || 'Khan Academy', url: lesson.khan_url});
+  if(lesson?.youtube_url) links.push({label: 'YouTube', url: lesson.youtube_url});
+  qs('resourceLinks').innerHTML = links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener noreferrer">📘 ${escapeHtml(l.label)}</a>`).join('');
 }
-async function askKnight(){
-  const q=currentQuestions[qIndex];
-  const knight=document.getElementById('knightBox'); knight.classList.add('show');
-  const apiHint = await fetchKnightHint(q);
-  const intro = TOPIC_INTRO[q.topic] || '';
-  document.getElementById('knightTalk').textContent = [intro, apiHint].filter(Boolean).join(' ');
-  const links = RESOURCE_MAP[q.topic] || [];
-  document.getElementById('resourceLinks').innerHTML = links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener noreferrer">📘 ${escapeHtml(l.label)}</a>`).join('');
-}
-function nextQuestion(){
-  if(qIndex < currentQuestions.length-1){ qIndex++; renderQuestion(); }
-  else finishLevel();
-}
+async function askKnight(){ const q=currentQuestions[qIndex]; showKnight(q.spell_code, false); }
+function nextQuestion(){ if(qIndex < currentQuestions.length - 1){ qIndex += 1; renderQuestion(); } else finishLevel(); }
 async function finishLevel(){
-  document.getElementById('progressFill').style.width='100%';
+  qs('progressFill').style.width = '100%';
+  qs('levelEnd').classList.remove('hidden');
+  const stars = score >= 11 ? 3 : score >= 8 ? 2 : 1;
+  qs('starRow').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
   if(S.reviewMode){
-    S.reviewMode = false;
-    saveState();
-    document.getElementById('levelEnd').classList.remove('hidden');
-    const stars = score>=5?3:score>=3?2:1;
-    document.getElementById('starRow').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
-    document.getElementById('endSummary').textContent = `${S.heroName || 'Princess Nova'} finished a royal review set with ${score} of ${currentQuestions.length} correct.`;
-    document.getElementById('newLearningText').textContent = 'This review set used fresh questions from earlier weak spots rather than a brand-new topic.';
-    const weak = Object.entries(S.weakTopics).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,4);
-    document.getElementById('adaptiveText').textContent = weak.length ? `Still worth revisiting: ${weak.map(([k])=>topicLabel(k)).join(', ')}.` : 'Wonderful. No big review clusters are left right now.';
-    document.getElementById('reviewList').innerHTML = '<li>Open the Spell Book anytime to see each spell page and start Spell Practice.</li>';
-    await syncStateToSupabase();
-    return;
+    const spell = S.practiceSpellCode;
+    qs('endSummary').textContent = `${heroDisplayName()} answered ${score} of ${currentQuestions.length} questions correctly in Spell Practice.`;
+    qs('newLearningText').textContent = `This was a focused practice set for ${spellName(spell)}.`;
+    qs('adaptiveText').textContent = mastered(spell) ? `${spellName(spell)} is now mastered with 100% accuracy.` : `${spellName(spell)} will keep returning until every recorded attempt is correct.`;
+    qs('reviewList').innerHTML = (S.wrongBook[spell]||[]).filter(x=>!x.resolved).length ? `<li>${escapeHtml(spellName(spell))} still has saved mistakes in the Spell Book.</li>` : `<li>Beautiful work. There are no unresolved mistakes saved for this spell right now.</li>`;
+  } else {
+    S.levelStars[S.currentLevelNo] = Math.max(S.levelStars[S.currentLevelNo] || 0, stars);
+    S.totalStars = Object.values(S.levelStars).reduce((a,b)=>a+b,0);
+    if(S.currentLevelNo >= S.unlockedLevelNo && S.unlockedLevelNo < DB.levels.length) S.unlockedLevelNo = S.currentLevelNo + 1;
+    const plans = DB.plansByLevelNo[S.currentLevelNo] || [];
+    const newOnes = plans.filter(p=>p.role==='new_intro').map(p=>spellName(p.spell_code));
+    qs('endSummary').textContent = `${heroDisplayName()} answered ${score} of ${currentQuestions.length} questions correctly.`;
+    qs('newLearningText').textContent = newOnes.length ? `New spell focus in this stop: ${newOnes.join(', ')}.` : 'This stop mainly spiraled earlier spells back for review.';
+    const weakest = Object.keys(S.topicStats).sort((a,b)=>accuracyFor(a)-accuracyFor(b)).slice(0,4).map(spellName);
+    qs('adaptiveText').textContent = weakest.length ? `Next time, the journey will quietly bring back: ${weakest.join(', ')}.` : 'No weak spells are standing out right now.';
+    const wrongHere = currentQuestions.filter(q=>!isQuestionResolvedNow(q)).slice(0,6);
+    qs('reviewList').innerHTML = wrongHere.length ? wrongHere.map(q=>`<li><strong>${escapeHtml(spellName(q.spell_code))}:</strong> ${escapeHtml(q.stem)}</li>`).join('') : '<li>Beautiful work. There were no unresolved mistakes in this level.</li>';
+    await syncLevelProgress(stars);
   }
-  const stars = score>=11?3:score>=8?2:1; const previous = S.levelStars[S.currentLevel]||0;
-  if(stars>previous){ S.totalStars += (stars-previous)*3; S.levelStars[S.currentLevel]=stars; }
-  else { S.levelStars[S.currentLevel]=previous || stars; }
-  if(S.currentLevel===S.unlocked && S.unlocked<LEVELS.length) S.unlocked++;
-  saveState(); updateStats();
-  document.getElementById('levelEnd').classList.remove('hidden');
-  document.getElementById('starRow').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
-  document.getElementById('endSummary').textContent = `${S.heroName || 'Princess Nova'} answered ${score} of ${currentQuestions.length} questions correctly.`;
-  const newTopics = LEVELS[S.currentLevel-1].newTopics;
-  document.getElementById('newLearningText').textContent = newTopics.length ? newTopics.map(t=>topicLabel(t)).join(', ') : 'This level mainly strengthened earlier skills through mixed practice.';
-  const weak = Object.entries(S.weakTopics).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,4);
-  document.getElementById('adaptiveText').textContent = weak.length ? `Next level will bring back: ${weak.map(([k])=>topicLabel(k)).join(', ')}.` : 'No strong weak spots right now. The next level can focus more on new learning.';
-  const list = document.getElementById('reviewList');
-  const wrongNow = currentQuestions.filter((q,i)=>{
-    const record = S.reviewLog.find(r=>r.level===S.currentLevel && r.prompt===q.prompt);
-    return record && !record.ok;
-  }).slice(0,6);
-  list.innerHTML = wrongNow.length ? wrongNow.map(q=>`<li><strong>Review later:</strong> ${escapeHtml(topicLabel(q.topic))} — ${escapeHtml(q.prompt)}</li>`).join('') : '<li>Beautiful work. There were no wrong questions in this level that need immediate review.</li>';
-  await syncStateToSupabase();
+  saveLocal(); updateStats();
 }
-
-
+function isQuestionResolvedNow(q){
+  const saved = (S.wrongBook[q.spell_code]||[]).find(x=>x.question_id===q.id);
+  return saved ? !!saved.resolved : true;
+}
+async function syncAttempt(q, ok, selectedAnswer){
+  if(!S.playerId) return;
+  const spellId = DB.spellsByCode[q.spell_code]?.id;
+  const levelId = DB.levelsByNo[S.currentLevelNo]?.id || null;
+  try{
+    await upsertRows('player_spell_stats', [{
+      player_id: S.playerId,
+      spell_id: spellId,
+      attempts: S.topicStats[q.spell_code].attempts,
+      correct: S.topicStats[q.spell_code].correct,
+      accuracy: accuracyFor(q.spell_code),
+      mastered: mastered(q.spell_code),
+      last_practiced_at: new Date().toISOString()
+    }], 'player_id,spell_id');
+    await api('player_question_attempts', { method:'POST', body: JSON.stringify([{ player_id:S.playerId, level_id:levelId, question_id:q.id, spell_id:spellId, is_correct:ok, selected_answer:String(selectedAnswer) }]) });
+    if(ok){
+      const saved = (S.wrongBook[q.spell_code]||[]).find(x=>x.question_id===q.id);
+      if(saved){
+        await upsertRows('player_wrong_questions', [{ player_id:S.playerId, question_id:q.id, spell_id:spellId, mistake_count:saved.mistake_count||1, last_wrong_at:saved.last_wrong_at || new Date().toISOString(), resolved:true }], 'player_id,question_id');
+      }
+    } else {
+      const saved = (S.wrongBook[q.spell_code]||[]).find(x=>x.question_id===q.id);
+      await upsertRows('player_wrong_questions', [{ player_id:S.playerId, question_id:q.id, spell_id:spellId, mistake_count:saved?.mistake_count||1, last_wrong_at:new Date().toISOString(), resolved:false }], 'player_id,question_id');
+    }
+    setSync('☁️ Story saved');
+  }catch(err){ console.error(err); setSync('☁️ Local story only', false); }
+}
+async function syncLevelProgress(stars){
+  if(!S.playerId) return;
+  const levelId = DB.levelsByNo[S.currentLevelNo]?.id; if(!levelId) return;
+  try{
+    await upsertRows('player_level_progress', [{ player_id:S.playerId, level_id:levelId, best_score:score, stars, completed:true }], 'player_id,level_id');
+    setSync('☁️ Story saved');
+  }catch(err){ console.error(err); setSync('☁️ Local story only', false); }
+}
+function renderSpellBook(){
+  show('reviewScreen');
+  qs('wrongBookSub').textContent = `Each spell has its own page. A spell is mastered only when its accuracy reaches 100%.`;
+  const orderedSpells = [...DB.spells].sort((a,b)=>{ const aw=(S.wrongBook[a.code]||[]).filter(x=>!x.resolved).length; const bw=(S.wrongBook[b.code]||[]).filter(x=>!x.resolved).length; if(bw!==aw) return bw-aw; return accuracyFor(a.code)-accuracyFor(b.code) || a.display_order-b.display_order; });
+  const cards = orderedSpells.map(sp=>{
+    const stat = S.topicStats[sp.code] || {attempts:0, correct:0};
+    const wrongCount = (S.wrongBook[sp.code] || []).filter(x=>!x.resolved).length;
+    const acc = accuracyFor(sp.code);
+    return `<div class="topic-card"><strong>${escapeHtml(sp.name)}</strong><div style="font-size:13px;line-height:1.65">Accuracy: <strong>${acc}%</strong><br/>Attempts: ${stat.attempts}<br/>Saved mistakes: ${wrongCount}</div><div class="cta-row" style="margin-top:10px"><button class="btn btn-secondary btn-mini" data-open-spell="${sp.code}">${mastered(sp.code)?'Mastered ✨':'Open Spell'}</button></div></div>`;
+  }).join('');
+  qs('wrongTopicGrid').innerHTML = cards;
+  qs('wrongItemList').innerHTML = orderedSpells.map(sp=>{
+    const unresolved = (S.wrongBook[sp.code] || []).filter(x=>!x.resolved).slice(0,4);
+    return `<div class="review-cluster"><h4>${escapeHtml(sp.name)}</h4><p>${mastered(sp.code)?'Mastered with 100% accuracy.':'Still learning.'}</p>${unresolved.length?`<ul class="cluster-list">${unresolved.map(x=>`<li>Saved mistake #${x.mistake_count}</li>`).join('')}</ul>`:'<p style="margin-top:6px">No saved mistakes right now.</p>'}</div>`;
+  }).join('');
+  qs('wrongTopicGrid').querySelectorAll('[data-open-spell]').forEach(btn=>btn.addEventListener('click',()=>openSpellModal(btn.dataset.openSpell)));
+  updateStats();
+}
+function openSpellModal(code){
+  currentSpellCode = code; currentSpellLessonExpanded = false;
+  const spell = DB.spellsByCode[code]; const stat = S.topicStats[code] || {attempts:0, correct:0};
+  const acc = accuracyFor(code); const lesson = lessonForSpell(code);
+  const unresolved = (S.wrongBook[code] || []).filter(x=>!x.resolved);
+  qs('spellModalTitle').textContent = spell?.name || 'Spell Page';
+  qs('spellModalSub').textContent = `This magic page shows mastery, saved mistakes, and guided help for ${spell?.name || code}.`;
+  qs('spellStatusBadge').textContent = mastered(code) ? 'Mastered' : 'Learning';
+  qs('spellAccuracy').textContent = `${acc}%`;
+  qs('spellCorrect').textContent = String(stat.correct || 0);
+  qs('spellAttempts').textContent = String(stat.attempts || 0);
+  qs('spellMistakes').textContent = String(unresolved.length);
+  qs('spellModalFill').style.width = `${Math.min(acc,100)}%`;
+  qs('spellMasteryNote').textContent = mastered(code) ? `${spell?.name} is mastered because every recorded attempt is correct.` : `${spell?.name} is still growing. This spell becomes mastered only at 100% accuracy.`;
+  qs('spellCoreRule').textContent = lesson?.concept_intro || `Sir Knight will add a concept note for ${spell?.name || code} here.`;
+  qs('spellKnightTalk').textContent = lesson?.knight_explanation_short || `Sir Knight says: name the spell first, then decide the operation calmly.`;
+  qs('spellStepList').innerHTML = (lesson?.step_by_step || '1. Read carefully. 2. Spot the numbers. 3. Choose the operation. 4. Check the answer.').split(/\s*\d+\.\s*/).filter(Boolean).map(x=>`<li>${escapeHtml(x.trim())}</li>`).join('');
+  qs('spellResourceNote').textContent = lesson?.resource_note || 'Open a public lesson whenever this spell feels new or sticky.';
+  qs('spellResourceLinks').innerHTML = [lesson?.khan_url ? `<a href="${lesson.khan_url}" target="_blank" rel="noopener noreferrer">📘 ${escapeHtml(lesson.resource_title || 'Khan Academy')}</a>` : '', lesson?.youtube_url ? `<a href="${lesson.youtube_url}" target="_blank" rel="noopener noreferrer">▶ YouTube</a>` : ''].join('');
+  qs('spellMistakeList').innerHTML = unresolved.length ? unresolved.map(x=>`<div class="spell-mistake">Saved mistake · tried ${x.mistake_count} time(s) · last seen ${new Date(x.last_wrong_at).toLocaleDateString()}</div>`).join('') : '<div class="spell-mistake">No unresolved mistakes are saved for this spell right now.</div>';
+  qs('spellModal').classList.add('show');
+}
+function closeSpellModal(){ qs('spellModal').classList.remove('show'); }
+function openLessonModal(code){
+  const spell = DB.spellsByCode[code];
+  const lesson = lessonForSpell(code);
+  qs('lessonModalTitle').textContent = `A New Spell Appears: ${spell?.name || code}`;
+  qs('lessonModalSub').textContent = `${heroDisplayName()} has reached the first stop for ${spell?.name || code}. Sir Knight opens a gentle lesson page before the questions begin.`;
+  qs('lessonConceptText').textContent = lesson?.concept_intro || `This is the first idea behind ${spell?.name || code}.`;
+  qs('lessonKnightText').textContent = lesson?.knight_explanation_long || lesson?.knight_explanation_short || `Sir Knight will guide this new spell one careful step at a time.`;
+  const steps = (lesson?.step_by_step || '1. Read the idea. 2. Watch the pattern. 3. Try an easy example. 4. Practice with care.').split(/\s*\d+\.\s*/).filter(Boolean);
+  qs('lessonStepList').innerHTML = steps.map(x=>`<li>${escapeHtml(x.trim())}</li>`).join('');
+  qs('lessonResourceNote').textContent = lesson?.resource_note || 'Open the public lesson if your child wants to see another explanation first.';
+  qs('lessonResourceLinks').innerHTML = [lesson?.khan_url ? `<a href="${lesson.khan_url}" target="_blank" rel="noopener noreferrer">📘 ${escapeHtml(lesson.resource_title || 'Khan Academy')}</a>` : '', lesson?.youtube_url ? `<a href="${lesson.youtube_url}" target="_blank" rel="noopener noreferrer">▶ YouTube</a>` : ''].join('');
+  qs('lessonModal').classList.add('show');
+}
+function closeLessonModal(){ qs('lessonModal').classList.remove('show'); }
+function expandSpellKnight(){
+  const lesson = lessonForSpell(currentSpellCode);
+  if(!lesson) return;
+  currentSpellLessonExpanded = !currentSpellLessonExpanded;
+  qs('spellKnightTalk').textContent = currentSpellLessonExpanded ? (lesson.knight_explanation_long || lesson.knight_explanation_short || '') : (lesson.knight_explanation_short || '');
+}
 function initFX(){
-  const spark=document.getElementById('sparkles'); for(let i=0;i<36;i++){ const s=document.createElement('div'); s.className='star'; s.style.left=Math.random()*100+'vw'; s.style.top=Math.random()*100+'vh'; s.style.animationDuration=(2+Math.random()*4)+'s'; s.style.animationDelay=(-Math.random()*5)+'s'; s.style.transform=`scale(${.7+Math.random()*1.4})`; spark.appendChild(s); }
-  const clouds=document.getElementById('clouds'); for(let i=0;i<8;i++){ const c=document.createElement('div'); c.className='cloud'; c.style.width=(70+Math.random()*120)+'px'; c.style.height=(24+Math.random()*24)+'px'; c.style.top=(5+Math.random()*45)+'vh'; c.style.left=(-20-Math.random()*20)+'vw'; c.style.animationDuration=(28+Math.random()*28)+'s'; c.style.animationDelay=(-Math.random()*30)+'s'; clouds.appendChild(c); }
-  const petals=document.getElementById('petals'); for(let i=0;i<18;i++){ const p=document.createElement('div'); p.className='petal'; p.textContent=['✿','❀','✦'][i%3]; p.style.left=Math.random()*100+'vw'; p.style.animationDuration=(8+Math.random()*8)+'s'; p.style.animationDelay=(-Math.random()*10)+'s'; petals.appendChild(p); }
+  const spark=qs('sparkles'); for(let i=0;i<36;i++){ const s=document.createElement('div'); s.className='star'; s.style.left=Math.random()*100+'vw'; s.style.top=Math.random()*100+'vh'; s.style.animationDuration=(2+Math.random()*4)+'s'; s.style.animationDelay=(-Math.random()*5)+'s'; s.style.transform=`scale(${.7+Math.random()*1.4})`; spark.appendChild(s); }
+  const clouds=qs('clouds'); for(let i=0;i<8;i++){ const c=document.createElement('div'); c.className='cloud'; c.style.width=(70+Math.random()*120)+'px'; c.style.height=(24+Math.random()*24)+'px'; c.style.top=(5+Math.random()*45)+'vh'; c.style.left=(-20-Math.random()*20)+'vw'; c.style.animationDuration=(28+Math.random()*28)+'s'; c.style.animationDelay=(-Math.random()*30)+'s'; clouds.appendChild(c); }
+  const petals=qs('petals'); for(let i=0;i<18;i++){ const p=document.createElement('div'); p.className='petal'; p.textContent=['✿','❀','✦'][i%3]; p.style.left=Math.random()*100+'vw'; p.style.animationDuration=(8+Math.random()*8)+'s'; p.style.animationDelay=(-Math.random()*10)+'s'; petals.appendChild(p); }
 }
 
-document.getElementById('saveProfileBtn').addEventListener('click', ()=>saveProfile(true));
-document.getElementById('openMapBtn').addEventListener('click', ()=>saveProfile(true));
-document.getElementById('mapBtn').addEventListener('click', renderMap);
-document.getElementById('backMapBtn').addEventListener('click', renderMap);
-document.getElementById('spellModalClose').addEventListener('click', closeSpellModal);
-document.getElementById('spellBackBookBtn').addEventListener('click', closeSpellModal);
-document.getElementById('spellPracticeBtn').addEventListener('click', ()=>{ if(currentSpellTopic){ closeSpellModal(); startWrongPractice(currentSpellTopic); } });
-document.getElementById('spellKnightBtn').addEventListener('click', expandSpellKnight);
-document.getElementById('spellModal').addEventListener('click', (e)=>{ if(e.target.id==='spellModal') closeSpellModal(); });
-document.getElementById('wrongBookTopBtn').addEventListener('click', renderWrongBook);
-document.getElementById('wrongBookWelcomeBtn').addEventListener('click', ()=>{ saveProfile(false).then(renderWrongBook); });
-document.getElementById('wrongBookBackBtn').addEventListener('click', renderMap);
-document.getElementById('practiceWrongBtn').addEventListener('click', startWrongPractice);
-document.getElementById('checkBtn').addEventListener('click', checkAnswer);
-document.getElementById('nextBtn').addEventListener('click', nextQuestion);
-document.getElementById('knightBtn').addEventListener('click', askKnight);
-document.getElementById('nextLevelBtn').addEventListener('click', ()=>{ if(S.currentLevel<LEVELS.length) startLevel(Math.min(S.currentLevel+1,S.unlocked)); else renderMap(); });
+qs('playerName').addEventListener('input', updateWelcome);
+qs('saveProfileBtn').addEventListener('click', async()=>{ if(await ensurePlayer()) renderMap(); });
+qs('openMapBtn').addEventListener('click', async()=>{ if(!S.playerName && !qs('playerName').value.trim()){ alert("Please type your child's name first."); return; } if(await ensurePlayer()) renderMap(); });
+qs('wrongBookWelcomeBtn').addEventListener('click', async()=>{ if(!S.playerName && !qs('playerName').value.trim()){ alert("Please type your child's name first."); return; } if(await ensurePlayer()) renderSpellBook(); });
+qs('wrongBookTopBtn').addEventListener('click', renderSpellBook);
+qs('wrongBookBackBtn').addEventListener('click', renderMap);
+qs('practiceWrongBtn').addEventListener('click', ()=>startSpellPractice());
+qs('spellModalClose').addEventListener('click', closeSpellModal);
+qs('spellBackBookBtn').addEventListener('click', closeSpellModal);
+qs('spellPracticeBtn').addEventListener('click', ()=>{ closeSpellModal(); startSpellPractice(currentSpellCode); });
+qs('spellKnightBtn').addEventListener('click', expandSpellKnight);
+qs('spellModal').addEventListener('click', e=>{ if(e.target.id==='spellModal') closeSpellModal(); });
+qs('lessonModalClose').addEventListener('click', closeLessonModal);
+qs('lessonSkipBtn').addEventListener('click', closeLessonModal);
+qs('lessonBeginBtn').addEventListener('click', closeLessonModal);
+qs('lessonModal').addEventListener('click', e=>{ if(e.target.id==='lessonModal') closeLessonModal(); });
+qs('checkBtn').addEventListener('click', checkAnswer);
+qs('nextBtn').addEventListener('click', nextQuestion);
+qs('knightBtn').addEventListener('click', askKnight);
+qs('mapBtn').addEventListener('click', renderMap);
+qs('backMapBtn').addEventListener('click', renderMap);
+qs('nextLevelBtn').addEventListener('click', ()=>{ if(S.reviewMode) renderSpellBook(); else renderMap(); });
 
-ensureDeviceId();
-initFX(); refreshImages(); setWelcome(); updateStats();
-if(S.playerName){ pullRemoteState().then(()=>{ refreshImages(); setWelcome(); updateStats(); }); }
+(async function init(){
+  loadLocal(); refreshImages(); initFX();
+  if(S.playerName){ qs('playerName').value = S.playerName; }
+  updateWelcome(); updateStats(); show('welcomeScreen');
+  const ok = await loadContent();
+  if(ok && S.playerName){ await ensurePlayer(); updateWelcome(); updateStats(); }
+})();
 </script>
+
 </body>
 </html>
