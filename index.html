@@ -348,7 +348,7 @@ body{
 /div>
 
 <div id="levelModal" class="modal-backdrop">
-  <div class="modal">
+  <div class="modal" style="width:min(760px,100%)">
     <div class="close-row"><button class="close-btn" data-close="levelModal">Close</button></div>
     <h3 id="levelModalTitle">Level</h3>
     <p id="levelStoryText" class="soft"></p>
@@ -359,13 +359,10 @@ body{
         <div id="levelStarsText" class="soft" style="margin-top:8px"></div>
       </div>
       <div class="card">
-        <div class="mini">What this level practices</div>
-        <div id="levelSpellPlan" class="soft" style="margin-top:8px"></div>
+        <div class="mini">This level</div>
+        <div class="big">12 mixed questions</div>
+        <div class="soft" id="levelSimpleNote" style="margin-top:8px">Old spells first. New learning appears slowly across the next levels.</div>
       </div>
-    </div>
-    <div id="lessonSection" class="lesson hidden">
-      <h3 style="font-size:22px;margin-bottom:6px">🛡️ Sir Knight Lesson</h3>
-      <div id="lessonContent"></div>
     </div>
     <div id="bossSection" class="lesson hidden">
       <h3 style="font-size:22px;margin-bottom:6px">👑 AMC Bonus Boss</h3>
@@ -381,11 +378,6 @@ body{
           <div id="bossClaimState" class="soft" style="margin-top:8px"></div>
         </div>
       </div>
-      <div class="lesson">
-        <div class="mini">Sir Knight Hint</div>
-        <p id="bossHintShort" style="margin-top:6px"></p>
-        <p id="bossHintLong" class="soft" style="margin-top:0"></p>
-      </div>
       <div class="boss-btns">
         <a id="bossOpenLink" class="btn" target="_blank" rel="noopener noreferrer">Open Real AMC8 Problem</a>
         <button id="claimBossBtn" class="primary-btn">I Solved It · Claim Reward</button>
@@ -397,6 +389,7 @@ body{
     </div>
   </div>
 </div>
+/div>
 
 <div id="quizModal" class="modal-backdrop">
   <div class="modal">
@@ -539,7 +532,7 @@ body{
       : '☁️ Sign in to make cloud save automatic.';
 
     if (saveExists || hasStory) {
-      $('homeTitle').innerHTML = `Welcome back, ${state.childName || 'Princess'}.<small>Your next star is waiting just beyond the next gate.</small>`;
+      $('homeTitle').innerHTML = `Welcome back, ${state.childName || 'Princess'}.<small>Continue the journey when you are ready.</small>`;
       $('nameSection').classList.add('hidden');
       $('startBtn').classList.add('hidden');
       $('continueBtn').classList.remove('hidden');
@@ -892,25 +885,13 @@ body{
     $('levelProgressText').textContent = row?.completed ? 'Completed' : row?.best_score ? `Best score ${row.best_score}/12` : 'Not started yet';
     $('levelStarsText').textContent = `Main stars: ${row?.stars || 0}${row?.bonusStars ? ` · Bonus stars: ${row.bonusStars}` : ''}`;
 
-    const plans = state.spellPlanByLevel[levelNo] || [];
-    $('levelSpellPlan').innerHTML = plans.length
-      ? plans.map(p => `<div><strong>${p.spells?.name || p.spells?.code || 'Spell'}</strong> · ${p.role} · ${p.difficulty_band} · ${p.min_questions}-${p.max_questions} question(s)</div>`).join('')
-      : 'The spell plan for this level has not loaded yet.';
-
-    const introPlans = plans.filter(p => ['new_intro'].includes(p.role) || ['concept','guided'].includes(p.difficulty_band));
-    const lessonHtml = introPlans.map(p => {
-      const lesson = (state.lessonsBySpellId[p.spell_id] || [])[0];
-      if (!lesson) return '';
-      return `<div class="card" style="margin-top:10px">
-        <div class="mini">${p.spells?.name || 'Spell'}</div>
-        <div style="margin-top:8px"><strong>${lesson.resource_title || 'Sir Knight Lesson'}</strong></div>
-        <div style="margin-top:8px">${lesson.concept_intro || ''}</div>
-        <div class="soft" style="margin-top:8px">${lesson.knight_explanation_short || ''}</div>
-        ${lesson.khan_url ? `<div style="margin-top:8px"><a href="${lesson.khan_url}" target="_blank" rel="noopener noreferrer">Open Khan lesson</a></div>` : ''}
-      </div>`;
-    }).join('');
-    $('lessonSection').classList.toggle('hidden', !lessonHtml);
-    $('lessonContent').innerHTML = lessonHtml || '';
+    const noteMap = {
+      1: 'This first level is old-skill review only.',
+      2: 'This level begins the first gentle introduction to two-digit division.',
+      3: 'This level continues two-digit division with guided practice.',
+      4: 'This level mixes old skills with more independent two-digit division practice.'
+    };
+    $('levelSimpleNote').textContent = noteMap[levelNo] || '12 mixed questions. Old spells return often, and new learning appears slowly.';
 
     const bonus = state.bonusByLevel[levelNo];
     if (bonus) {
@@ -920,8 +901,6 @@ body{
       $('bossReward').textContent = `+${bonus.reward_stars || 0} stars`;
       const claimed = !!(row?.bonusStars);
       $('bossClaimState').textContent = claimed ? 'Reward already claimed for this level.' : 'Solve the real AMC8 problem, then claim the reward once.';
-      $('bossHintShort').textContent = bonus.boss?.knight_hint_short || '';
-      $('bossHintLong').textContent = bonus.boss?.knight_hint_long || '';
       $('bossOpenLink').href = bonus.boss?.source_url || '#';
       $('claimBossBtn').disabled = claimed || !state.playerId;
       $('claimBossBtn').textContent = claimed ? 'Reward already claimed' : 'I Solved It · Claim Reward';
