@@ -517,7 +517,8 @@ body{
 
   function applyHome() {
     const saveExists = hasAnySave(state.progress);
-    const hasStory = !!state.playerId || !!state.childName;
+    const local = localLoad();
+    const hasStory = !!state.playerId || !!state.childName || !!local.storyReady;
     const displayName = state.childName ? `Princess ${state.childName}` : 'the princess';
     $('storyText').textContent = state.childName
       ? `Far above the Cloud-Castle Kingdom, sleeping stars are waiting for ${displayName}. She must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.`
@@ -572,11 +573,24 @@ body{
   function renderMap() {
     const layer = $('mapLayer');
     layer.innerHTML = '';
-    const unlocked = unlockedCount(state.levels, state.progress);
-    const nextNo = state.currentLevelNo;
-    $('mapNextHint').textContent = `Next stop: Level ${nextNo}${state.levels[nextNo - 1] ? ' · ' + state.levels[nextNo - 1].title : ''}`;
+    const levels = state.levels || [];
+    const unlocked = unlockedCount(levels, state.progress);
+    const nextNo = state.currentLevelNo || 1;
+    $('mapNextHint').textContent = `Next stop: Level ${nextNo}${levels[nextNo - 1] ? ' · ' + levels[nextNo - 1].title : ''}`;
 
-    state.levels.forEach(level => {
+    if (!levels.length) {
+      const msg = document.createElement('div');
+      msg.style.position = 'absolute';
+      msg.style.inset = '0';
+      msg.style.display = 'grid';
+      msg.style.placeItems = 'center';
+      msg.style.padding = '24px';
+      msg.innerHTML = `<div class="card" style="max-width:520px;text-align:center"><div class="big">The kingdom map is still sleeping.</div><div class="soft" style="margin-top:8px">I could not find level rows in Supabase yet. Please make sure the level seed SQL has been imported, then refresh.</div></div>`;
+      layer.appendChild(msg);
+      return;
+    }
+
+    levels.forEach(level => {
       const no = level.level_no;
       const pos = posForLevel(no);
       const row = state.progress[no] || {};
@@ -592,21 +606,23 @@ body{
       node.style.left = `${pos.x}%`;
       node.style.top = `${pos.y}%`;
       node.textContent = no;
-      node.dataset.label = level.title;
+      node.dataset.label = level.title || `Level ${no}`;
       if (!unlockedNow) node.disabled = true;
       node.addEventListener('click', () => openLevelDetail(no));
 
       const starline = document.createElement('div');
       starline.className = 'map-starline';
-      starline.textContent = stars ? '⭐'.repeat(stars) : '☆☆☆';
+      starline.textContent = stars ? '⭐'.repeat(stars) : '';
       node.appendChild(starline);
 
       if (hasBonus) {
         const bonus = document.createElement('div');
         bonus.className = 'map-bonus';
-        bonus.textContent = 'AMC Bonus';
+        bonus.textContent = 'AMC';
         node.appendChild(bonus);
       }
+
+      layer.appendChild(node);
 
       if (active) {
         const pin = document.createElement('img');
@@ -616,8 +632,6 @@ body{
         pin.style.top = `${pos.y}%`;
         layer.appendChild(pin);
       }
-
-      layer.appendChild(node);
     });
   }
 
@@ -632,42 +646,41 @@ body{
 
   async function loadContentTables() {
     const client = state.client;
-    const [levelsRes, spellPlanRes, bonusRes, lessonsRes] = await Promise.all([
-      client.from('levels').select('*').order('level_no'),
-      client.from('level_spell_plan').select('id, level_id, spell_id, role, min_questions, max_questions, difficulty_band, spells(name,code)').order('created_at'),
-      client.from('level_bonus_boss_plan').select('level_id, reward_stars, amc_bonus_boss_id, amc_bonus_bosses(*)'),
-      client.from('spell_lessons').select('*').order('created_at')
-    ]);
-
+    const levelsRes = await client.from('levels').select('*').order('level_no');
     if (levelsRes.error) throw levelsRes.error;
     state.levels = levelsRes.data || [];
 
     const idToNo = Object.fromEntries(state.levels.map(l => [l.id, l.level_no]));
-
     state.spellPlanByLevel = {};
-    (spellPlanRes.data || []).forEach(row => {
-      const no = idToNo[row.level_id];
-      if (!no) return;
-      if (!state.spellPlanByLevel[no]) state.spellPlanByLevel[no] = [];
-      state.spellPlanByLevel[no].push(row);
-    });
-
     state.bonusByLevel = {};
-    (bonusRes.data || []).forEach(row => {
-      const no = idToNo[row.level_id];
-      if (!no) return;
-      state.bonusByLevel[no] = {
-        reward_stars: row.reward_stars,
-        bonus_boss_id: row.amc_bonus_boss_id,
-        boss: row.amc_bonus_bosses
-      };
-    });
-
     state.lessonsBySpellId = {};
-    (lessonsRes.data || []).forEach(row => {
-      if (!state.lessonsBySpellId[row.spell_id]) state.lessonsBySpellId[row.spell_id] = [];
-      state.lessonsBySpellId[row.spell_id].push(row);
-    });
+
+    try {
+      const spellPlanRes = await client.from('level_spell_plan').select('id, level_id, spell_id, role, min_questions, max_questions, difficulty_band, spells(name,code)').order('created_at');
+      (spellPlanRes.data || []).forEach(row => {
+        const no = idToNo[row.level_id];
+        if (!no) return;
+        if (!state.spellPlanByLevel[no]) state.spellPlanByLevel[no] = [];
+        state.spellPlanByLevel[no].push(row);
+      });
+    } catch {}
+
+    try {
+      const bonusRes = await client.from('level_bonus_boss_plan').select('level_id, reward_stars, amc_bonus_boss_id, amc_bonus_bosses(*)');
+      (bonusRes.data || []).forEach(row => {
+        const no = idToNo[row.level_id];
+        if (!no) return;
+        state.bonusByLevel[no] = { reward_stars: row.reward_stars, bonus_boss_id: row.amc_bonus_boss_id, boss: row.amc_bonus_bosses };
+      });
+    } catch {}
+
+    try {
+      const lessonsRes = await client.from('spell_lessons').select('*').order('created_at');
+      (lessonsRes.data || []).forEach(row => {
+        if (!state.lessonsBySpellId[row.spell_id]) state.lessonsBySpellId[row.spell_id] = [];
+        state.lessonsBySpellId[row.spell_id].push(row);
+      });
+    } catch {}
   }
 
   async function linkOrLoadProfileFromSession(session) {
@@ -688,7 +701,7 @@ body{
         state.playerId = row.player_id;
         state.childName = row.child_name || '';
         state.princessName = row.princess_name || (state.childName ? `Princess ${state.childName}` : 'Hero Princess');
-        localSave({ childName: state.childName });
+        localSave({ childName: state.childName, storyReady: true });
       } else {
         const { data: profileData } = await state.client
           .from('user_profiles')
@@ -697,7 +710,7 @@ body{
           .maybeSingle();
         if (profileData?.child_name) {
           state.childName = profileData.child_name || '';
-          localSave({ childName: state.childName });
+          localSave({ childName: state.childName, storyReady: true });
         }
       }
     }
@@ -764,52 +777,42 @@ body{
     }
 
     setStatus('Opening the story...');
-    let row;
-
     const { data, error } = await state.client.rpc('get_or_create_player', { p_child_name: name });
     if (error || !data || !data.length) {
       console.error(error);
       setStatus('The story could not be opened yet.');
       return;
     }
-    row = data[0];
 
+    const row = data[0];
     state.playerId = row.player_id;
     state.childName = row.child_name;
     state.princessName = row.princess_name;
-    localSave({ childName: state.childName });
+    localSave({ childName: state.childName, storyReady: true });
 
     if (state.user) {
-      const profilePayload = {
-        user_id: state.user.id,
-        player_id: state.playerId,
-        child_name: state.childName,
-        updated_at: new Date().toISOString()
-      };
-      const { error: profileError } = await state.client
-        .from('user_profiles')
-        .upsert(profilePayload, { onConflict: 'user_id' });
+      const profilePayload = { user_id: state.user.id, player_id: state.playerId, child_name: state.childName, updated_at: new Date().toISOString() };
+      const { error: profileError } = await state.client.from('user_profiles').upsert(profilePayload, { onConflict: 'user_id' });
       if (profileError) {
         console.error(profileError);
         setStatus('The story opened, but cloud linking is not ready yet. Your local save still works on this browser.');
       }
     }
 
-    await loadPlayerState();
+    try { await loadPlayerState(); } catch (e) { console.error(e); }
+    state.currentLevelNo = nextPlayableLevel(state.levels, state.progress);
     applyTopbar();
     applyHome();
     renderMap();
-    if (!state.user) {
-      setStatus(`Welcome, Princess ${state.childName}. The first road is ready.`);
-    } else {
-      setStatus(`Welcome, Princess ${state.childName}. This account is now linked to the story.`);
-    }
+    setStatus(state.user ? `Welcome, Princess ${state.childName}. This account is now linked to the story.` : `Welcome, Princess ${state.childName}. The first road is ready.`);
     openMapModal();
   }
 
-  function continueJourney() {
-    if (!state.levels.length) return;
+  async function continueJourney() {
     setStatus(`Continuing the story for Princess ${state.childName}.`);
+    if (!state.levels.length) {
+      try { await loadContentTables(); } catch (e) { console.error(e); }
+    }
     openMapModal();
   }
 
@@ -818,7 +821,10 @@ body{
     $('spellModal').classList.add('open');
   }
 
-  function openMapModal() {
+  async function openMapModal() {
+    if (!state.levels.length) {
+      try { await loadContentTables(); } catch (e) { console.error(e); }
+    }
     renderMap();
     $('mapModal').classList.add('open');
   }
