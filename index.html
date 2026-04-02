@@ -1237,7 +1237,7 @@ body{
 
     // ── Spell Lessons ──
     const plans = state.spellPlanByLevel[levelNo] || [];
-    const newSpellIds = plans.filter(p => p.role === 'new').map(p => p.spell_id);
+    const newSpellIds = plans.filter(p => p.role === 'new' || p.role === 'new_intro').map(p => p.spell_id);
     const lessonRows = [];
     newSpellIds.forEach(sid => {
       (state.lessonsBySpellId[sid] || []).forEach(l => lessonRows.push(l));
@@ -1416,8 +1416,8 @@ body{
     const wrongIds = wrongRows.map(r => r.question_id);
 
     // Separate plans by role for spiral ratio enforcement
-    const reviewPlans = plans.filter(p => p.role !== 'new');
-    const newPlans    = plans.filter(p => p.role === 'new');
+    const reviewPlans = plans.filter(p => p.role !== 'new' && p.role !== 'new_intro');
+    const newPlans    = plans.filter(p => p.role === 'new' || p.role === 'new_intro');
     // Spiral design: max 4 new-content questions out of 12 (~33%)
     // Review/practice fills the majority first
     const MAX_NEW = Math.min(4, newPlans.length * 3);
