@@ -465,9 +465,8 @@ body{
     </div>
     <div class="top-actions">
       <div class="chip" tabindex="0" data-tip="Princess name — the story hero.">👑 <span id="heroName">Hero</span></div>
-      <div class="chip" tabindex="0" data-tip="Current level.">🗺️ <span id="heroLevel">Lv 1</span></div>
+      <div class="chip" tabindex="0" data-tip="Current level out of 36 total levels.">🗺️ <span id="heroLevel">Lv 1</span><span id="heroUnlock" style="color:var(--text2);font-size:11px;margin-left:2px">/ 36</span></div>
       <div class="chip" tabindex="0" data-tip="Spirit Stones — earn by answering questions, spend on cat snacks!">💎 <span id="heroStars">0</span></div>
-      <div class="chip" tabindex="0" data-tip="Levels unlocked.">🔓 <span id="heroUnlock">1/36</span></div>
       <button id="petBtn" class="btn">🐱</button>
       <button id="spellBookBtn" class="btn">📖</button>
       <button id="authBtn" class="btn">☁️ Sign In</button>
@@ -827,9 +826,8 @@ body{
     $('heroName').textContent = shortName;
     $('heroLevel').textContent = `Lv ${state.currentLevelNo}`;
     $('heroStars').textContent = available;
-    const unlocked = unlockedCount(state.levels, state.progress);
     const total = state.levels.length || 36;
-    $('heroUnlock').textContent = `${unlocked}/${total}`;
+    $('heroUnlock').textContent = `/ ${total}`;
     $('authBtn').textContent = state.user ? '↩ Sign Out' : '☁️ Sign In';
     window._appStones = available;
     if (typeof updateStonesDisplay === 'function') updateStonesDisplay();
