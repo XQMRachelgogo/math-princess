@@ -1242,7 +1242,6 @@ body{
     newSpellIds.forEach(sid => {
       (state.lessonsBySpellId[sid] || []).forEach(l => lessonRows.push(l));
     });
-    // Also include any lesson for spells being introduced (role may vary), deduplicate
     const seenLessonIds = new Set();
     const uniqueLessons = lessonRows.filter(l => {
       if (seenLessonIds.has(l.id)) return false;
@@ -1250,11 +1249,25 @@ body{
       return true;
     });
 
+    // Debug: log what we found
+    console.log(`[Level ${levelNo}] plans:`, plans.length, '| new spell plans:', newSpellIds.length, '| lessons found:', uniqueLessons.length);
+    console.log('[lessons sample]', uniqueLessons[0] || 'none');
+
+    // Preview fallback: if new spells exist but no lesson in DB yet, show a placeholder
+    const lessonDisplay = uniqueLessons.length ? uniqueLessons : (newSpellIds.length ? [{
+      _preview: true,
+      spells: { name: plans.find(p=>p.role==='new')?.spells?.name || 'New Spell' },
+      concept_intro: 'Sir Knight is preparing the lesson for this spell — check back soon!',
+      khan_url: 'https://www.khanacademy.org/math/arithmetic/arith-review-multiply-divide',
+      resource_title: 'Division on Khan Academy (example link)',
+      resource_note: 'This is a preview of how Khan Academy links will appear.'
+    }] : []);
+
     const lessonsSection = $('lessonsSection');
     const lessonCards = $('lessonCards');
-    if (uniqueLessons.length) {
+    if (lessonDisplay.length) {
       lessonsSection.classList.remove('hidden');
-      lessonCards.innerHTML = uniqueLessons.map(l => {
+      lessonCards.innerHTML = lessonDisplay.map(l => {
         // Use actual spell_lessons field names from Supabase schema
         const khanUrl = l.khan_url || '';
         const ytUrl   = l.youtube_url || '';
