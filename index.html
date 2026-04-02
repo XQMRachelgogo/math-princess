@@ -306,7 +306,7 @@ body{
 .cat-tail{position:absolute;border-radius:0 999px 999px 0;transform-origin:left center}
 .cat-paw{position:absolute;border-radius:50%}
 
-/* Cat 1 — 月光猫 (Moonlight, soft lavender) */
+/* Cat 1 — Luna (Moonlight, soft lavender) */
 .cat-luna .cat-body{width:74px;height:64px;bottom:0;left:8px;background:radial-gradient(ellipse at 40% 35%,#ede4ff,#d8c8f8)}
 .cat-luna .cat-ear{width:22px;height:26px;background:#d8c8f8}
 .cat-luna .cat-ear::after{background:#f5d8ee}
@@ -321,7 +321,7 @@ body{
 .cat-luna .cat-paw.right{width:18px;height:12px;bottom:-8px;right:14px;background:#e0d0f8}
 .cat-luna .cat-marking{position:absolute;width:20px;height:3px;border-radius:99px;background:rgba(160,130,210,.35);top:18px;left:27px;transform:rotate(-6deg)}
 
-/* Cat 2 — 桃花猫 (Peach Blossom, warm cream/pink) */
+/* Cat 2 — Mochi (Peach Blossom, warm cream/pink) */
 .cat-mochi .cat-body{width:76px;height:66px;bottom:0;left:7px;background:radial-gradient(ellipse at 40% 35%,#fff3e8,#fbd8c0)}
 .cat-mochi .cat-ear{width:24px;height:28px;background:#fbd8c0}
 .cat-mochi .cat-ear::after{background:#ffc0d8}
@@ -336,7 +336,7 @@ body{
 .cat-mochi .cat-paw.right{width:20px;height:13px;bottom:-8px;right:12px;background:#fce0c8}
 .cat-mochi .cat-stripe{position:absolute;width:4px;height:18px;border-radius:99px;background:rgba(220,160,140,.3)}
 
-/* Cat 3 — 星尘猫 (Stardust, misty blue-grey) */
+/* Cat 3 — Stardust (misty blue-grey) */
 .cat-star .cat-body{width:72px;height:62px;bottom:0;left:9px;background:radial-gradient(ellipse at 40% 35%,#e8f0ff,#c8d8f0)}
 .cat-star .cat-ear{width:21px;height:25px;background:#c8d8f0}
 .cat-star .cat-ear::after{background:#e8d0f0}
@@ -486,7 +486,7 @@ body{
         <img src="https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/5.png" alt="Princess" style="width:36px;height:36px;object-fit:cover;border-radius:12px">
       </div>
       <div>
-        <h1>用数学拯救王国</h1>
+        <h1>Save the Kingdom with Math</h1>
         <p>A Princess · A Quest · A Math Adventure</p>
       </div>
     </div>
@@ -629,19 +629,19 @@ body{
               <div class="snack-icon">🐟</div>
               <div class="snack-name">Dried Fish</div>
               <div class="snack-price">💎 2 stones</div>
-              <div class="snack-effect">饱腹+20</div>
+              <div class="snack-effect">Fullness +20</div>
             </div>
             <div class="snack-card" id="buyCake">
               <div class="snack-icon">🍰</div>
               <div class="snack-name">Cake</div>
               <div class="snack-price">💎 5 stones</div>
-              <div class="snack-effect">饱+25 开心+15</div>
+              <div class="snack-effect">Full +25, Happy +15</div>
             </div>
             <div class="snack-card" id="buyStar">
               <div class="snack-icon">⭐</div>
               <div class="snack-name">Star Candy</div>
               <div class="snack-price">💎 8 stones</div>
-              <div class="snack-effect">开心+40!</div>
+              <div class="snack-effect">Happiness +40!</div>
             </div>
           </div>
         </div>
@@ -940,7 +940,7 @@ body{
     state.currentLevelNo = nextPlayableLevel(state.levels, state.progress);
     $('heroName').textContent = state.princessName || 'Hero Princess';
     $('heroLevel').textContent = `Level ${state.currentLevelNo}`;
-    $('heroStars').textContent = `💎 ${totalStars}`;
+    $('heroStars').textContent = totalStars;
     $('heroUnlock').textContent = `Unlocked ${unlockedCount(state.levels, state.progress)}/${state.levels.length || 36}`;
     $('authBtn').textContent = state.user ? '↩ Sign Out' : '☁️ Sign In';
     window._appStones = totalStars;
@@ -950,7 +950,7 @@ body{
   function applyHome() {
     const saveExists = hasAnySave(state.progress);
     const local = localLoad();
-    const hasStory = !!state.playerId || !!state.childName || !!local.storyReady;
+    const hasStory = !!state.playerId || !!state.childName || !!local.storyReady || !!state.user;
     const displayName = state.childName ? `Princess ${state.childName}` : 'the princess';
     $('storyText').textContent = state.childName
       ? `Far above the Cloud-Castle Kingdom, sleeping stars are waiting for ${displayName}. She must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.`
@@ -964,7 +964,7 @@ body{
       ? '☁️ Cloud save is active. This account can reopen the same story automatically.'
       : '☁️ Sign in to make cloud save automatic.';
 
-    if (saveExists || hasStory) {
+    if (hasStory) {
       $('homeTitle').innerHTML = `Welcome back, ${state.childName || 'Princess'}.<small>Continue the journey when you are ready.</small>`;
       $('nameSection').classList.add('hidden');
       $('startBtn').classList.add('hidden');
@@ -1659,6 +1659,9 @@ body{
 /* ═══════════════════════════════════════════════════════
    PET SYSTEM  (standalone, uses localStorage for pet state)
 ═══════════════════════════════════════════════════════ */
+// Global $ helper for pet system (main app has its own inside IIFE)
+const $_g = id => document.getElementById(id);
+
 const PET_KEY = 'princess_pet_v2';
 
 const CAT_DEFS = {
@@ -1738,7 +1741,7 @@ function buildCatHTML(catId, size = 90) {
 }
 
 function petLog(msg) {
-  const log = $('petLog');
+  const log = $_g('petLog');
   if (!log) return;
   const d = petLoad();
   const entry = document.createElement('div');
@@ -1753,7 +1756,7 @@ function petLog(msg) {
 }
 
 function petSpeak(msgs) {
-  const bubble = $('petSpeechBubble');
+  const bubble = $_g('petSpeechBubble');
   if (!bubble) return;
   const msg = msgs[Math.floor(Math.random() * msgs.length)];
   bubble.textContent = msg;
@@ -1769,7 +1772,7 @@ function petSpeak(msgs) {
 }
 
 function spawnParticle(type) {
-  const scene = $('petScene');
+  const scene = $_g('petScene');
   if (!scene) return;
   const icons = { heart:'❤️', star:'⭐', music:'🎵', fish:'🐟', cake:'🍰', sparkle:'✨' };
   for (let i = 0; i < 3; i++) {
@@ -1789,8 +1792,8 @@ function updateBars() {
   const d = getPetState();
   const h = Math.max(0, Math.min(100, d.happiness));
   const f = Math.max(0, Math.min(100, d.fullness));
-  const hBar = $('happinessBar'); const fBar = $('fullnessBar');
-  const hVal = $('happinessVal'); const fVal = $('fullnessVal');
+  const hBar = $_g('happinessBar'); const fBar = $_g('fullnessBar');
+  const hVal = $_g('happinessVal'); const fVal = $_g('fullnessVal');
   if (hBar) hBar.style.width = h + '%';
   if (fBar) fBar.style.width = f + '%';
   if (hVal) hVal.textContent = h + ' / 100';
@@ -1830,7 +1833,7 @@ function petInteract(type) {
     toy.style.left = '50%'; toy.style.bottom = '35%';
     toy.style.setProperty('--tx', (Math.random()*80-40) + 'px');
     toy.style.setProperty('--ty', (-50 - Math.random()*40) + 'px');
-    const scene = $('petScene');
+    const scene = $_g('petScene');
     if (scene) { scene.appendChild(toy); setTimeout(() => toy.remove(), 900); }
   } else if (type === 'pet') {
     // click on cat directly
@@ -1870,7 +1873,7 @@ function buySnack(type) {
   triggerCatAnim('fed');
   spawnParticle(snack.icon === '⭐' ? 'star' : snack.icon === '🍰' ? 'cake' : 'fish');
   petSpeak(overFull ? CAT_SPEECHES.full : CAT_SPEECHES.feed);
-  petLog(snack.icon + ' 喂了 ' + snack.name + ' (-' + snack.cost + '💎)');
+  petLog(snack.icon + ' Fed ' + snack.name + ' (-' + snack.cost + ' 💎)');
   updateBars();
   updateStonesDisplay();
 }
@@ -1890,12 +1893,12 @@ function sumStarsGlobal() {
 
 function updateStonesDisplay() {
   const n = sumStarsGlobal();
-  const el = $('petRoomStones');
+  const el = $_g('petRoomStones');
   if (el) el.textContent = n;
 }
 
 function renderPetInScene(catId) {
-  const stage = $('sceneCatStage');
+  const stage = $_g('sceneCatStage');
   if (!stage) return;
   stage.innerHTML = buildCatHTML(catId, 110);
   stage.querySelector('.cat-wrapper').addEventListener('click', () => petInteract('pet'));
@@ -1911,7 +1914,7 @@ function openPetRoom() {
   const d = getPetState();
   if (!d.chosen) {
     // show unlock modal
-    $('petUnlockModal').classList.add('open');
+    $_g('petUnlockModal').classList.add('open');
     renderCatInUnlock('luna', 'unlock-cat-luna');
     renderCatInUnlock('mochi', 'unlock-cat-mochi');
     renderCatInUnlock('star', 'unlock-cat-star');
@@ -1922,15 +1925,15 @@ function openPetRoom() {
 
 function showPetRoom(catId) {
   const def = CAT_DEFS[catId];
-  $('petRoomModal').classList.add('open');
-  $('petRoomTitle').textContent = '🐱 ' + def.name + "'s Den";
-  $('petNameBadge').textContent = def.emoji + ' ' + def.name;
+  $_g('petRoomModal').classList.add('open');
+  $_g('petRoomTitle').textContent = '🐱 ' + def.name + "'s Den";
+  $_g('petNameBadge').textContent = def.emoji + ' ' + def.name;
   renderPetInScene(catId);
   updateBars();
   updateStonesDisplay();
   // restore log
   const d = getPetState();
-  const log = $('petLog');
+  const log = $_g('petLog');
   if (log && d.log && d.log.length) {
     log.innerHTML = d.log.map(l => `<div>${l}</div>`).join('');
   }
@@ -1941,29 +1944,29 @@ document.querySelectorAll('.pet-choice').forEach(el => {
   el.addEventListener('click', () => {
     document.querySelectorAll('.pet-choice').forEach(e => e.classList.remove('selected'));
     el.classList.add('selected');
-    $('confirmPetBtn').disabled = false;
-    $('confirmPetBtn').dataset.cat = el.dataset.cat;
+    $_g('confirmPetBtn').disabled = false;
+    $_g('confirmPetBtn').dataset.cat = el.dataset.cat;
   });
 });
 
-$('confirmPetBtn').addEventListener('click', () => {
-  const catId = $('confirmPetBtn').dataset.cat;
+$_g('confirmPetBtn').addEventListener('click', () => {
+  const catId = $_g('confirmPetBtn').dataset.cat;
   if (!catId) return;
   petSave({ chosen: catId, happiness: 80, fullness: 60 });
-  $('petUnlockModal').classList.remove('open');
+  $_g('petUnlockModal').classList.remove('open');
   petLog('🎉 ' + CAT_DEFS[catId].name + ' joined your journey!');
   showPetRoom(catId);
 });
 
-$('petRoomCloseBtn').addEventListener('click', () => {
-  $('petRoomModal').classList.remove('open');
+$_g('petRoomCloseBtn').addEventListener('click', () => {
+  $_g('petRoomModal').classList.remove('open');
 });
 
-$('patBtn').addEventListener('click', () => petInteract('pat'));
-$('playBtn').addEventListener('click', () => petInteract('play'));
-$('buyFish').addEventListener('click', () => buySnack('fish'));
-$('buyCake').addEventListener('click', () => buySnack('cake'));
-$('buyStar').addEventListener('click', () => buySnack('star'));
+$_g('patBtn').addEventListener('click', () => petInteract('pat'));
+$_g('playBtn').addEventListener('click', () => petInteract('play'));
+$_g('buyFish').addEventListener('click', () => buySnack('fish'));
+$_g('buyCake').addEventListener('click', () => buySnack('cake'));
+$_g('buyStar').addEventListener('click', () => buySnack('star'));
 
 // Hook: after quiz submit, check if level 1 just completed → show unlock
 (function patchSubmitForPet() {
@@ -1999,7 +2002,7 @@ if (_scoreBoxEl) {
         const title = (document.getElementById('quizTitle') || {}).textContent || '';
         if (title.includes('Level 1') || title.includes('1 ·')) {
           setTimeout(() => {
-            $('petUnlockModal').classList.add('open');
+            $_g('petUnlockModal').classList.add('open');
             renderCatInUnlock('luna',  'unlock-cat-luna');
             renderCatInUnlock('mochi', 'unlock-cat-mochi');
             renderCatInUnlock('star',  'unlock-cat-star');
