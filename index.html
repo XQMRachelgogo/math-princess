@@ -1122,6 +1122,26 @@ body{
       }
     }
 
+    // If logged in but still no playerId, try to create/link using local childName
+    if (state.user && !state.playerId && state.childName) {
+      console.log('[session] logged-in user has no player — creating and linking...');
+      const { data, error } = await state.client.rpc('get_or_create_player', { p_child_name: state.childName });
+      console.log('[get_or_create_player fallback] data:', data, 'error:', error);
+      if (!error && data && data.length) {
+        const row = data[0];
+        state.playerId = row.player_id;
+        state.childName = row.child_name;
+        state.princessName = row.princess_name;
+        // Link this player to the user account
+        await state.client.from('user_profiles').upsert(
+          { user_id: state.user.id, player_id: state.playerId, child_name: state.childName, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' }
+        );
+        localSave({ authUserId: state.user.id, childName: state.childName, storyReady: true, playerId: state.playerId });
+        console.log('[session] linked playerId:', state.playerId);
+      }
+    }
+
     console.log('[session] final playerId:', state.playerId);
 
     if (state.playerId) {
