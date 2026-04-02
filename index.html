@@ -467,7 +467,7 @@ body{
       <div class="chip" tabindex="0" data-tip="Princess name — the story hero.">👑 <span id="heroName">Hero</span></div>
       <div class="chip" tabindex="0" data-tip="Current level out of 36 total levels.">🗺️ <span id="heroLevel">Lv 1</span><span id="heroUnlock" style="color:var(--text2);font-size:11px;margin-left:2px">/ 36</span></div>
       <div class="chip" tabindex="0" data-tip="Spirit Stones — earn by answering questions, spend on cat snacks!">💎 <span id="heroStars">0</span></div>
-      <button id="petBtn" class="btn">🐱</button>
+      <button id="petBtn" class="btn" style="display:none">🐱</button>
       <button id="spellBookBtn" class="btn">📖</button>
       <button id="authBtn" class="btn">☁️ Sign In</button>
     </div>
@@ -709,6 +709,16 @@ body{
   function sumStars(progress) {
     return Object.values(progress || {}).reduce((acc, row) => acc + (row.stars || 0) + (row.bonusStars || 0), 0);
   }
+  function isLevelCleared(row, levelNo = null) {
+    if (!row) return false;
+    if (row.completed) return true;
+    // Also check clearedLevels in localStorage
+    if (levelNo !== null) {
+      const local = localLoad();
+      return Array.isArray(local.clearedLevels) && local.clearedLevels.includes(levelNo);
+    }
+    return false;
+  }
   function hasAnySave(progress) {
     return Object.values(progress || {}).some(v => (v.best_score || 0) > 0 || v.completed || (v.stars || 0) > 0 || (v.bonusStars || 0) > 0);
   }
@@ -846,6 +856,19 @@ body{
     $('authBtn').textContent = state.user ? '↩ Sign Out' : '☁️ Sign In';
     window._appStones = available;
     if (typeof updateStonesDisplay === 'function') updateStonesDisplay();
+    // Show/hide pet button based on level 1 completion
+    const _petBtn = $('petBtn');
+    if (_petBtn) {
+      const _l1 = window.__level1Cleared
+        || (Object.values(state.progress || {}).some((v,i) => false) === false && (() => {
+          const _lc = localLoad().clearedLevels || [];
+          return _lc.includes(1);
+        })())
+        || !!(state.progress && state.progress[1] && state.progress[1].completed)
+        || !!(localLoad().progressBackup && localLoad().progressBackup['1'] && localLoad().progressBackup['1'].completed);
+      _petBtn.style.display = _l1 ? '' : 'none';
+      if (_l1) window.__level1Cleared = true;
+    }
   }
 
   function applyHome() {
@@ -1681,6 +1704,15 @@ body{
         console.log('[submitQuiz] Local progress level', no, '| stars earned:', earnedStars, '| total stones:', window._appStones);
         $('nextLevelBtn').classList.remove('hidden');
         localSave({ progressBackup: state.progress });
+        // Update clearedLevels list for QA and pet unlock detection
+        const _sk = localLoad();
+        _sk.clearedLevels = Array.from(new Set([...(_sk.clearedLevels || []), no]));
+        localSave({ clearedLevels: _sk.clearedLevels });
+        // Fire progress event for pet system and QA hooks
+        if (no === 1) {
+          window.__level1Cleared = true;
+          window.dispatchEvent(new CustomEvent('story-progress-updated', { detail: { level1Cleared: true } }));
+        }
       }
 
       // Update UI without reopening level modal (which would hide nextLevelBtn)
@@ -1986,7 +2018,14 @@ body{
     const isUnlocked=!!load().unlocked;
     if(petBtn) petBtn.style.opacity=isUnlocked?'1':'0.4';
 
-    petBtn && petBtn.addEventListener('click',()=>{ if(!load().unlocked) return; openPetRoom(); });
+    petBtn && petBtn.addEventListener('click',()=>{
+      if(!load().unlocked) {
+        // Not yet unlocked — show gift modal instead
+        if (typeof window._openPetGiftModal === 'function') window._openPetGiftModal(true);
+        return;
+      }
+      openPetRoom();
+    });
 
     G('petRoomCloseBtn').addEventListener('click',()=>{
       document.body.style.overflow='';
@@ -2002,21 +2041,32 @@ body{
 
     G('petGiftClaimBtn').addEventListener('click',()=>{
       save({unlocked:true,happiness:80,fullness:60,lastInteract:Date.now(),giftPending:false});
-      const pb=G('petBtn'); if(pb) pb.style.opacity='1';
+      const pb=G('petBtn'); if(pb) { pb.style.display=''; pb.style.opacity='1'; }
       const gm=G('petGiftModal'); if(gm) gm.style.display='none';
-      openPetRoom();
+      // Small delay to ensure save() completed before openPetRoom reads it
+      setTimeout(() => openPetRoom(), 50);
     });
   }
   init();
 
-  window._openPetGiftModal = () => {
-    if (!window._petGiftSessionFlag) { console.log('[gift] blocked - no session flag'); return; }
+  window._openPetGiftModal = (force = false) => {
     const pd = JSON.parse(localStorage.getItem('snowball_v1')||'{}');
     if (pd.unlocked) { console.log('[gift] blocked - already unlocked'); return; }
+    // Allow direct calls (force=true from petBtn) or session flag
+    if (!force && !window._petGiftSessionFlag) { console.log('[gift] blocked - no session flag'); return; }
     console.log('[gift] showing modal');
     const m = G('petGiftModal');
     if (m) m.style.display = 'flex';
   };
+
+  // Listen for level1 cleared event from main script
+  window.addEventListener('story-progress-updated', (e) => {
+    if (e.detail && e.detail.level1Cleared) {
+      window.__level1Cleared = true;
+      const pb = G('petBtn');
+      if (pb) pb.style.display = '';
+    }
+  });
 
   // Sync stones
   const heroEl=document.getElementById('heroStars');
