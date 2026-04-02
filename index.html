@@ -1105,6 +1105,7 @@ body{
     });
 
     state.spellStats = spellStatsRes.data || [];
+    console.log('[loadPlayerState] raw progress rows:', progressRes.data?.length, '| spellStats rows:', spellStatsRes.data?.length);
 
     // Merge any locally-backed-up progress (in case Supabase sync lagged)
     const localBackup = (localLoad().progressBackup) || {};
@@ -1854,11 +1855,12 @@ body{
 
   /* ── init ── */
   function init(){
-    // Clear stale giftPending flag from previous sessions
+    // ALWAYS clear giftPending on page load — it can only be re-set in the same session
     const _pd = JSON.parse(localStorage.getItem('snowball_v1')||'{}');
-    if (_pd.giftPending && !_pd.unlocked) {
-      _pd.giftPending = false;
+    if (!_pd.unlocked) {
+      _pd.giftPending = false; // clear unconditionally if not yet unlocked
       localStorage.setItem('snowball_v1', JSON.stringify(_pd));
+      console.log('[pet init] cleared giftPending, unlocked:', _pd.unlocked);
     }
     buildModals();
 
@@ -1897,10 +1899,11 @@ body{
     });
   });
   window._openPetGiftModal = () => {
-    // Only show if triggered in this session (not on page reload)
-    if (!window._petGiftSessionFlag) return;
+    // ONLY show if this exact JS session triggered the level 1 completion
+    if (!window._petGiftSessionFlag) { console.log('[gift] blocked - no session flag'); return; }
     const pd = JSON.parse(localStorage.getItem('snowball_v1')||'{}');
-    if (pd.unlocked) return;
+    if (pd.unlocked) { console.log('[gift] blocked - already unlocked'); return; }
+    console.log('[gift] showing modal');
     const m = G('petGiftModal');
     if (m) { try { if(!m.open) m.showModal(); } catch(e){ console.error('gift dialog:',e); } }
   };
