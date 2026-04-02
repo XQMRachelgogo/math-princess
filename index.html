@@ -272,10 +272,12 @@ body{
 }
 /* ═══ PET ROOM ═══ */
 .pet-room-backdrop{
-  position:fixed;inset:0;z-index:9999;display:none;place-items:center;padding:20px;
-  background:rgba(40,20,70,.55);
+  position:fixed;left:0;top:0;right:0;bottom:0;
+  z-index:999999;display:none;
+  align-items:center;justify-content:center;
+  padding:20px;background:rgba(40,20,70,.6);
 }
-.pet-room-backdrop.open{display:grid}
+.pet-room-backdrop.open{display:flex}
 .pet-room{
   background:linear-gradient(160deg,#fef9ff,#f0e8ff);
   border:2px solid rgba(210,180,255,.5);border-radius:32px;
@@ -414,10 +416,12 @@ body{
 }
 /* ═══ PET GIFT UNLOCK MODAL ═══ */
 .pet-gift-backdrop{
-  position:fixed;inset:0;z-index:9999;display:none;place-items:center;padding:20px;
-  background:rgba(40,20,70,.55);
+  position:fixed;left:0;top:0;right:0;bottom:0;
+  z-index:999999;display:none;
+  align-items:center;justify-content:center;
+  padding:20px;background:rgba(40,20,70,.6);
 }
-.pet-gift-backdrop.open{display:grid}
+.pet-gift-backdrop.open{display:flex}
 .pet-gift-box{
   background:linear-gradient(160deg,#fff9fe,#f5eeff);
   border:2px solid rgba(220,180,255,.5);border-radius:36px;
@@ -713,6 +717,7 @@ body{
     <div class="modal-actions">
       <button id="submitQuizBtn" class="primary-btn">Submit Answers</button>
       <button id="retryQuizBtn" class="ghost-btn hidden">Retry Level</button>
+      <button id="nextLevelBtn" class="primary-btn hidden">Next Level →</button>
     </div>
   </div>
 </div>
@@ -1574,6 +1579,7 @@ body{
       markQuizReview(attempts);
       $('submitQuizBtn').classList.add('hidden');
       $('retryQuizBtn').classList.remove('hidden');
+      $('nextLevelBtn').classList.add('hidden'); // reset
 
       const rawScore = attempts.filter(a => a.is_correct).length;
       const result = (data && data[0]) || { score: rawScore, stars: starsForScore(rawScore), completed: rawScore >= 8 };
@@ -1596,6 +1602,8 @@ body{
         state.progress[no].best_score = Math.max(state.progress[no].best_score, rawScore);
         state.progress[no].stars = Math.max(state.progress[no].stars, starsForScore(rawScore));
         console.log('[submitQuiz] Local progress updated for level', no, state.progress[no]);
+        // Show Next Level button
+        $('nextLevelBtn').classList.remove('hidden');
       }
 
       await loadPlayerState();
@@ -1655,6 +1663,11 @@ body{
   $('startLevelBtn').addEventListener('click', startLevelFlow);
   $('submitQuizBtn').addEventListener('click', submitQuiz);
   $('retryQuizBtn').addEventListener('click', startLevelFlow);
+  $('nextLevelBtn').addEventListener('click', () => {
+    modalIds.forEach(id => $(id).classList.remove('open'));
+    state.currentLevelNo = nextPlayableLevel(state.levels, state.progress);
+    openMapModal();
+  });
   $('claimBossBtn').addEventListener('click', claimBossReward);
   document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', () => $(btn.dataset.close).classList.remove('open')));
 
@@ -1894,9 +1907,11 @@ body{
     ps.log       = d.log || [];
     sleeping = false;
     applyDecay();
+    document.body.style.overflow='hidden';
     G('petRoomModal').classList.add('open');
     setMood(displayMood());
     updateBars();
+    window._appStones = parseInt((G('heroStars')||{}).textContent||'0')||0;
     syncStonesUI();
     const log = G('petLog');
     if (log && ps.log.length) log.innerHTML = ps.log.map(l=>`<div>${l}</div>`).join('');
@@ -1908,19 +1923,23 @@ body{
     // Move modals to direct body children to guarantee position:fixed works
     ['petRoomModal','petGiftModal'].forEach(id => {
       const el = document.getElementById(id);
-      if (el && el.parentElement !== document.body) document.body.appendChild(el);
+      if (el) document.body.appendChild(el); // always move to end of body
     });
 
     // Show/hide petBtn based on unlock state
     const petBtn = G('petBtn');
     const isUnlocked = !!load().unlocked;
     if (petBtn) petBtn.style.opacity = isUnlocked ? '1' : '0.4';
+    // Pre-set cat image so it's ready when modal opens
+    const catImg = G('catStateImg');
+    if (catImg) catImg.src = IMGS.main;
 
     G('petBtn').addEventListener('click', () => {
       if (!load().unlocked) return; // silently ignore if not unlocked
       openPetRoom();
     });
     G('petRoomCloseBtn').addEventListener('click', () => {
+      document.body.style.overflow='';
       G('petRoomModal').classList.remove('open');
       clearTimeout(idleTimer); clearTimeout(actionTimer);
       save({happiness:ps.happiness, fullness:ps.fullness, log:ps.log});
