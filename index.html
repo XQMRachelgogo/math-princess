@@ -163,6 +163,17 @@ body{
 .soft{color:#9a84b0}
 .pill{display:inline-flex;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#fff7fc;font-size:12px;font-weight:900;color:#9a7db2}
 .lesson{margin-top:16px;border-top:1px dashed var(--line);padding-top:16px}
+.lesson-card{background:linear-gradient(160deg,#fff8fe,#f5eeff);border:1px solid var(--line);border-radius:18px;padding:16px 18px;margin-bottom:10px}
+.lesson-card-title{font-size:15px;font-weight:900;color:var(--title);margin-bottom:6px}
+.lesson-card-body{font-size:14px;color:#7060a0;line-height:1.7;margin-bottom:10px}
+.lesson-video-link{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:14px;
+  background:linear-gradient(135deg,#e8f4ff,#f0e8ff);border:1px solid rgba(180,160,220,.4);
+  font-size:13px;font-weight:900;color:#5050b0;text-decoration:none;
+  transition:.15s transform,.15s box-shadow;
+}
+.lesson-video-link:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(100,80,200,.15)}
+.lesson-video-link .vid-icon{font-size:18px}
 .boss-btns,.modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 
 .map-shell{
@@ -734,14 +745,20 @@ body{
         </div>
         <div class="card">
           <div class="mini">Boss Reward</div>
-          <div id="bossReward" class="big">+0 stars</div>
+          <div id="bossReward" class="big">+0 Spirit Stones</div>
           <div id="bossClaimState" class="soft" style="margin-top:8px"></div>
         </div>
       </div>
       <div class="boss-btns">
-        <a id="bossOpenLink" class="btn" target="_blank" rel="noopener noreferrer">Open Real AMC8 Problem</a>
+        <a id="bossOpenLink" class="btn" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px">🔗 Open AMC 8 Problem (AoPS / Official)</a>
         <button id="claimBossBtn" class="primary-btn">I Solved It · Claim Reward</button>
       </div>
+      <div id="bossLinkNote" class="soft" style="font-size:12px;margin-top:8px"></div>
+    </div>
+
+    <div id="lessonsSection" class="lesson hidden">
+      <h3 style="font-size:18px;margin-bottom:10px">📖 Sir Knight's Lesson — new spells for this road</h3>
+      <div id="lessonCards"></div>
     </div>
     <div class="modal-actions">
       <button id="startLevelBtn" class="primary-btn">Start Main Level</button>
@@ -749,7 +766,6 @@ body{
     </div>
   </div>
 </div>
-/div>
 
 <div id="quizModal" class="modal-backdrop">
   <div class="modal">
@@ -1114,11 +1130,20 @@ body{
     } catch {}
 
     try {
-      const lessonsRes = await client.from('spell_lessons').select('*').order('created_at');
+      const lessonsRes = await client.from('spell_lessons').select('*, spells(name,code)').order('created_at');
       (lessonsRes.data || []).forEach(row => {
         if (!state.lessonsBySpellId[row.spell_id]) state.lessonsBySpellId[row.spell_id] = [];
         state.lessonsBySpellId[row.spell_id].push(row);
       });
+      // Log field names once so we can verify the schema
+      if (lessonsRes.data && lessonsRes.data.length) {
+        console.log('[spell_lessons fields]', Object.keys(lessonsRes.data[0]));
+        console.log('[spell_lessons sample]', lessonsRes.data[0]);
+      } else if (lessonsRes.error) {
+        console.warn('[spell_lessons error]', lessonsRes.error);
+      } else {
+        console.log('[spell_lessons] table is empty or no rows returned');
+      }
     } catch {}
   }
 
@@ -1304,7 +1329,7 @@ body{
     $('levelStoryText').textContent = level.story_text || 'The next fairy road is ready.';
     const row = state.progress[levelNo];
     $('levelProgressText').textContent = row?.completed ? 'Completed' : row?.best_score ? `Best score ${row.best_score}/12` : 'Not started yet';
-    $('levelStarsText').textContent = `Main stars: ${row?.stars || 0}${row?.bonusStars ? ` · Bonus stars: ${row.bonusStars}` : ''}`;
+    $('levelStarsText').textContent = `Spirit Stones: ${row?.stars || 0}${row?.bonusStars ? ` · Bonus: ${row.bonusStars}` : ''}`;
 
     const noteMap = {
       1: 'This first level is old-skill review only.',
@@ -1314,17 +1339,91 @@ body{
     };
     $('levelSimpleNote').textContent = noteMap[levelNo] || '12 mixed questions. Old spells return often, and new learning appears slowly.';
 
+    // ── Spell Lessons ──
+    const plans = state.spellPlanByLevel[levelNo] || [];
+    const newSpellIds = plans.filter(p => p.role === 'new').map(p => p.spell_id);
+    const lessonRows = [];
+    newSpellIds.forEach(sid => {
+      (state.lessonsBySpellId[sid] || []).forEach(l => lessonRows.push(l));
+    });
+    // Also include any lesson for spells being introduced (role may vary), deduplicate
+    const seenLessonIds = new Set();
+    const uniqueLessons = lessonRows.filter(l => {
+      if (seenLessonIds.has(l.id)) return false;
+      seenLessonIds.add(l.id);
+      return true;
+    });
+
+    const lessonsSection = $('lessonsSection');
+    const lessonCards = $('lessonCards');
+    if (uniqueLessons.length) {
+      lessonsSection.classList.remove('hidden');
+      lessonCards.innerHTML = uniqueLessons.map(l => {
+        // Detect video URL field — could be video_url, khan_url, url, link, etc.
+        const videoUrl = l.video_url || l.khan_url || l.url || l.link || l.resource_url || '';
+        const isKhan = videoUrl.includes('khanacademy');
+        const isYT   = videoUrl.includes('youtube') || videoUrl.includes('youtu.be');
+        const videoIcon = isKhan ? '🎓' : isYT ? '▶️' : '🔗';
+        const videoLabel = isKhan ? 'Watch on Khan Academy' : isYT ? 'Watch on YouTube' : 'Watch lesson video';
+
+        const videoHtml = videoUrl
+          ? `<a class="lesson-video-link" href="${videoUrl}" target="_blank" rel="noopener noreferrer">
+               <span class="vid-icon">${videoIcon}</span>${videoLabel}
+             </a>`
+          : '';
+
+        // body/content/description field detection
+        const body = l.body || l.content || l.description || l.lesson_text || l.text || '';
+        const title = l.title || l.lesson_title || l.name || (l.spells?.name ? `Spell: ${l.spells.name}` : 'Sir Knight's Lesson');
+
+        return `<div class="lesson-card">
+          <div class="lesson-card-title">✨ ${title}</div>
+          ${body ? `<div class="lesson-card-body">${body}</div>` : ''}
+          ${videoHtml}
+        </div>`;
+      }).join('');
+    } else {
+      lessonsSection.classList.add('hidden');
+    }
+
+    // ── AMC Bonus Boss ──
     const bonus = state.bonusByLevel[levelNo];
     if (bonus) {
       $('bossSection').classList.remove('hidden');
-      $('bossTitle').textContent = `${bonus.boss?.year || ''} AMC 8 · Problem ${bonus.boss?.problem_no || ''}`;
-      $('bossTags').textContent = Array.isArray(bonus.boss?.topic_tags) ? bonus.boss.topic_tags.join(' · ') : '';
-      $('bossReward').textContent = `+${bonus.reward_stars || 0} stars`;
+      const year = bonus.boss?.year || '';
+      const probNo = bonus.boss?.problem_no || '';
+      const titleShort = bonus.boss?.title_short || '';
+      const sourceName = bonus.boss?.source_name || 'AoPS Wiki';
+      $('bossTitle').textContent = `${year} AMC 8 · Problem ${probNo}${titleShort ? ' · ' + titleShort : ''}`;
+
+      // topic_tags can be array or JSON string
+      let tags = bonus.boss?.topic_tags || [];
+      if (typeof tags === 'string') { try { tags = JSON.parse(tags); } catch { tags = [tags]; } }
+      $('bossTags').textContent = Array.isArray(tags) && tags.length ? tags.join(' · ') : '';
+
+      $('bossReward').textContent = `+${bonus.reward_stars || 0} Spirit Stones`;
       const claimed = !!(row?.bonusStars);
-      $('bossClaimState').textContent = claimed ? 'Reward already claimed for this level.' : 'Solve the real AMC8 problem, then claim the reward once.';
-      $('bossOpenLink').href = bonus.boss?.source_url || '#';
+      $('bossClaimState').textContent = claimed
+        ? '✅ Reward already claimed for this level.'
+        : 'Solve the real AMC 8 problem on the official site, then claim your reward here.';
+
+      const sourceUrl = bonus.boss?.source_url || '';
+      const bossLink = $('bossOpenLink');
+      if (sourceUrl && sourceUrl !== '#') {
+        bossLink.href = sourceUrl;
+        bossLink.style.opacity = '1';
+        bossLink.style.pointerEvents = 'auto';
+        $('bossLinkNote').textContent = `Source: ${sourceName}`;
+      } else {
+        bossLink.href = '#';
+        bossLink.style.opacity = '0.5';
+        bossLink.style.pointerEvents = 'none';
+        $('bossLinkNote').textContent = 'Problem link not yet available.';
+      }
+      bossLink.textContent = `🔗 Open AMC 8 · ${year} Problem ${probNo} (${sourceName})`;
+
       $('claimBossBtn').disabled = claimed || !state.playerId;
-      $('claimBossBtn').textContent = claimed ? 'Reward already claimed' : 'I Solved It · Claim Reward';
+      $('claimBossBtn').textContent = claimed ? '✅ Reward already claimed' : 'I Solved It · Claim Spirit Stones';
     } else {
       $('bossSection').classList.add('hidden');
     }
