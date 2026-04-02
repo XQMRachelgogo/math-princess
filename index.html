@@ -770,6 +770,38 @@ body{
     }
     return out;
   }
+  function normalizeMainLevels(rows) {
+    const byLevelNo = new Map();
+    (rows || []).forEach(row => {
+      const no = Number(row.level_no);
+      if (!Number.isInteger(no) || no < 1 || no > 36) return;
+      const existing = byLevelNo.get(no);
+      if (!existing) {
+        byLevelNo.set(no, row);
+        return;
+      }
+      const existingTs = Date.parse(existing.updated_at || existing.created_at || 0) || 0;
+      const rowTs = Date.parse(row.updated_at || row.created_at || 0) || 0;
+      if (rowTs >= existingTs) byLevelNo.set(no, row);
+    });
+    return Array.from(byLevelNo.values()).sort((a, b) => Number(a.level_no) - Number(b.level_no));
+  }
+  function newestLessonPerSpell(rows) {
+    const bySpellId = new Map();
+    (rows || []).forEach(row => {
+      const spellId = row.spell_id;
+      if (!spellId) return;
+      const existing = bySpellId.get(spellId);
+      if (!existing) {
+        bySpellId.set(spellId, row);
+        return;
+      }
+      const existingTs = Date.parse(existing.updated_at || existing.created_at || 0) || 0;
+      const rowTs = Date.parse(row.updated_at || row.created_at || 0) || 0;
+      if (rowTs >= existingTs) bySpellId.set(spellId, row);
+    });
+    return Array.from(bySpellId.values());
+  }
   function shuffle(arr) {
     const copy = [...arr];
     for (let i = copy.length - 1; i > 0; i--) {
@@ -972,7 +1004,7 @@ body{
     const client = state.client;
     const levelsRes = await client.from('levels').select('*').order('level_no');
     if (levelsRes.error) throw levelsRes.error;
-    state.levels = levelsRes.data || [];
+    state.levels = normalizeMainLevels(levelsRes.data || []);
 
     const idToNo = Object.fromEntries(state.levels.map(l => [l.id, l.level_no]));
     state.spellPlanByLevel = {};
@@ -1000,7 +1032,8 @@ body{
 
     try {
       const lessonsRes = await client.from('spell_lessons').select('*, spells(name,code)').order('created_at');
-      (lessonsRes.data || []).forEach(row => {
+      const latestLessons = newestLessonPerSpell(lessonsRes.data || []);
+      latestLessons.forEach(row => {
         if (!state.lessonsBySpellId[row.spell_id]) state.lessonsBySpellId[row.spell_id] = [];
         state.lessonsBySpellId[row.spell_id].push(row);
       });
@@ -1242,12 +1275,7 @@ body{
     newSpellIds.forEach(sid => {
       (state.lessonsBySpellId[sid] || []).forEach(l => lessonRows.push(l));
     });
-    const seenLessonIds = new Set();
-    const uniqueLessons = lessonRows.filter(l => {
-      if (seenLessonIds.has(l.id)) return false;
-      seenLessonIds.add(l.id);
-      return true;
-    });
+    const uniqueLessons = newestLessonPerSpell(lessonRows);
 
     // Debug: log what we found
     console.log(`[Level ${levelNo}] plans:`, plans.length, '| new spell plans:', newSpellIds.length, '| lessons found:', uniqueLessons.length);
