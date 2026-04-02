@@ -520,87 +520,8 @@ body{
 </div>
 
 
-<!-- ═══ PET ROOM MODAL ═══ -->
-<div id="petRoomModal" class="pet-room-backdrop">
-  <div class="pet-room">
-    <div class="pet-room-header">
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <h3 id="petRoomTitle" style="margin:0;font-size:20px;color:var(--title)">🐱 Snowball's Den</h3>
-        <div class="stones-row">💎 <span id="petRoomStones">0</span> Spirit Stones</div>
-      </div>
-      <button class="close-btn" id="petRoomCloseBtn">Close</button>
-    </div>
-    <div class="pet-room-body">
-      <!-- Scene -->
-      <div class="pet-scene" id="petScene">
-        <div id="petCatImg" class="pet-cat-img">
-          <img id="catStateImg" src="" alt="Snowball" draggable="false">
-        </div>
-        <div id="petSpeechBubble" class="pet-bubble">Meow~</div>
-        <div id="petZzz" class="pet-zzz" style="display:none">z z z</div>
-        <div id="petSleepOverlay" class="pet-sleep-overlay">
-          <div class="sleep-msg">🌙 Snowball is asleep...<br>Come back after your adventure!</div>
-        </div>
-      </div>
-      <!-- Controls -->
-      <div class="pet-panel">
-        <div class="pet-status-row">
-          <div class="pet-mood-bar-wrap">
-            <div class="pet-mood-label">💕 Happiness</div>
-            <div class="pet-bar-track"><div class="pet-bar-fill happiness" id="happinessBar" style="width:70%"></div></div>
-            <div class="pet-bar-val" id="happinessVal">70 / 100</div>
-          </div>
-          <div class="pet-mood-bar-wrap">
-            <div class="pet-mood-label">🍚 Fullness</div>
-            <div class="pet-bar-track"><div class="pet-bar-fill fullness" id="fullnessBar" style="width:50%"></div></div>
-            <div class="pet-bar-val" id="fullnessVal">50 / 100</div>
-          </div>
-        </div>
-        <!-- Actions -->
-        <div class="pet-actions-row">
-          <button class="pet-action-btn" id="eatBtn">
-            <span class="act-icon">🐟</span>
-            <span class="act-label">Eat</span>
-            <span class="act-cost">💎 2</span>
-          </button>
-          <button class="pet-action-btn feast" id="feastBtn">
-            <span class="act-icon">🍱</span>
-            <span class="act-label">Feast</span>
-            <span class="act-cost">💎 5</span>
-          </button>
-          <button class="pet-action-btn" id="playBtn">
-            <span class="act-icon">🎀</span>
-            <span class="act-label">Play</span>
-            <span class="act-cost">💎 2</span>
-          </button>
-          <button class="pet-action-btn" id="patBtn">
-            <span class="act-icon">✋</span>
-            <span class="act-label">Pat</span>
-            <span class="act-cost">💎 1</span>
-          </button>
-        </div>
-        <!-- Log -->
-        <div class="pet-log" id="petLog"><div>🐾 Snowball is waiting for you!</div></div>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- ═══ PET GIFT UNLOCK MODAL ═══ -->
-<div id="petGiftModal" class="pet-gift-backdrop">
-  <div class="pet-gift-box">
-    <div class="pet-gift-img-wrap">
-      <img src="https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/cat-gift.png" alt="A cat in a gift box!" class="pet-gift-img">
-    </div>
-    <div class="pet-gift-content">
-      <div class="pet-gift-sparkle">🎉</div>
-      <h2 class="pet-gift-title">You have a new companion!</h2>
-      <p class="pet-gift-sub">Snowball has been waiting for you in the kingdom. Keep earning <strong>Spirit Stones</strong> by solving levels — use them to feed and play with your cat!</p>
-      <div class="pet-gift-note">💎 Spirit Stones = cat snacks &amp; playtime<br>🐾 Find Snowball anytime with the 🐱 button</div>
-      <button id="petGiftClaimBtn" class="primary-btn" style="margin-top:20px;padding:14px 36px;font-size:16px">Meet Snowball! 🐱</button>
-    </div>
-  </div>
-</div>
+
 
 <div id="authModal" class="modal-backdrop">
   <div class="modal" style="width:min(560px,100%)">
@@ -1594,32 +1515,32 @@ body{
 
       await loadPlayerState();
 
-      // Local override: if score qualifies, force local progress to completed
+      // Local override: force completion & stars in client state
       if (result.completed && level) {
         const no = level.level_no;
         if (!state.progress[no]) state.progress[no] = { best_score: 0, stars: 0, completed: false, bonusStars: 0 };
         state.progress[no].completed = true;
         state.progress[no].best_score = Math.max(state.progress[no].best_score, rawScore);
-        state.progress[no].stars = Math.max(state.progress[no].stars, starsForScore(rawScore));
-        console.log('[submitQuiz] Local progress updated for level', no, state.progress[no]);
-        // Show Next Level button
+        const earnedStars = starsForScore(rawScore);
+        state.progress[no].stars = Math.max(state.progress[no].stars, earnedStars);
+        // Update topbar stones immediately
+        window._appStones = sumStars(state.progress);
+        console.log('[submitQuiz] Local progress level', no, '| stars earned:', earnedStars, '| total stones:', window._appStones);
         $('nextLevelBtn').classList.remove('hidden');
       }
 
-      await loadPlayerState();
+      // Update UI without reopening level modal (which would hide nextLevelBtn)
       applyTopbar();
       applyHome();
       renderMap();
-      openLevelDetail(level.level_no);
-      setStatus(`Level ${level.level_no} saved to Supabase.`);
+      setStatus(result.completed ? `Level ${level.level_no} complete! +${starsForScore(rawScore)} Spirit Stones earned.` : `Level ${level.level_no} saved.`);
 
       // 🐱 Unlock cat after Level 1 first completion
       if (level.level_no === 1 && result.completed) {
         const petData = JSON.parse(localStorage.getItem('snowball_v1') || '{}');
         if (!petData.unlocked) {
           setTimeout(() => {
-            const giftModal = document.getElementById('petGiftModal');
-            if (giftModal) giftModal.classList.add('open');
+            if (typeof window._openPetGiftModal === 'function') window._openPetGiftModal();
           }, 1200);
         }
       }
@@ -1676,301 +1597,253 @@ body{
 
 </script>
 <script>
-/* ═══════════════════════════════════════
-   SNOWBALL — Single Cat Pet System v2
-═══════════════════════════════════════ */
+/* ═══ SNOWBALL PET SYSTEM — DOM built entirely via JS ═══ */
 (function() {
   const BASE = 'https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/';
   const IMGS = {
-    main:  BASE + 'cat-main.png',
-    eat:   BASE + 'cat-eat.png',
-    feast: BASE + 'cat-feast.png',
-    play:  BASE + 'cat-play.png',
-    happy: BASE + 'cat-happy.png',
-    yawn:  BASE + 'cat-yawn.png',
-    sleep: BASE + 'cat-sleep.png',
-    sad:   BASE + 'cat-sad.png',
-    gift:  BASE + 'cat-gift.png',
+    main:'cat-main.png', eat:'cat-eat.png', feast:'cat-feast.png',
+    play:'cat-play.png', happy:'cat-happy.png', yawn:'cat-yawn.png',
+    sleep:'cat-sleep.png', sad:'cat-sad.png'
   };
-  // Preload all images
-  Object.values(IMGS).forEach(src => { const i = new Image(); i.src = src; });
+  Object.keys(IMGS).forEach(k => { const i=new Image(); i.src=BASE+IMGS[k]; IMGS[k]=BASE+IMGS[k]; });
 
-  const PET_KEY = 'snowball_v1';
+  const KEY = 'snowball_v1';
   const G = id => document.getElementById(id);
+  function load(){ try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return{}} }
+  function save(p){ localStorage.setItem(KEY,JSON.stringify(Object.assign({},load(),p))); }
 
-  function load() { try { return JSON.parse(localStorage.getItem(PET_KEY)||'{}'); } catch { return {}; } }
-  function save(p) { localStorage.setItem(PET_KEY, JSON.stringify(Object.assign({}, load(), p))); }
-
-  const SPEECHES = {
-    main:  ['Meow~', 'Purrrr ♡', '(*ᵕ̤ᴗᵕ̤*)', "I'm here!", '✨'],
-    eat:   ['Nom nom!', 'Yummy~', 'So good!', 'More please!'],
-    feast: ['FEAST TIME!!', 'Best day ever! ♡', 'nyam nyam nyam~', '♡♡♡'],
-    play:  ['Wheee!', 'Catch me!', 'Again again!', 'Yay~'],
-    happy: ['Purrr~', 'I love you! ♡', 'Nuzzle nuzzle~', '(˘ε˘)♡'],
-    yawn:  ['Mrrr... sleepy...', 'zzz...', 'Just five more minutes...'],
-    sleep: ['z z z', 'zZzZz~'],
-    sad:   ['...mew', 'Nobody played with me today...', '(；ω；)', 'Please come back soon...'],
+  const SPEECH = {
+    main:['Meow~','Purrrr ♡','(*ᵕ̤ᴗᵕ̤*)','I'm here!','✨'],
+    eat:['Nom nom!','Yummy~','So good!','More please!'],
+    feast:['FEAST TIME!!','Best day ever! ♡','nyam nyam nyam~','♡♡♡'],
+    play:['Wheee!','Catch me!','Again again!','Yay~'],
+    happy:['Purrr~','I love you! ♡','Nuzzle nuzzle~','(˘ε˘)♡'],
+    yawn:['Mrrr... sleepy...','zzz...','Just five more minutes...'],
+    sleep:['z z z','zZzZz~'],
+    sad:['...mew','Nobody played with me...','(；ω；)','Please come back soon...'],
   };
+  const ANIM = {main:'idle',eat:'eating',feast:'feasting',play:'playing',happy:'happy',yawn:'yawning',sleep:'sleeping',sad:'idle'};
 
-  // CSS animation class per mood
-  const ANIM_CLASS = {
-    main: 'idle', eat: 'eating', feast: 'feasting',
-    play: 'playing', happy: 'happy', yawn: 'yawning', sleep: 'sleeping', sad: 'idle'
-  };
-  // Duration of action animations (ms), then return to main
-  const ACTION_DUR = { eat: 2200, feast: 2600, play: 2400, happy: 2000 };
-
-  let ps = { happiness: 80, fullness: 60, mood: 'main', log: [] };
-  let idleTimer = null;
-  let bubbleTimer = null;
-  let actionTimer = null;
-  let sleeping = false;
+  let ps = {happiness:80,fullness:60,mood:'main',log:[]};
+  let sleeping=false, idleT=null, actionT=null, bubbleT=null;
 
   /* ── stones ── */
-  function stones() { return Math.max(0, (window._appStones||0) - (load().spent||0)); }
-  function spendStones(n) { const d=load(); d.spent=(d.spent||0)+n; localStorage.setItem(PET_KEY,JSON.stringify(d)); syncStonesUI(); }
-  function syncStonesUI() { const el=G('petRoomStones'); if(el) el.textContent=stones(); }
+  function stones(){ return Math.max(0,(window._appStones||0)-(load().spent||0)); }
+  function spend(n){ const d=load(); d.spent=(d.spent||0)+n; localStorage.setItem(KEY,JSON.stringify(d)); syncStones(); }
+  function syncStones(){ const el=G('petRoomStones'); if(el) el.textContent=stones(); }
 
-  /* ── speech bubble ── */
-  function speak(mood) {
-    const arr = SPEECHES[mood]||SPEECHES.main;
-    const msg = arr[Math.floor(Math.random()*arr.length)];
-    const b = G('petSpeechBubble');
-    if (!b) return;
-    b.textContent = msg;
-    b.classList.add('show');
-    clearTimeout(bubbleTimer);
-    bubbleTimer = setTimeout(() => b.classList.remove('show'), 2600);
+  /* ── build DOM ── */
+  function buildModals(){
+    // Pet room overlay — appended to body, guaranteed top-level
+    const overlay = document.createElement('div');
+    overlay.id = 'petRoomModal';
+    overlay.style.cssText = [
+      'display:none','position:fixed','left:0','top:0','right:0','bottom:0',
+      'z-index:2147483647','background:rgba(30,10,60,.6)',
+      'align-items:center','justify-content:center','padding:20px'
+    ].join(';');
+    overlay.innerHTML = `
+      <div style="background:linear-gradient(160deg,#fef9ff,#f0e8ff);border:2px solid rgba(210,180,255,.5);border-radius:32px;width:min(820px,100%);max-height:90vh;overflow:hidden;box-shadow:0 32px 80px rgba(100,50,180,.28);display:flex;flex-direction:column;">
+        <div style="padding:18px 24px 14px;background:linear-gradient(160deg,rgba(255,255,255,.92),rgba(248,240,255,.92));border-bottom:1px solid rgba(210,180,255,.4);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:12px">
+            <h3 style="margin:0;font-size:20px;color:#6b4a96">🐱 Snowball's Den</h3>
+            <div style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;background:linear-gradient(135deg,#f5eeff,#fce8ff);border:1px solid #e8d5f0;font-weight:900;font-size:14px;color:#6b4a96">💎 <span id="petRoomStones">0</span> Spirit Stones</div>
+          </div>
+          <button id="petRoomCloseBtn" style="border:none;background:#f7f2ff;color:#8e75a7;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer;font-family:inherit">Close</button>
+        </div>
+        <div style="display:flex;flex:1;min-height:0;overflow:hidden">
+          <div id="petScene" style="position:relative;flex:1.3;min-height:380px;overflow:hidden;background:url('${BASE}cat-home.png') center/cover no-repeat;border-right:1px solid rgba(210,180,255,.3);display:flex;align-items:flex-end;justify-content:center">
+            <div id="petCatImg" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);z-index:3;cursor:pointer;user-select:none">
+              <img id="catStateImg" src="${IMGS.main}" alt="Snowball" draggable="false" style="width:clamp(200px,45%,280px);height:auto;filter:drop-shadow(0 8px 20px rgba(80,40,140,.22));transition:.22s opacity;display:block">
+            </div>
+            <div id="petBubble" style="position:absolute;top:18px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.96);border:2px solid #e8d5f0;border-radius:20px;padding:9px 18px;font-size:14px;font-weight:900;color:#6b4a96;white-space:nowrap;box-shadow:0 8px 24px rgba(150,110,200,.10);z-index:9;opacity:0;transition:.3s opacity;pointer-events:none">Meow~</div>
+            <div id="petZzz" style="display:none;position:absolute;top:30px;left:55%;font-size:20px;font-weight:900;color:#a090c0;letter-spacing:3px;z-index:10;animation:zzzFloat 2.2s ease-in-out infinite">z z z</div>
+            <div id="petSleepOverlay" style="display:none;position:absolute;inset:0;z-index:20;background:rgba(60,40,100,.08);align-items:center;justify-content:center">
+              <div style="background:rgba(255,255,255,.92);border:2px solid #e8d5f0;border-radius:20px;padding:14px 22px;font-size:15px;font-weight:900;color:#6b4a96;text-align:center;line-height:1.6;max-width:240px;box-shadow:0 8px 24px rgba(150,110,200,.10)">🌙 Snowball is asleep...<br>Come back after your adventure!</div>
+            </div>
+          </div>
+          <div style="padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;min-width:220px">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="background:rgba(255,255,255,.7);border:1px solid #e8d5f0;border-radius:14px;padding:12px 14px">
+                <div style="font-size:11px;font-weight:900;color:#a080c0;margin-bottom:5px">💕 Happiness</div>
+                <div style="height:9px;border-radius:999px;background:rgba(200,180,230,.25);overflow:hidden;margin-bottom:4px"><div id="happinessBar" style="height:100%;border-radius:999px;background:linear-gradient(90deg,#f472b6,#c084fc);transition:.5s width;width:80%"></div></div>
+                <div id="happinessVal" style="font-size:10px;font-weight:900;color:#b090c8;text-align:right">80 / 100</div>
+              </div>
+              <div style="background:rgba(255,255,255,.7);border:1px solid #e8d5f0;border-radius:14px;padding:12px 14px">
+                <div style="font-size:11px;font-weight:900;color:#a080c0;margin-bottom:5px">🍚 Fullness</div>
+                <div style="height:9px;border-radius:999px;background:rgba(200,180,230,.25);overflow:hidden;margin-bottom:4px"><div id="fullnessBar" style="height:100%;border-radius:999px;background:linear-gradient(90deg,#fb923c,#fbbf24);transition:.5s width;width:60%"></div></div>
+                <div id="fullnessVal" style="font-size:10px;font-weight:900;color:#b090c8;text-align:right">60 / 100</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <button id="eatBtn" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer"><span style="font-size:22px">🐟</span><span style="font-size:12px;font-weight:900;color:#6b4a96">Eat</span><span style="font-size:10px;color:#c084fc;font-weight:900">💎 2</span></button>
+              <button id="feastBtn" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px;border-radius:18px;border:1.5px solid rgba(251,146,60,.3);background:linear-gradient(160deg,#fff8f0,#fff0e8);font-family:inherit;cursor:pointer"><span style="font-size:22px">🍱</span><span style="font-size:12px;font-weight:900;color:#6b4a96">Feast</span><span style="font-size:10px;color:#c084fc;font-weight:900">💎 5</span></button>
+              <button id="playBtn" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer"><span style="font-size:22px">🎀</span><span style="font-size:12px;font-weight:900;color:#6b4a96">Play</span><span style="font-size:10px;color:#c084fc;font-weight:900">💎 2</span></button>
+              <button id="patBtn" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer"><span style="font-size:22px">✋</span><span style="font-size:12px;font-weight:900;color:#6b4a96">Pat</span><span style="font-size:10px;color:#c084fc;font-weight:900">💎 1</span></button>
+            </div>
+            <div id="petLog" style="background:rgba(255,255,255,.6);border:1px solid #e8d5f0;border-radius:12px;padding:10px 12px;max-height:100px;overflow-y:auto;font-size:12px;color:#9070b0;font-weight:700;line-height:1.8;flex:1"><div>🐾 Snowball is waiting for you!</div></div>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    // Gift modal
+    const giftOverlay = document.createElement('div');
+    giftOverlay.id = 'petGiftModal';
+    giftOverlay.style.cssText = [
+      'display:none','position:fixed','left:0','top:0','right:0','bottom:0',
+      'z-index:2147483647','background:rgba(30,10,60,.6)',
+      'align-items:center','justify-content:center','padding:20px'
+    ].join(';');
+    giftOverlay.innerHTML = `
+      <div style="background:linear-gradient(160deg,#fff9fe,#f5eeff);border:2px solid rgba(220,180,255,.5);border-radius:36px;width:min(680px,100%);overflow:hidden;box-shadow:0 32px 80px rgba(120,60,200,.28);display:flex;flex-direction:column;align-items:center">
+        <div style="width:100%;height:260px;overflow:hidden;background:linear-gradient(180deg,#fce8ff,#e8d8ff)">
+          <img src="${BASE}cat-gift.png" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block">
+        </div>
+        <div style="padding:28px 36px 32px;text-align:center">
+          <div style="font-size:40px;margin-bottom:8px">🎉</div>
+          <h2 style="font-size:26px;font-weight:900;color:#6b4a96;margin:0 0 10px">You have a new companion!</h2>
+          <p style="color:#7060a0;font-size:15px;line-height:1.7;margin:0 0 16px">Snowball has been waiting for you! Keep earning <strong>Spirit Stones</strong> by solving levels — use them to feed and play with your cat!</p>
+          <div style="display:inline-block;padding:12px 20px;border-radius:18px;background:rgba(255,255,255,.8);border:1px solid #e8d5f0;font-size:13px;font-weight:800;color:#8060b0;line-height:1.8">💎 Spirit Stones = cat snacks &amp; playtime<br>🐾 Find Snowball anytime with the 🐱 button</div>
+          <br>
+          <button id="petGiftClaimBtn" style="margin-top:20px;padding:14px 36px;font-size:16px;border:none;cursor:pointer;border-radius:16px;font-family:inherit;font-weight:900;background:linear-gradient(135deg,#f472b6,#c084fc);color:#fff;box-shadow:0 8px 24px rgba(196,100,230,.3)">Meet Snowball! 🐱</button>
+        </div>
+      </div>`;
+    document.body.appendChild(giftOverlay);
   }
 
-  /* ── set mood + image + animation ── */
-  function setMood(mood) {
-    ps.mood = mood;
-    sleeping = (mood === 'sleep');
-    const img  = G('catStateImg');
-    const wrap = G('petCatImg');
-    const zzz  = G('petZzz');
-    const overlay = G('petSleepOverlay');
-    if (!img || !wrap) return;
-
-    // crossfade image
-    img.style.opacity = '0';
-    setTimeout(() => { img.src = IMGS[mood]||IMGS.main; img.style.opacity = '1'; }, 180);
-
-    // animation class
-    wrap.className = 'pet-cat-img ' + (ANIM_CLASS[mood] || 'idle');
-
-    // zzz
-    if (zzz) zzz.style.display = mood==='sleep' ? 'block' : 'none';
-    // sleep overlay blocks all buttons
-    if (overlay) overlay.classList.toggle('show', mood==='sleep');
-
-    speak(mood);
-    save({ mood });
+  /* ── helpers ── */
+  function speak(mood){
+    const arr=SPEECH[mood]||SPEECH.main;
+    const b=G('petBubble'); if(!b) return;
+    b.textContent=arr[Math.floor(Math.random()*arr.length)];
+    b.style.opacity='1';
+    clearTimeout(bubbleT);
+    bubbleT=setTimeout(()=>b.style.opacity='0',2600);
   }
 
-  function returnToMain() {
-    if (sleeping) return;
-    clearTimeout(actionTimer);
-    setMood('main');
-  }
-
-  function doAction(mood, durationMs) {
-    if (sleeping) return;
-    clearTimeout(actionTimer);
-    setMood(mood);
-    actionTimer = setTimeout(returnToMain, durationMs || ACTION_DUR[mood] || 2000);
-    resetIdleTimer();
-  }
-
-  /* ── idle → yawn → sleep timer ── */
-  function resetIdleTimer() {
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => {
-      if (sleeping) return;
-      setMood('yawn');
-      // after yawn show, go to sleep in 2 more minutes
-      idleTimer = setTimeout(() => {
-        setMood('sleep');
-      }, 2 * 60 * 1000);
-    }, 3 * 60 * 1000);
-  }
-
-  /* ── hearts ── */
-  function spawnHearts(emoji, count=3) {
-    const scene = G('petScene');
-    if (!scene) return;
-    for (let i=0; i<count; i++) {
-      setTimeout(() => {
-        const h = document.createElement('div');
-        h.className = 'float-heart';
-        h.textContent = emoji;
-        h.style.left = (20 + Math.random()*60) + '%';
-        h.style.bottom = '30%';
-        scene.appendChild(h);
-        setTimeout(() => h.remove(), 1100);
-      }, i*180);
+  function setMood(mood){
+    ps.mood=mood; sleeping=(mood==='sleep');
+    const img=G('catStateImg'), wrap=G('petCatImg'), zzz=G('petZzz'), so=G('petSleepOverlay');
+    if(!img) return;
+    img.style.opacity='0';
+    setTimeout(()=>{ img.src=IMGS[mood]||IMGS.main; img.style.opacity='1'; },180);
+    if(wrap){
+      const animMap={main:'catIdle',eat:'catEat',feast:'catFeast',play:'catPlay',happy:'catHappy',yawn:'catYawn',sleep:'catSleep',sad:'catIdle'};
+      wrap.style.animation='none';
+      setTimeout(()=>{ wrap.style.animation=`${animMap[mood]||'catIdle'} ${mood==='sleep'||mood==='yawn'?'3s':'0.55s'} ${mood==='main'||mood==='sleep'||mood==='yawn'?'ease-in-out infinite':'ease-in-out 4'}`; },10);
     }
+    if(zzz) zzz.style.display=mood==='sleep'?'block':'none';
+    if(so) so.style.display=mood==='sleep'?'flex':'none';
+    speak(mood);
+    save({mood});
   }
 
-  /* ── log ── */
-  function addLog(msg) {
-    const log = G('petLog');
-    if (!log) return;
-    const el = document.createElement('div');
-    el.textContent = msg;
-    log.insertBefore(el, log.firstChild);
-    while (log.children.length > 10) log.removeChild(log.lastChild);
+  function returnToMain(){ if(sleeping) return; clearTimeout(actionT); setMood(ps.happiness<20?'sad':'main'); }
+  function doAction(mood,ms){ if(sleeping) return; clearTimeout(actionT); setMood(mood); actionT=setTimeout(returnToMain,ms||2000); resetIdle(); }
+
+  function resetIdle(){
+    clearTimeout(idleT);
+    idleT=setTimeout(()=>{ if(sleeping) return; setMood('yawn'); idleT=setTimeout(()=>setMood('sleep'),2*60*1000); },3*60*1000);
+  }
+
+  function hearts(e,n=3){
+    const scene=G('petScene'); if(!scene) return;
+    for(let i=0;i<n;i++) setTimeout(()=>{
+      const h=document.createElement('div');
+      h.textContent=e; h.style.cssText=`position:absolute;font-size:20px;pointer-events:none;z-index:10;animation:floatUp 1s ease-out forwards;left:${20+Math.random()*60}%;bottom:30%`;
+      scene.appendChild(h); setTimeout(()=>h.remove(),1100);
+    },i*180);
+  }
+
+  function addLog(msg){
+    const log=G('petLog'); if(!log) return;
+    const el=document.createElement('div'); el.textContent=msg;
+    log.insertBefore(el,log.firstChild);
+    while(log.children.length>10) log.removeChild(log.lastChild);
     const d=load(); d.log=[msg,...(d.log||[])].slice(0,20); save(d);
   }
 
-  /* ── bars ── */
-  function updateBars() {
-    const h = Math.round(Math.max(0,Math.min(100,ps.happiness)));
-    const f = Math.round(Math.max(0,Math.min(100,ps.fullness)));
-    const hBar=G('happinessBar'), fBar=G('fullnessBar');
-    const hVal=G('happinessVal'), fVal=G('fullnessVal');
-    if(hBar) hBar.style.width=h+'%';
-    if(fBar) fBar.style.width=f+'%';
-    if(hVal) hVal.textContent=h+' / 100';
-    if(fVal) fVal.textContent=f+' / 100';
+  function updateBars(){
+    const h=Math.round(Math.max(0,Math.min(100,ps.happiness)));
+    const f=Math.round(Math.max(0,Math.min(100,ps.fullness)));
+    const hb=G('happinessBar'),fb=G('fullnessBar'),hv=G('happinessVal'),fv=G('fullnessVal');
+    if(hb) hb.style.width=h+'%'; if(fb) fb.style.width=f+'%';
+    if(hv) hv.textContent=h+' / 100'; if(fv) fv.textContent=f+' / 100';
   }
 
-  function noStones(needed) {
-    const b=G('petSpeechBubble');
-    if(b){ b.textContent=`Need ${needed} more 💎...`; b.classList.add('show'); clearTimeout(bubbleTimer); bubbleTimer=setTimeout(()=>b.classList.remove('show'),2000); }
+  function noStones(n){
+    const b=G('petBubble'); if(!b) return;
+    b.textContent=`Need ${n} more 💎...`; b.style.opacity='1';
+    clearTimeout(bubbleT); bubbleT=setTimeout(()=>b.style.opacity='0',2000);
+  }
+
+  function applyDecay(){
+    const d=load(), last=d.lastInteract||Date.now();
+    const days=Math.floor((Date.now()-last)/(24*60*60*1000));
+    if(days>0){ ps.happiness=Math.max(0,ps.happiness-days*10); save({happiness:ps.happiness}); }
   }
 
   /* ── actions ── */
-  function doEat() {
-    if(sleeping) return;
-    if(stones()<2){ noStones(2); return; }
-    spendStones(2);
-    ps.fullness=Math.min(100,ps.fullness+15);
-    ps.happiness=Math.min(100,ps.happiness+5);
-    updateBars(); spawnHearts('🐟',2); addLog('🐟 Snowball ate a fish!');
-    doAction('eat');
-    save({happiness:ps.happiness,fullness:ps.fullness});
-  }
-  function doFeast() {
-    if(sleeping) return;
-    if(stones()<5){ noStones(5); return; }
-    spendStones(5);
-    ps.fullness=Math.min(100,ps.fullness+30);
-    ps.happiness=Math.min(100,ps.happiness+15);
-    updateBars(); spawnHearts('🍱',5); addLog('🍱 Snowball had a feast!!');
-    doAction('feast');
-    save({happiness:ps.happiness,fullness:ps.fullness});
-  }
-  function doPlay() {
-    if(sleeping) return;
-    if(stones()<2){ noStones(2); return; }
-    spendStones(2);
-    ps.happiness=Math.min(100,ps.happiness+12);
-    ps.fullness=Math.max(0,ps.fullness-5);
-    updateBars(); spawnHearts('🎀',3); addLog('🎀 Snowball played happily!');
-    doAction('play');
-    save({happiness:ps.happiness,fullness:ps.fullness});
-  }
-  function doPat() {
-    if(sleeping) return;
-    if(stones()<1){ noStones(1); return; }
-    spendStones(1);
-    ps.happiness=Math.min(100,ps.happiness+8);
-    updateBars(); spawnHearts('💕',3); addLog('✋ You gave Snowball a pat!');
-    doAction('happy');
-    save({happiness:ps.happiness,fullness:ps.fullness});
-  }
+  function doEat(){ if(sleeping) return; if(stones()<2){ noStones(2); return; } spend(2); ps.fullness=Math.min(100,ps.fullness+15); ps.happiness=Math.min(100,ps.happiness+5); updateBars(); hearts('🐟',2); addLog('🐟 Snowball ate a fish!'); doAction('eat'); save({happiness:ps.happiness,fullness:ps.fullness}); }
+  function doFeast(){ if(sleeping) return; if(stones()<5){ noStones(5); return; } spend(5); ps.fullness=Math.min(100,ps.fullness+30); ps.happiness=Math.min(100,ps.happiness+15); updateBars(); hearts('🍱',5); addLog('🍱 Snowball had a feast!!'); doAction('feast',2600); save({happiness:ps.happiness,fullness:ps.fullness}); }
+  function doPlay(){ if(sleeping) return; if(stones()<2){ noStones(2); return; } spend(2); ps.happiness=Math.min(100,ps.happiness+12); ps.fullness=Math.max(0,ps.fullness-5); updateBars(); hearts('🎀',3); addLog('🎀 Snowball played!'); doAction('play',2400); save({happiness:ps.happiness,fullness:ps.fullness}); }
+  function doPat(){ if(sleeping) return; if(stones()<1){ noStones(1); return; } spend(1); ps.happiness=Math.min(100,ps.happiness+8); updateBars(); hearts('💕',3); addLog('✋ You patted Snowball!'); doAction('happy'); save({happiness:ps.happiness,fullness:ps.fullness,lastInteract:Date.now()}); }
 
-  /* ── happiness decay: -10 per day missed ── */
-  function applyDecay() {
-    const d = load();
-    const last = d.lastInteract || Date.now();
-    const daysMissed = Math.floor((Date.now() - last) / (24*60*60*1000));
-    if (daysMissed > 0) {
-      ps.happiness = Math.max(0, ps.happiness - daysMissed * 10);
-      save({ happiness: ps.happiness });
-    }
-  }
-  function displayMood() { return ps.happiness < 20 ? 'sad' : 'main'; }
-  function markInteract() { save({ lastInteract: Date.now() }); }
-
-  /* ── open / close ── */
-  function openPetRoom() {
-    const d = load();
-    if (!d.unlocked) {
-      // not yet unlocked — shouldn't normally be called, but guard anyway
-      return;
-    }
-    ps.happiness = d.happiness ?? 80;
-    ps.fullness  = d.fullness  ?? 60;
-    ps.log       = d.log || [];
-    sleeping = false;
-    applyDecay();
+  /* ── open ── */
+  function openPetRoom(){
+    const d=load(); if(!d.unlocked) return;
+    ps.happiness=d.happiness??80; ps.fullness=d.fullness??60; ps.log=d.log||[];
+    sleeping=false; applyDecay();
+    const m=G('petRoomModal'); if(!m) return;
+    m.style.display='flex';
     document.body.style.overflow='hidden';
-    G('petRoomModal').classList.add('open');
-    setMood(displayMood());
+    setMood(ps.happiness<20?'sad':'main');
     updateBars();
-    window._appStones = parseInt((G('heroStars')||{}).textContent||'0')||0;
-    syncStonesUI();
-    const log = G('petLog');
-    if (log && ps.log.length) log.innerHTML = ps.log.map(l=>`<div>${l}</div>`).join('');
-    resetIdleTimer();
+    window._appStones=parseInt((G('heroStars')||{}).textContent||'0')||0;
+    syncStones();
+    const log=G('petLog');
+    if(log&&ps.log.length) log.innerHTML=ps.log.map(l=>`<div>${l}</div>`).join('');
+    resetIdle();
   }
 
-  /* ── wire up ── */
-  function init() {
-    // Move modals to direct body children to guarantee position:fixed works
-    ['petRoomModal','petGiftModal'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) document.body.appendChild(el); // always move to end of body
+  /* ── init ── */
+  function init(){
+    buildModals();
+
+    const petBtn=G('petBtn');
+    const isUnlocked=!!load().unlocked;
+    if(petBtn) petBtn.style.opacity=isUnlocked?'1':'0.4';
+
+    petBtn && petBtn.addEventListener('click',()=>{ if(!load().unlocked) return; openPetRoom(); });
+
+    G('petRoomCloseBtn').addEventListener('click',()=>{
+      document.body.style.overflow='';
+      G('petRoomModal').style.display='none';
+      clearTimeout(idleT); clearTimeout(actionT);
+      save({happiness:ps.happiness,fullness:ps.fullness,log:ps.log});
     });
+    G('eatBtn').addEventListener('click',doEat);
+    G('feastBtn').addEventListener('click',doFeast);
+    G('playBtn').addEventListener('click',doPlay);
+    G('patBtn').addEventListener('click',doPat);
+    G('petCatImg').addEventListener('click',()=>{ if(!sleeping) doPat(); });
 
-    // Show/hide petBtn based on unlock state
-    const petBtn = G('petBtn');
-    const isUnlocked = !!load().unlocked;
-    if (petBtn) petBtn.style.opacity = isUnlocked ? '1' : '0.4';
-    // Pre-set cat image so it's ready when modal opens
-    const catImg = G('catStateImg');
-    if (catImg) catImg.src = IMGS.main;
-
-    G('petBtn').addEventListener('click', () => {
-      if (!load().unlocked) return; // silently ignore if not unlocked
+    G('petGiftClaimBtn').addEventListener('click',()=>{
+      save({unlocked:true,happiness:80,fullness:60,lastInteract:Date.now()});
+      const pb=G('petBtn'); if(pb) pb.style.opacity='1';
+      G('petGiftModal').style.display='none';
       openPetRoom();
     });
-    G('petRoomCloseBtn').addEventListener('click', () => {
-      document.body.style.overflow='';
-      G('petRoomModal').classList.remove('open');
-      clearTimeout(idleTimer); clearTimeout(actionTimer);
-      save({happiness:ps.happiness, fullness:ps.fullness, log:ps.log});
-    });
-    G('eatBtn').addEventListener('click',   () => { doEat();   markInteract(); });
-    G('feastBtn').addEventListener('click', () => { doFeast(); markInteract(); });
-    G('playBtn').addEventListener('click',  () => { doPlay();  markInteract(); });
-    G('patBtn').addEventListener('click',   () => { doPat();   markInteract(); });
-    G('petCatImg').addEventListener('click', () => { if(!sleeping) { doPat(); markInteract(); } });
-
-    // Gift unlock button
-    const unlockBtn = G('petGiftClaimBtn');
-    if (unlockBtn) {
-      unlockBtn.addEventListener('click', () => {
-        save({ unlocked: true, happiness: 80, fullness: 60, lastInteract: Date.now() });
-        const pb = G('petBtn'); if (pb) pb.style.opacity = '1';
-        G('petGiftModal').classList.remove('open');
-        openPetRoom();
-      });
-    }
   }
   init();
 
-  // Sync stones from topbar
-  const heroEl = document.getElementById('heroStars');
-  if (heroEl) {
-    new MutationObserver(() => {
-      window._appStones = parseInt(heroEl.textContent)||0;
-      syncStonesUI();
-    }).observe(heroEl, {childList:true, characterData:true, subtree:true});
-  }
+  // Expose openPetRoom and gift modal for main app
+  window._openPetGiftModal = () => { const m=G('petGiftModal'); if(m) m.style.display='flex'; };
+
+  // Sync stones
+  const heroEl=document.getElementById('heroStars');
+  if(heroEl) new MutationObserver(()=>{ window._appStones=parseInt(heroEl.textContent)||0; syncStones(); }).observe(heroEl,{childList:true,characterData:true,subtree:true});
 })();
 </script>
 </body>
