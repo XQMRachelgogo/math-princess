@@ -812,17 +812,19 @@ body{
   }
 
   function applyTopbar() {
-    const totalStars = sumStars(state.progress);
+    const totalEarned = sumStars(state.progress);
+    const spent = (() => { try { return JSON.parse(localStorage.getItem('snowball_v1')||'{}').spent || 0; } catch { return 0; } })();
+    const available = Math.max(0, totalEarned - spent);
     state.currentLevelNo = nextPlayableLevel(state.levels, state.progress);
     const shortName = (state.princessName || 'Hero Princess').replace('Princess ', '');
     $('heroName').textContent = shortName;
     $('heroLevel').textContent = `Lv ${state.currentLevelNo}`;
-    $('heroStars').textContent = totalStars;
+    $('heroStars').textContent = available;
     const unlocked = unlockedCount(state.levels, state.progress);
     const total = state.levels.length || 36;
     $('heroUnlock').textContent = `${unlocked}/${total}`;
     $('authBtn').textContent = state.user ? '↩ Sign Out' : '☁️ Sign In';
-    window._appStones = totalStars;
+    window._appStones = available;
     if (typeof updateStonesDisplay === 'function') updateStonesDisplay();
   }
 
@@ -1585,7 +1587,8 @@ body{
         state.progress[no].completed = true;
         state.progress[no].best_score = Math.max(state.progress[no].best_score, rawScore);
         state.progress[no].stars = Math.max(state.progress[no].stars, earnedStars);
-        window._appStones = sumStars(state.progress);
+        const spent2 = (() => { try { return JSON.parse(localStorage.getItem('snowball_v1')||'{}').spent||0; } catch{return 0;} })();
+        window._appStones = Math.max(0, sumStars(state.progress) - spent2);
         console.log('[submitQuiz] Local progress level', no, '| stars earned:', earnedStars, '| total stones:', window._appStones);
         $('nextLevelBtn').classList.remove('hidden');
         localSave({ progressBackup: state.progress });
