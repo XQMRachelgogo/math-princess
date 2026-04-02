@@ -1541,21 +1541,40 @@ body{
       console.log('[submitQuiz] RPC response - data:', data, 'error:', error);
       if (error) { console.error('[submitQuiz] RPC error:', error); throw error; }
 
+      // Client-side fallback: directly upsert progress since RPC may not be writing to DB
+      const rawScore = attempts.filter(a => a.is_correct).length;
+      const earnedStars = starsForScore(rawScore);
+      const isCompleted = rawScore >= 8;
+
+      try {
+        const { error: upsertErr } = await state.client
+          .from('player_level_progress')
+          .upsert({
+            player_id: state.playerId,
+            level_id: level.id,
+            best_score: rawScore,
+            stars: earnedStars,
+            completed: isCompleted,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'player_id,level_id' });
+        if (upsertErr) console.warn('[submitQuiz] direct upsert error:', upsertErr);
+        else console.log('[submitQuiz] direct upsert success ✓');
+      } catch(e) { console.warn('[submitQuiz] direct upsert exception:', e); }
+
       markQuizReview(attempts);
       $('submitQuizBtn').classList.add('hidden');
       $('retryQuizBtn').classList.remove('hidden');
       $('nextLevelBtn').classList.add('hidden'); // reset
 
-      const rawScore = attempts.filter(a => a.is_correct).length;
-      const result = (data && data[0]) || { score: rawScore, stars: starsForScore(rawScore), completed: rawScore >= 8 };
+      const result = (data && data[0]) || { score: rawScore, stars: earnedStars, completed: isCompleted };
       // Ensure completed flag: if score >= 8 (2+ stars) always mark completed
-      if (rawScore >= 8 && !result.completed) result.completed = true;
+      if (isCompleted && !result.completed) result.completed = true;
 
       // Debug: log what Supabase returned
       console.log('[submitQuiz] RPC result:', data, '| rawScore:', rawScore, '| completed:', result.completed);
 
       $('quizScoreBox').classList.remove('hidden');
-      $('quizScoreBox').textContent = `Score ${result.score ?? rawScore}/12 · ${result.stars ?? starsForScore(rawScore)} Spirit Stone(s) · ${result.completed ? 'Level completed! ✨' : 'Keep practicing and try again.'}`;
+      $('quizScoreBox').textContent = `Score ${result.score ?? rawScore}/12 · ${result.stars ?? earnedStars} Spirit Stone(s) · ${result.completed ? 'Level completed! ✨' : 'Keep practicing and try again.'}`;
 
       await loadPlayerState();
 
@@ -1565,13 +1584,10 @@ body{
         if (!state.progress[no]) state.progress[no] = { best_score: 0, stars: 0, completed: false, bonusStars: 0 };
         state.progress[no].completed = true;
         state.progress[no].best_score = Math.max(state.progress[no].best_score, rawScore);
-        const earnedStars = starsForScore(rawScore);
         state.progress[no].stars = Math.max(state.progress[no].stars, earnedStars);
-        // Update topbar stones immediately
         window._appStones = sumStars(state.progress);
         console.log('[submitQuiz] Local progress level', no, '| stars earned:', earnedStars, '| total stones:', window._appStones);
         $('nextLevelBtn').classList.remove('hidden');
-        // Backup progress to localStorage in case Supabase sync lags
         localSave({ progressBackup: state.progress });
       }
 
