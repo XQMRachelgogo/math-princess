@@ -844,8 +844,10 @@ body{
 
   function applyTopbar() {
     const totalEarned = sumStars(state.progress);
-    const spent = (() => { try { return JSON.parse(localStorage.getItem('snowball_v1')||'{}').spent || 0; } catch { return 0; } })();
-    const available = Math.max(0, totalEarned - spent);
+    const petData = (() => { try { return JSON.parse(localStorage.getItem('snowball_v1')||'{}'); } catch { return {}; } })();
+    const bonusStones = petData.bonusStones || 0;
+    const spent = petData.spent || 0;
+    const available = Math.max(0, totalEarned + bonusStones - spent);
     state.currentLevelNo = nextPlayableLevel(state.levels, state.progress);
     const shortName = (state.princessName || 'Hero Princess').replace('Princess ', '');
     $('heroName').textContent = shortName;
@@ -1881,15 +1883,22 @@ body{
       if (result.completed && level) {
         const no = level.level_no;
         if (!state.progress[no]) state.progress[no] = { best_score: 0, stars: 0, completed: false, bonusStars: 0 };
+        const prevStars = state.progress[no].stars || 0;
         state.progress[no].completed = true;
         state.progress[no].best_score = Math.max(state.progress[no].best_score || 0, rawScore);
-        state.progress[no].stars = Math.max(state.progress[no].stars || 0, earnedStars);
+        state.progress[no].stars = Math.max(prevStars, earnedStars);
+        // Give bonus stones only for net star improvement (retry reward)
+        const starImprovement = Math.max(0, earnedStars - prevStars);
+        if (starImprovement > 0 && typeof window._addBonusStonesForImprovement === 'function') {
+          window._addBonusStonesForImprovement(starImprovement);
+        }
         const spent2 = (() => { try { return JSON.parse(localStorage.getItem('snowball_v1')||'{}').spent||0; } catch{return 0;} })();
-        const available = Math.max(0, sumStars(state.progress) - spent2);
+        const bonusEarned = (() => { try { return JSON.parse(localStorage.getItem('snowball_v1')||'{}').bonusStones||0; } catch{return 0;} })();
+        const available = Math.max(0, sumStars(state.progress) + bonusEarned - spent2);
         window._appStones = available;
         const heroStarsEl = $('heroStars');
         if (heroStarsEl) heroStarsEl.textContent = available;
-        console.log('[submitQuiz] Level', no, '| earnedStars:', earnedStars, '| available stones:', available);
+        console.log('[submitQuiz] Level', no, '| earnedStars:', earnedStars, '| prevStars:', prevStars, '| improvement:', starImprovement, '| available:', available);
         $('nextLevelBtn').classList.remove('hidden');
         localSave({ progressBackup: state.progress });
         const _sk = localLoad();
@@ -2028,18 +2037,88 @@ body{
   let sleeping=false, idleT=null, actionT=null, bubbleT=null;
 
   /* ── stones ── */
-  function stones(){ return Math.max(0, window._appStones || 0); }
-  function spend(n){ 
-    const d=load(); 
-    d.spent=(d.spent||0)+n; 
-    localStorage.setItem(KEY,JSON.stringify(d)); 
-    window._appStones = Math.max(0, (window._appStones||0) - n);
-    syncStones(); 
-    // Also update topbar to reflect new available balance
+  // Stone accounting:
+  // window._appStones = earned from levels (set by main app)
+  // load().bonusStones = bonus pool (daily login + snowball finds + retry improvements)
+  // load().spent = total spent from both pools
+  // available = _appStones + bonusStones - spent
+
+  function totalEarned(){ return (window._appStones||0) + (load().bonusStones||0); }
+  function stones(){ return Math.max(0, totalEarned() - (load().spent||0)); }
+
+  function addBonusStones(n, reason){
+    const d = load();
+    d.bonusStones = (d.bonusStones||0) + n;
+    localStorage.setItem(KEY, JSON.stringify(d));
+    window._appStones = (window._appStones||0); // keep level stones unchanged
+    syncStones();
+    // Update topbar
     const heroEl = document.getElementById('heroStars');
-    if(heroEl) heroEl.textContent = window._appStones;
+    if(heroEl) heroEl.textContent = stones();
+    if(reason) addLog('💎 +' + n + ' ' + reason);
+    // bubble
+    const b = G('petBubble');
+    if(b){ b.textContent = '💎 +' + n + ' ' + (reason||'bonus!'); b.style.opacity='1';
+      clearTimeout(bubbleT); bubbleT=setTimeout(()=>b.style.opacity='0',2800); }
+  }
+
+  function spend(n){
+    const d = load();
+    d.spent = (d.spent||0) + n;
+    localStorage.setItem(KEY, JSON.stringify(d));
+    syncStones();
+    const heroEl = document.getElementById('heroStars');
+    if(heroEl) heroEl.textContent = stones();
   }
   function syncStones(){ const el=G('petRoomStones'); if(el) el.textContent=stones(); }
+
+  // ── Daily login bonus: +1 stone per day ───────────────────────────────
+  function checkDailyBonus(){
+    const d = load();
+    const now = Date.now();
+    const lastBonus = d.lastDailyBonus || 0;
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    if(now - lastBonus >= oneDayMs){
+      d.lastDailyBonus = now;
+      d.bonusStones = (d.bonusStones||0) + 1;
+      localStorage.setItem(KEY, JSON.stringify(d));
+      setTimeout(()=>{ addBonusStones(0, ''); // just sync display
+        syncStones();
+        const heroEl = document.getElementById('heroStars');
+        if(heroEl) heroEl.textContent = stones();
+        addLog('🌟 Daily bonus: +1 Spirit Stone!');
+        speak('happy');
+      }, 1200);
+    }
+  }
+
+  // ── Snowball daily find: 1-2 stones per day ───────────────────────────
+  function checkSnowballFind(){
+    const d = load();
+    const now = Date.now();
+    const lastFind = d.lastSnowballFind || 0;
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    if(now - lastFind >= oneDayMs){
+      const found = Math.random() < 0.5 ? 1 : 2;
+      d.lastSnowballFind = now;
+      d.bonusStones = (d.bonusStones||0) + found;
+      localStorage.setItem(KEY, JSON.stringify(d));
+      const msgs = [
+        'Snowball found a shiny gem! 💎',
+        'Snowball brought you a treasure! ✨',
+        'Snowball dug up a spirit stone! 🐾',
+      ];
+      const msg = msgs[Math.floor(Math.random()*msgs.length)];
+      setTimeout(()=>{
+        syncStones();
+        const heroEl = document.getElementById('heroStars');
+        if(heroEl) heroEl.textContent = stones();
+        addLog('🐾 ' + msg + ' (+' + found + ')');
+        speak('happy');
+        doAction('happy');
+      }, 2500);
+    }
+  }
 
   /* ── build DOM ── */
   function buildModals(){
@@ -2083,12 +2162,39 @@ body{
               </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <button id="eatBtn" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer"><span style="font-size:22px">🐟</span><span style="font-size:12px;font-weight:900;color:#6b4a96">Eat</span><span style="font-size:10px;color:#c084fc;font-weight:900">💎 2</span></button>
-              <button id="feastBtn" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px;border-radius:18px;border:1.5px solid rgba(251,146,60,.3);background:linear-gradient(160deg,#fff8f0,#fff0e8);font-family:inherit;cursor:pointer"><span style="font-size:22px">🍱</span><span style="font-size:12px;font-weight:900;color:#6b4a96">Feast</span><span style="font-size:10px;color:#c084fc;font-weight:900">💎 5</span></button>
-              <button id="playBtn" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer"><span style="font-size:22px">🎀</span><span style="font-size:12px;font-weight:900;color:#6b4a96">Play</span><span style="font-size:10px;color:#c084fc;font-weight:900">💎 2</span></button>
-              <button id="patBtn" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer"><span style="font-size:22px">✋</span><span style="font-size:12px;font-weight:900;color:#6b4a96">Pat</span><span style="font-size:10px;color:#c084fc;font-weight:900">💎 1</span></button>
+              <button id="eatBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer">
+                <span style="font-size:20px">🐟</span>
+                <span style="font-size:12px;font-weight:900;color:#6b4a96">Eat</span>
+                <span style="font-size:10px;color:#c084fc;font-weight:900">💎 2</span>
+                <span style="font-size:9px;color:#b090c0;line-height:1.3;text-align:center">+15 fullness<br>+5 happiness</span>
+              </button>
+              <button id="feastBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px;border-radius:18px;border:1.5px solid rgba(251,146,60,.3);background:linear-gradient(160deg,#fff8f0,#fff0e8);font-family:inherit;cursor:pointer">
+                <span style="font-size:20px">🍱</span>
+                <span style="font-size:12px;font-weight:900;color:#6b4a96">Feast</span>
+                <span style="font-size:10px;color:#c084fc;font-weight:900">💎 3</span>
+                <span style="font-size:9px;color:#b090c0;line-height:1.3;text-align:center">+30 fullness<br>+15 happiness</span>
+              </button>
+              <button id="playBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer">
+                <span style="font-size:20px">🎀</span>
+                <span style="font-size:12px;font-weight:900;color:#6b4a96">Play</span>
+                <span style="font-size:10px;color:#c084fc;font-weight:900">💎 1</span>
+                <span style="font-size:9px;color:#b090c0;line-height:1.3;text-align:center">+12 happiness<br>-5 fullness</span>
+              </button>
+              <button id="patBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer">
+                <span style="font-size:20px">✋</span>
+                <span style="font-size:12px;font-weight:900;color:#6b4a96">Pat</span>
+                <span style="font-size:10px;color:#22c55e;font-weight:900">FREE ✨</span>
+                <span style="font-size:9px;color:#b090c0;line-height:1.3;text-align:center">+8 happiness<br>always free</span>
+              </button>
             </div>
-            <div id="petLog" style="background:rgba(255,255,255,.6);border:1px solid #e8d5f0;border-radius:12px;padding:10px 12px;max-height:100px;overflow-y:auto;font-size:12px;color:#9070b0;font-weight:700;line-height:1.8;flex:1"><div>🐾 Snowball is waiting for you!</div></div>
+            <div style="background:rgba(255,255,255,.6);border:1px solid #e8d5f0;border-radius:12px;padding:10px 12px;font-size:10px;color:#9070b0;font-weight:700;line-height:1.9">
+              <div style="font-size:11px;font-weight:900;color:#7a5a96;margin-bottom:4px">💎 How to earn stones</div>
+              <div>⭐ Complete a level → 1–3 stones</div>
+              <div>⬆️ Improve your score → bonus stones</div>
+              <div>🌟 Visit daily → +1 stone</div>
+              <div>🐾 Snowball finds gems → +1–2 / day</div>
+            </div>
+            <div id="petLog" style="background:rgba(255,255,255,.6);border:1px solid #e8d5f0;border-radius:12px;padding:10px 12px;max-height:80px;overflow-y:auto;font-size:12px;color:#9070b0;font-weight:700;line-height:1.8;flex:1"><div>🐾 Snowball is waiting for you!</div></div>
           </div>
         </div>
       </div>`;
@@ -2188,15 +2294,18 @@ body{
 
   /* ── actions ── */
   function doEat(){ if(sleeping) return; if(stones()<2){ noStones(2); return; } spend(2); ps.fullness=Math.min(100,ps.fullness+15); ps.happiness=Math.min(100,ps.happiness+5); updateBars(); hearts('🐟',2); addLog('🐟 Snowball ate a fish!'); doAction('eat'); save({happiness:ps.happiness,fullness:ps.fullness}); }
-  function doFeast(){ if(sleeping) return; if(stones()<5){ noStones(5); return; } spend(5); ps.fullness=Math.min(100,ps.fullness+30); ps.happiness=Math.min(100,ps.happiness+15); updateBars(); hearts('🍱',5); addLog('🍱 Snowball had a feast!!'); doAction('feast',2600); save({happiness:ps.happiness,fullness:ps.fullness}); }
-  function doPlay(){ if(sleeping) return; if(stones()<2){ noStones(2); return; } spend(2); ps.happiness=Math.min(100,ps.happiness+12); ps.fullness=Math.max(0,ps.fullness-5); updateBars(); hearts('🎀',3); addLog('🎀 Snowball played!'); doAction('play',2400); save({happiness:ps.happiness,fullness:ps.fullness}); }
-  function doPat(){ if(sleeping) return; if(stones()<1){ noStones(1); return; } spend(1); ps.happiness=Math.min(100,ps.happiness+8); updateBars(); hearts('💕',3); addLog('✋ You patted Snowball!'); doAction('happy'); save({happiness:ps.happiness,fullness:ps.fullness,lastInteract:Date.now()}); }
+  function doFeast(){ if(sleeping) return; if(stones()<3){ noStones(3); return; } spend(3); ps.fullness=Math.min(100,ps.fullness+30); ps.happiness=Math.min(100,ps.happiness+15); updateBars(); hearts('🍱',5); addLog('🍱 Snowball had a feast!!'); doAction('feast',2600); save({happiness:ps.happiness,fullness:ps.fullness}); }
+  function doPlay(){ if(sleeping) return; if(stones()<1){ noStones(1); return; } spend(1); ps.happiness=Math.min(100,ps.happiness+12); ps.fullness=Math.max(0,ps.fullness-5); updateBars(); hearts('🎀',3); addLog('🎀 Snowball played!'); doAction('play',2400); save({happiness:ps.happiness,fullness:ps.fullness}); }
+  function doPat(){ if(sleeping) return; ps.happiness=Math.min(100,ps.happiness+8); updateBars(); hearts('💕',3); addLog('✋ You patted Snowball!'); doAction('happy'); save({happiness:ps.happiness,fullness:ps.fullness,lastInteract:Date.now()}); }
 
   /* ── open ── */
   function openPetRoom(){
     const d=load(); if(!d.unlocked) return;
     ps.happiness=d.happiness??80; ps.fullness=d.fullness??60; ps.log=d.log||[];
     sleeping=false; applyDecay();
+    // Check daily bonuses on every open
+    checkDailyBonus();
+    checkSnowballFind();
     const m=G('petRoomModal'); if(!m) return;
     m.style.display = 'flex';
     document.body.style.overflow='hidden';
@@ -2273,6 +2382,12 @@ body{
     console.log('[gift] showing modal');
     const m = G('petGiftModal');
     if (m) m.style.display = 'flex';
+  };
+
+  // Expose bonus stone adder for main app (retry improvement reward)
+  window._addBonusStonesForImprovement = (n) => {
+    if (!load().unlocked) return; // only if cat is unlocked
+    addBonusStones(n, 'improvement bonus!');
   };
 
   // Listen for level1 cleared event from main script
