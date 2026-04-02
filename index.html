@@ -1487,20 +1487,20 @@ body{
       .in('spell_id', spellIds);
     if (error) throw error;
 
-    // ── Progressive spiral ratio: new content % by level band ──
-    // Levels  1–4  : 0–30%  new  (introduction phase, mostly review)
-    // Levels  5–12 : 30–45% new  (building phase)
-    // Levels 13–24 : 45–65% new  (expansion phase)
-    // Levels 25–36 : 65–80% new  (mastery phase)
+    // ── Progressive spiral: new content % by level band ──────────────────
+    // L1=0%, L2-4=30%, L5-12=45%, L13-24=60%, L25-36=75%
     function getMaxNew(lno) {
-      if (lno <= 1)  return 0;   // Level 1 is pure review baseline
-      if (lno <= 4)  return Math.round(12 * 0.30);  // ≤3-4 new questions
-      if (lno <= 12) return Math.round(12 * 0.45);  // ≤5 new questions
-      if (lno <= 24) return Math.round(12 * 0.60);  // ≤7 new questions
-      return Math.round(12 * 0.75);                  // ≤9 new questions
+      if (lno <= 1)  return 0;
+      if (lno <= 4)  return Math.round(12 * 0.30);
+      if (lno <= 12) return Math.round(12 * 0.45);
+      if (lno <= 24) return Math.round(12 * 0.60);
+      return Math.round(12 * 0.75);
     }
     const MAX_NEW = getMaxNew(levelNo);
     const TOTAL   = 12;
+
+    // Difficulty progression order (easy → hard)
+    const DIFF_ORDER = ['concept', 'guided', 'practice', 'challenge'];
 
     const reviewPlans = plans.filter(p => p.role !== 'new' && p.role !== 'new_intro');
     const newPlans    = plans.filter(p => p.role === 'new'  || p.role === 'new_intro');
@@ -1511,103 +1511,107 @@ body{
       bySpell[q.spell_id].push(q);
     });
 
-    const chosen   = [];
+    const chosen    = [];
     const chosenIds = new Set();
     const wrongIds  = wrongRows.map(r => r.question_id);
 
-    function addQuestion(q) {
+    function addQ(q) {
       if (!q || chosenIds.has(q.id)) return false;
       chosen.push(q); chosenIds.add(q.id); return true;
     }
 
-    // ── Pick from a spell's pool: wrong-first, then difficulty-matched, then any ──
+    // Pick up to `limit` questions from a spell in difficulty order
     function pickFromSpell(spellId, limit, preferDifficulty) {
+      if (limit <= 0) return;
       const pool = bySpell[spellId] || [];
-      const added = () => chosen.filter(x => x.spell_id === spellId).length;
+      const countForSpell = () => chosen.filter(x => x.spell_id === spellId).length;
 
       // Priority 1: previously wrong questions (reinforce weak spots)
       for (const q of shuffle(pool.filter(q => wrongIds.includes(q.id) && !chosenIds.has(q.id)))) {
-        if (chosen.length >= TOTAL || added() >= limit) break;
-        addQuestion(q);
+        if (chosen.length >= TOTAL || countForSpell() >= limit) break;
+        addQ(q);
       }
-      // Priority 2: difficulty-band match
-      const diffMatch = pool.filter(q => !chosenIds.has(q.id) && q.difficulty === preferDifficulty);
-      for (const q of shuffle(diffMatch)) {
-        if (chosen.length >= TOTAL || added() >= limit) break;
-        addQuestion(q);
-      }
-      // Priority 3: anything remaining from this spell
-      for (const q of shuffle(pool.filter(q => !chosenIds.has(q.id)))) {
-        if (chosen.length >= TOTAL || added() >= limit) break;
-        addQuestion(q);
+      // Priority 2: preferred difficulty first, then easier→harder
+      const diffOrder = preferDifficulty
+        ? [preferDifficulty, ...DIFF_ORDER.filter(d => d !== preferDifficulty)]
+        : DIFF_ORDER;
+      for (const diff of diffOrder) {
+        for (const q of shuffle(pool.filter(q => !chosenIds.has(q.id) && q.difficulty === diff))) {
+          if (chosen.length >= TOTAL || countForSpell() >= limit) break;
+          addQ(q);
+        }
+        if (countForSpell() >= limit) break;
       }
     }
 
-    // ── Ensure variety: track question types used so far ──
-    function diversify(pool, wantMc, wantSa) {
-      // Try to include at least wantMc multiple-choice and wantSa short-answer
-      const mc = pool.filter(q => !chosenIds.has(q.id) && q.question_type === 'multiple_choice');
-      const sa = pool.filter(q => !chosenIds.has(q.id) && q.question_type === 'short_answer');
-      const others = pool.filter(q => !chosenIds.has(q.id) && q.question_type !== 'multiple_choice' && q.question_type !== 'short_answer');
-      const needed = Math.max(0, TOTAL - chosen.length);
-      const mcCount = Math.min(wantMc, mc.length);
-      const saCount = Math.min(wantSa, sa.length);
-      const out = [...shuffle(mc).slice(0, mcCount), ...shuffle(sa).slice(0, saCount), ...shuffle(others)];
-      return shuffle(out).slice(0, needed);
-    }
-
-    // ═══ STEP 1: Review questions — fill the majority first ═══
-    // Spread review across all review spells, at least 1 per spell
+    // ═══ STEP 1: Review spells — fill the majority first ═══
+    // Review difficulty: early levels use practice, later allow challenge
+    const reviewDiff = levelNo <= 12 ? 'practice' : levelNo <= 24 ? 'challenge' : null;
     const reviewTarget = TOTAL - MAX_NEW;
     const perReview = reviewPlans.length
       ? Math.max(1, Math.floor(reviewTarget / reviewPlans.length))
       : 0;
-
     for (const plan of reviewPlans) {
-      pickFromSpell(plan.spell_id, perReview, plan.difficulty_band);
+      pickFromSpell(plan.spell_id, perReview, reviewDiff || plan.difficulty_band);
     }
 
-    // ═══ STEP 2: New-content questions (capped at MAX_NEW) ═══
-    // For early levels: start with 'concept' difficulty to scaffold
-    // For later levels: use plan's own difficulty_band
-    const newDifficulty = levelNo <= 4 ? 'concept' : levelNo <= 12 ? 'guided' : null;
+    // ═══ STEP 2: New-content — capped at MAX_NEW, easiest questions first ═══
+    // Early levels: concept only; mid: guided; late: practice/challenge
+    const newDiff = levelNo <= 4  ? 'concept'
+                  : levelNo <= 8  ? 'guided'
+                  : levelNo <= 16 ? 'practice'
+                  : null; // null = natural DIFF_ORDER spread
     const perNew = newPlans.length
       ? Math.max(1, Math.floor(MAX_NEW / newPlans.length))
       : 0;
-
     for (const plan of newPlans) {
       const newCount = chosen.filter(q => newPlans.some(p => p.spell_id === q.spell_id)).length;
       if (newCount >= MAX_NEW) break;
       const cap = Math.min(perNew, MAX_NEW - newCount);
-      pickFromSpell(plan.spell_id, cap, newDifficulty || plan.difficulty_band);
+      pickFromSpell(plan.spell_id, cap, newDiff || plan.difficulty_band);
     }
 
-    // ═══ STEP 3: Fill remaining with review (type-diverse) ═══
+    // ═══ STEP 3: Fill remaining with review, balancing question types ═══
     if (chosen.length < TOTAL) {
       const reviewSpellIds = new Set(reviewPlans.map(p => p.spell_id));
-      const reviewPool = (allQs || []).filter(q => !chosenIds.has(q.id) && reviewSpellIds.has(q.spell_id));
-      // Try to balance question types in the fill
-      const mcSoFar = chosen.filter(q => q.question_type === 'multiple_choice').length;
-      const saSoFar = chosen.filter(q => q.question_type === 'short_answer').length;
-      const wantMc = Math.max(0, 7 - mcSoFar);  // target ~7 MC out of 12
-      const wantSa = Math.max(0, 4 - saSoFar);  // target ~4 SA out of 12
-      for (const q of diversify(reviewPool, wantMc, wantSa)) {
+      const pool = (allQs || []).filter(q => !chosenIds.has(q.id) && reviewSpellIds.has(q.spell_id));
+      const mcWant = Math.max(0, 7 - chosen.filter(q => q.question_type === 'multiple_choice').length);
+      const saWant = Math.max(0, 4 - chosen.filter(q => q.question_type === 'short_answer').length);
+      const mc = shuffle(pool.filter(q => q.question_type === 'multiple_choice')).slice(0, mcWant);
+      const sa = shuffle(pool.filter(q => q.question_type === 'short_answer')).slice(0, saWant);
+      const mcSet = new Set(mc.map(q=>q.id)), saSet = new Set(sa.map(q=>q.id));
+      const rest = shuffle(pool.filter(q => !mcSet.has(q.id) && !saSet.has(q.id)));
+      for (const q of [...mc, ...sa, ...rest]) {
         if (chosen.length >= TOTAL) break;
-        addQuestion(q);
+        addQ(q);
       }
     }
 
-    // ═══ STEP 4: Absolute fallback — any remaining question ═══
+    // ═══ STEP 4: Absolute fallback ═══
     if (chosen.length < TOTAL) {
       for (const q of shuffle((allQs || []).filter(q => !chosenIds.has(q.id)))) {
         if (chosen.length >= TOTAL) break;
-        addQuestion(q);
+        addQ(q);
       }
     }
 
-    console.log(`[Level ${levelNo}] target new: ${MAX_NEW}/${TOTAL} | actual new: ${chosen.filter(q => newPlans.some(p=>p.spell_id===q.spell_id)).length} | total: ${chosen.length}`);
+    // ═══ FINAL SORT: review first, then new; within each group easy→hard ═══
+    const newSpellIdSet = new Set(newPlans.map(p => p.spell_id));
+    chosen.sort((a, b) => {
+      const aNew = newSpellIdSet.has(a.spell_id) ? 1 : 0;
+      const bNew = newSpellIdSet.has(b.spell_id) ? 1 : 0;
+      if (aNew !== bNew) return aNew - bNew;          // review before new
+      const aDi = DIFF_ORDER.indexOf(a.difficulty);
+      const bDi = DIFF_ORDER.indexOf(b.difficulty);
+      return (aDi < 0 ? 2 : aDi) - (bDi < 0 ? 2 : bDi);  // easier first
+    });
+
+    const actualNew = chosen.filter(q => newSpellIdSet.has(q.spell_id)).length;
+    console.log('[Level ' + levelNo + '] maxNew=' + MAX_NEW + ' actualNew=' + actualNew + ' total=' + chosen.length
+      + ' | ' + chosen.map(q => (newSpellIdSet.has(q.spell_id)?'NEW':'rev') + ':' + q.difficulty).join(' '));
     return chosen.slice(0, TOTAL);
   }
+
 
   function renderQuiz(levelNo, questions) {
     state.quizQuestions = questions;
