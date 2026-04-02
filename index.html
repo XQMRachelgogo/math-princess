@@ -266,10 +266,14 @@ body{
   .map-shell{height:70vh}
   .map-canvas{min-height:1180px}
 }
+
+  60%{opacity:1}
+  100%{transform:translate(var(--tx),var(--ty)) rotate(360deg) scale(.4);opacity:0}
+}
 /* ═══ PET ROOM ═══ */
 .pet-room-backdrop{
   position:fixed;inset:0;z-index:9999;display:none;place-items:center;padding:20px;
-  background:rgba(40,20,70,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  background:rgba(40,20,70,.55);
 }
 .pet-room-backdrop.open{display:grid}
 .pet-room{
@@ -411,7 +415,7 @@ body{
 /* ═══ PET GIFT UNLOCK MODAL ═══ */
 .pet-gift-backdrop{
   position:fixed;inset:0;z-index:9999;display:none;place-items:center;padding:20px;
-  background:rgba(40,20,70,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  background:rgba(40,20,70,.55);
 }
 .pet-gift-backdrop.open{display:grid}
 .pet-gift-box{
@@ -758,10 +762,6 @@ body{
   function sumStars(progress) {
     return Object.values(progress || {}).reduce((acc, row) => acc + (row.stars || 0) + (row.bonusStars || 0), 0);
   }
-  function isLevelCleared(row) {
-    if (!row) return false;
-    return !!(row.completed || Number(row.best_score || 0) > 0 || Number(row.stars || 0) > 0);
-  }
   function hasAnySave(progress) {
     return Object.values(progress || {}).some(v => (v.best_score || 0) > 0 || v.completed || (v.stars || 0) > 0 || (v.bonusStars || 0) > 0);
   }
@@ -769,21 +769,16 @@ body{
     if (!levels.length) return 1;
     let count = 1;
     for (let i = 2; i <= levels.length; i++) {
-      if (isLevelCleared(progress[i - 1])) count = i;
+      if (progress[i - 1] && progress[i - 1].completed) count = i;
       else break;
     }
     return count;
   }
   function nextPlayableLevel(levels, progress) {
     for (let i = 1; i <= levels.length; i++) {
-      if (!isLevelCleared(progress[i])) return i;
+      if (!(progress[i] && progress[i].completed)) return i;
     }
     return levels.length || 1;
-  }
-  function emitProgressSignals() {
-    const level1Cleared = isLevelCleared(state.progress[1]);
-    window.__level1Cleared = level1Cleared;
-    window.dispatchEvent(new CustomEvent('story-progress-updated', { detail: { level1Cleared } }));
   }
   function posForLevel(levelNo) {
     // Positions calibrated from live map.png click points
@@ -1134,7 +1129,6 @@ body{
       await loadPlayerState();
     }
 
-    emitProgressSignals();
     applyTopbar();
     applyHome();
     renderSpellBook();
@@ -1207,7 +1201,6 @@ body{
 
     try { await loadPlayerState(); } catch (e) { console.error(e); }
     state.currentLevelNo = nextPlayableLevel(state.levels, state.progress);
-    emitProgressSignals();
     applyTopbar();
     applyHome();
     renderMap();
@@ -1582,12 +1575,30 @@ body{
       $('submitQuizBtn').classList.add('hidden');
       $('retryQuizBtn').classList.remove('hidden');
 
-      const result = (data && data[0]) || { score: attempts.filter(a => a.is_correct).length, stars: starsForScore(attempts.filter(a => a.is_correct).length), completed: false };
+      const rawScore = attempts.filter(a => a.is_correct).length;
+      const result = (data && data[0]) || { score: rawScore, stars: starsForScore(rawScore), completed: rawScore >= 8 };
+      // Ensure completed flag: if score >= 8 (2+ stars) always mark completed
+      if (rawScore >= 8 && !result.completed) result.completed = true;
+
+      // Debug: log what Supabase returned
+      console.log('[submitQuiz] RPC result:', data, '| rawScore:', rawScore, '| completed:', result.completed);
+
       $('quizScoreBox').classList.remove('hidden');
-      $('quizScoreBox').textContent = `Score ${result.score}/12 · ${result.stars} Spirit Stone(s) · ${result.completed ? 'Level completed! ✨' : 'Keep practicing and try again.'}`;
+      $('quizScoreBox').textContent = `Score ${result.score ?? rawScore}/12 · ${result.stars ?? starsForScore(rawScore)} Spirit Stone(s) · ${result.completed ? 'Level completed! ✨' : 'Keep practicing and try again.'}`;
 
       await loadPlayerState();
-      emitProgressSignals();
+
+      // Local override: if score qualifies, force local progress to completed
+      if (result.completed && level) {
+        const no = level.level_no;
+        if (!state.progress[no]) state.progress[no] = { best_score: 0, stars: 0, completed: false, bonusStars: 0 };
+        state.progress[no].completed = true;
+        state.progress[no].best_score = Math.max(state.progress[no].best_score, rawScore);
+        state.progress[no].stars = Math.max(state.progress[no].stars, starsForScore(rawScore));
+        console.log('[submitQuiz] Local progress updated for level', no, state.progress[no]);
+      }
+
+      await loadPlayerState();
       applyTopbar();
       applyHome();
       renderMap();
@@ -1595,7 +1606,7 @@ body{
       setStatus(`Level ${level.level_no} saved to Supabase.`);
 
       // 🐱 Unlock cat after Level 1 first completion
-      if (level.level_no === 1 && isLevelCleared(state.progress[1])) {
+      if (level.level_no === 1 && result.completed) {
         const petData = JSON.parse(localStorage.getItem('snowball_v1') || '{}');
         if (!petData.unlocked) {
           setTimeout(() => {
@@ -1676,13 +1687,6 @@ body{
 
   function load() { try { return JSON.parse(localStorage.getItem(PET_KEY)||'{}'); } catch { return {}; } }
   function save(p) { localStorage.setItem(PET_KEY, JSON.stringify(Object.assign({}, load(), p))); }
-  function syncPetAvailability() {
-    const btn = G('petBtn');
-    if (!btn) return;
-    const d = load();
-    const available = !!(d.unlocked && window.__level1Cleared);
-    btn.style.display = available ? '' : 'none';
-  }
 
   const SPEECHES = {
     main:  ['Meow~', 'Purrrr ♡', '(*ᵕ̤ᴗᵕ̤*)', "I'm here!", '✨'],
@@ -1901,15 +1905,19 @@ body{
 
   /* ── wire up ── */
   function init() {
-    syncPetAvailability();
-    window.addEventListener('story-progress-updated', syncPetAvailability);
+    // Move modals to direct body children to guarantee position:fixed works
+    ['petRoomModal','petGiftModal'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.parentElement !== document.body) document.body.appendChild(el);
+    });
+
+    // Show/hide petBtn based on unlock state
+    const petBtn = G('petBtn');
+    const isUnlocked = !!load().unlocked;
+    if (petBtn) petBtn.style.opacity = isUnlocked ? '1' : '0.4';
+
     G('petBtn').addEventListener('click', () => {
-      if (!load().unlocked || !window.__level1Cleared) {
-        // Cat not yet unlocked — pulse the button but don't open
-        G('petBtn').style.animation = 'none';
-        setTimeout(() => G('petBtn').style.animation = '', 10);
-        return;
-      }
+      if (!load().unlocked) return; // silently ignore if not unlocked
       openPetRoom();
     });
     G('petRoomCloseBtn').addEventListener('click', () => {
@@ -1928,8 +1936,8 @@ body{
     if (unlockBtn) {
       unlockBtn.addEventListener('click', () => {
         save({ unlocked: true, happiness: 80, fullness: 60, lastInteract: Date.now() });
+        const pb = G('petBtn'); if (pb) pb.style.opacity = '1';
         G('petGiftModal').classList.remove('open');
-        syncPetAvailability();
         openPetRoom();
       });
     }
