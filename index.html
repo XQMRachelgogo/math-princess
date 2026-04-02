@@ -1082,6 +1082,7 @@ body{
     }
 
     const idToNo = Object.fromEntries(state.levels.map(l => [l.id, l.level_no]));
+    console.log('[loadPlayerState] fetching for playerId:', state.playerId);
     const [progressRes, bonusClaimRes, spellStatsRes] = await Promise.all([
       client.from('player_level_progress').select('level_id,best_score,stars,completed').eq('player_id', state.playerId),
       client.from('player_bonus_claims').select('level_id,stars_awarded').eq('player_id', state.playerId),
@@ -1106,6 +1107,8 @@ body{
 
     state.spellStats = spellStatsRes.data || [];
     console.log('[loadPlayerState] raw progress rows:', progressRes.data?.length, '| spellStats rows:', spellStatsRes.data?.length);
+    if (progressRes.error) console.error('[loadPlayerState] progress error:', progressRes.error);
+    if (spellStatsRes.error) console.error('[loadPlayerState] spellStats error:', spellStatsRes.error);
 
     // Merge any locally-backed-up progress (in case Supabase sync lagged)
     const localBackup = (localLoad().progressBackup) || {};
@@ -1304,18 +1307,24 @@ body{
 
       const sourceUrl = bonus.boss?.source_url || '';
       const bossLink = $('bossOpenLink');
-      if (sourceUrl && sourceUrl !== '#') {
-        bossLink.href = sourceUrl;
+      // Build a clean problem URL - prefer AoPS problem page (not solution)
+      let cleanUrl = sourceUrl;
+      if (year && probNo) {
+        // AoPS problem page format (no answers shown by default on problem page)
+        cleanUrl = `https://artofproblemsolving.com/wiki/index.php/${year}_AMC_8_Problems/Problem_${probNo}`;
+      }
+      if (cleanUrl && cleanUrl !== '#') {
+        bossLink.href = cleanUrl;
         bossLink.style.opacity = '1';
         bossLink.style.pointerEvents = 'auto';
-        $('bossLinkNote').textContent = `Source: ${sourceName}`;
+        $('bossLinkNote').textContent = `Try to solve it before scrolling down to the solution!`;
       } else {
         bossLink.href = '#';
         bossLink.style.opacity = '0.5';
         bossLink.style.pointerEvents = 'none';
         $('bossLinkNote').textContent = 'Problem link not yet available.';
       }
-      bossLink.textContent = `🔗 Open AMC 8 · ${year} Problem ${probNo} (${sourceName})`;
+      bossLink.textContent = `🔗 Open ${year} AMC 8 · Problem ${probNo} (AoPS)`;
 
       $('claimBossBtn').disabled = claimed || !state.playerId;
       $('claimBossBtn').textContent = claimed ? '✅ Reward already claimed' : 'I Solved It · Claim Spirit Stones';
