@@ -1539,14 +1539,15 @@ body{
       if (level.level_no === 1 && result.completed) {
         const petData = JSON.parse(localStorage.getItem('snowball_v1') || '{}');
         if (!petData.unlocked) {
-          const showGift = () => {
-            if (typeof window._openPetGiftModal === 'function') {
-              window._openPetGiftModal();
-            }
-          };
-          // Try immediately, then retry in case pet system hasn't loaded yet
-          setTimeout(showGift, 800);
-          setTimeout(showGift, 1500);
+          setTimeout(() => {
+            // Close quiz modal first so dialog stack doesn't conflict
+            $('quizModal').classList.remove('open');
+            setTimeout(() => {
+              if (typeof window._openPetGiftModal === 'function') {
+                window._openPetGiftModal();
+              }
+            }, 300);
+          }, 1000);
         }
       }
     } catch (err) {
@@ -1618,7 +1619,7 @@ body{
   function save(p){ localStorage.setItem(KEY,JSON.stringify(Object.assign({},load(),p))); }
 
   const SPEECH = {
-    main:['Meow~','Purrrr ♡','(*ᵕ̤ᴗᵕ̤*)','I'm here!','✨'],
+    main:['Meow~','Purrrr ♡','(*ᵕ̤ᴗᵕ̤*)',"I'm here!",'✨'],
     eat:['Nom nom!','Yummy~','So good!','More please!'],
     feast:['FEAST TIME!!','Best day ever! ♡','nyam nyam nyam~','♡♡♡'],
     play:['Wheee!','Catch me!','Again again!','Yay~'],
@@ -1801,7 +1802,7 @@ body{
     ps.happiness=d.happiness??80; ps.fullness=d.fullness??60; ps.log=d.log||[];
     sleeping=false; applyDecay();
     const m=G('petRoomModal'); if(!m) return;
-    if(m.open) m.close(); m.showModal();
+    try { if(m.open) m.close(); m.showModal(); } catch(e) { console.error('pet dialog error:',e); }
     document.body.style.overflow='hidden';
     setMood(ps.happiness<20?'sad':'main');
     updateBars();
@@ -1844,7 +1845,7 @@ body{
   init();
 
   // Expose openPetRoom and gift modal for main app
-  window._openPetGiftModal = () => { const m=G('petGiftModal'); if(m&&!m.open) m.showModal(); };
+  window._openPetGiftModal = () => { const m=G('petGiftModal'); if(m) { try { if(!m.open) m.showModal(); } catch(e){ console.error('gift dialog:',e); } } };
 
   // Sync stones
   const heroEl=document.getElementById('heroStars');
