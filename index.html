@@ -183,27 +183,27 @@ body{
 .map-road svg{width:100%;height:100%}
 .map-layer{position:absolute;inset:0;z-index:2}
 .map-node{
-  position:absolute;transform:translate(-50%,-50%);width:52px;height:52px;border-radius:50%;
+  position:absolute;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;
   display:grid;place-items:center;border:3px solid rgba(255,255,255,.95);
   background:linear-gradient(160deg,rgba(255,248,255,.97),rgba(237,220,255,.95));
-  color:#7040a0;font-size:16px;font-weight:900;
-  box-shadow:0 4px 16px rgba(140,80,200,.25), 0 1px 0 rgba(255,255,255,.8) inset;
+  color:#7040a0;font-size:14px;font-weight:900;
+  box-shadow:0 4px 14px rgba(140,80,200,.22), 0 1px 0 rgba(255,255,255,.8) inset;
   cursor:pointer;transition:.15s transform,.15s box-shadow;
   text-shadow:0 1px 2px rgba(255,255,255,.8)
 }
-.map-node:hover{transform:translate(-50%,-50%) scale(1.12);box-shadow:0 8px 24px rgba(140,80,200,.35)}
-.map-node.locked{background:linear-gradient(160deg,rgba(240,236,248,.9),rgba(226,218,240,.9));color:#b8a8cc;cursor:not-allowed}
+.map-node:hover{transform:translate(-50%,-50%) scale(1.15);box-shadow:0 8px 20px rgba(140,80,200,.32)}
+.map-node.locked{background:linear-gradient(160deg,rgba(240,236,248,.85),rgba(226,218,240,.85));color:#c0b0d0;cursor:not-allowed;opacity:.7}
 .map-node.locked:hover{transform:translate(-50%,-50%)}
-.map-node.done{background:linear-gradient(160deg,rgba(255,252,220,.97),rgba(255,240,180,.95));border-color:rgba(255,220,100,.9);color:#9a7000}
+.map-node.done{background:linear-gradient(160deg,rgba(255,252,215,.97),rgba(255,238,170,.95));border-color:rgba(255,215,80,.9);color:#9a7000}
 .map-node.active{
-  background:linear-gradient(160deg,#fff5ff,#f0d8ff);
-  border-color:rgba(220,140,255,.9);
-  box-shadow:0 0 0 6px rgba(230,160,255,.25), 0 6px 20px rgba(180,100,255,.3), 0 1px 0 rgba(255,255,255,.8) inset;
+  background:linear-gradient(160deg,#fff0ff,#eed5ff);
+  border-color:rgba(210,130,255,.9);
+  box-shadow:0 0 0 5px rgba(220,150,255,.22), 0 6px 18px rgba(180,100,255,.28), 0 1px 0 rgba(255,255,255,.8) inset;
   animation:nodePulse 2s ease-in-out infinite;
 }
 @keyframes nodePulse{
-  0%,100%{box-shadow:0 0 0 6px rgba(230,160,255,.25), 0 6px 20px rgba(180,100,255,.3)}
-  50%{box-shadow:0 0 0 10px rgba(230,160,255,.15), 0 8px 28px rgba(180,100,255,.4)}
+  0%,100%{box-shadow:0 0 0 5px rgba(220,150,255,.22), 0 6px 18px rgba(180,100,255,.28)}
+  50%{box-shadow:0 0 0 9px rgba(220,150,255,.12), 0 8px 24px rgba(180,100,255,.38)}
 }
 .map-node[data-label]:hover::after{
   content:attr(data-label);position:absolute;left:50%;bottom:calc(100% + 12px);transform:translateX(-50%);
@@ -252,6 +252,230 @@ body{
   .map-shell{height:70vh}
   .map-canvas{min-height:1180px}
 }
+
+/* ═══════════════════════════════════════
+   PET UNLOCK MODAL
+═══════════════════════════════════════ */
+.pet-unlock-backdrop{
+  position:fixed;inset:0;z-index:200;display:none;place-items:center;padding:20px;
+  background:rgba(60,30,90,.5);backdrop-filter:blur(8px);
+}
+.pet-unlock-backdrop.open{display:grid}
+.pet-unlock-box{
+  background:linear-gradient(160deg,#fff9fe,#f5eeff);
+  border:2px solid rgba(220,180,255,.6);border-radius:36px;
+  padding:36px 32px 32px;width:min(780px,100%);
+  box-shadow:0 32px 80px rgba(120,60,200,.22);
+  text-align:center;position:relative;overflow:hidden;
+}
+.pet-unlock-box::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,200,240,.3) 0,transparent 60%);
+}
+.pet-unlock-title{font-size:28px;font-weight:900;color:var(--title);margin:0 0 6px}
+.pet-unlock-sub{color:#a080c0;font-size:15px;font-weight:700;margin:0 0 28px}
+.pet-choices{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:28px}
+.pet-choice{
+  border:2px solid rgba(220,180,255,.5);border-radius:28px;padding:20px 14px 16px;
+  background:rgba(255,255,255,.85);cursor:pointer;
+  transition:.2s transform,.2s border-color,.2s box-shadow;position:relative;
+}
+.pet-choice:hover{transform:translateY(-4px);border-color:#c084fc;box-shadow:0 12px 32px rgba(180,100,255,.2)}
+.pet-choice.selected{border-color:#a855f7;background:linear-gradient(160deg,#fdf4ff,#ede9fe);box-shadow:0 0 0 4px rgba(168,85,247,.15)}
+.pet-choice-cat{height:120px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.pet-choice-name{font-size:17px;font-weight:900;color:var(--title);margin-bottom:4px}
+.pet-choice-desc{font-size:12px;color:#a080c0;font-weight:700;line-height:1.5}
+.pet-choice-trait{display:inline-flex;margin-top:8px;padding:4px 10px;border-radius:999px;background:#f5eeff;border:1px solid var(--line);font-size:11px;font-weight:900;color:#9060c0}
+
+/* ═══════════════════════════════════════
+   CSS WATERCOLOUR CATS
+═══════════════════════════════════════ */
+.cat-wrapper{position:relative;width:90px;height:110px}
+/* shared cat body parts */
+.cat-body{position:absolute;border-radius:50% 50% 46% 46%;transition:.3s transform}
+.cat-ear{position:absolute;border-radius:50% 50% 0 0;top:-18px}
+.cat-ear::after{content:'';position:absolute;inset:4px 4px 2px;border-radius:50% 50% 0 0}
+.cat-face{position:absolute;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.cat-eye{width:10px;height:10px;background:#3a2050;border-radius:50%;position:relative}
+.cat-eye::after{content:'';position:absolute;top:1px;left:2px;width:4px;height:4px;background:rgba(255,255,255,.7);border-radius:50%}
+.cat-eye.blink{animation:catBlink .12s ease-in-out}
+@keyframes catBlink{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.08)}}
+.cat-nose{width:6px;height:5px;background:#e8a0b8;border-radius:50% 50% 40% 40%;margin-top:1px}
+.cat-mouth{width:10px;height:5px;border-bottom:2px solid #c080a0;border-radius:0 0 50% 50%;margin-top:1px}
+.cat-cheek{position:absolute;width:14px;height:8px;border-radius:50%;opacity:.55}
+.cat-tail{position:absolute;border-radius:0 999px 999px 0;transform-origin:left center}
+.cat-paw{position:absolute;border-radius:50%}
+
+/* Cat 1 — 月光猫 (Moonlight, soft lavender) */
+.cat-luna .cat-body{width:74px;height:64px;bottom:0;left:8px;background:radial-gradient(ellipse at 40% 35%,#ede4ff,#d8c8f8)}
+.cat-luna .cat-ear{width:22px;height:26px;background:#d8c8f8}
+.cat-luna .cat-ear::after{background:#f5d8ee}
+.cat-luna .cat-ear.left{left:10px}
+.cat-luna .cat-ear.right{right:10px}
+.cat-luna .cat-face{width:52px;height:46px;bottom:14px;left:19px;background:radial-gradient(ellipse at 40% 35%,#f5efff,#e8deff)}
+.cat-luna .cat-eyes{display:flex;gap:10px;margin-bottom:2px}
+.cat-luna .cat-cheek.left{background:#f0c0d8;bottom:16px;left:14px}
+.cat-luna .cat-cheek.right{background:#f0c0d8;bottom:16px;right:14px}
+.cat-luna .cat-tail{width:52px;height:14px;bottom:8px;right:-46px;background:linear-gradient(90deg,#d8c8f8,#ede4ff);transform:rotate(-18deg)}
+.cat-luna .cat-paw.left{width:18px;height:12px;bottom:-8px;left:14px;background:#e0d0f8}
+.cat-luna .cat-paw.right{width:18px;height:12px;bottom:-8px;right:14px;background:#e0d0f8}
+.cat-luna .cat-marking{position:absolute;width:20px;height:3px;border-radius:99px;background:rgba(160,130,210,.35);top:18px;left:27px;transform:rotate(-6deg)}
+
+/* Cat 2 — 桃花猫 (Peach Blossom, warm cream/pink) */
+.cat-mochi .cat-body{width:76px;height:66px;bottom:0;left:7px;background:radial-gradient(ellipse at 40% 35%,#fff3e8,#fbd8c0)}
+.cat-mochi .cat-ear{width:24px;height:28px;background:#fbd8c0}
+.cat-mochi .cat-ear::after{background:#ffc0d8}
+.cat-mochi .cat-ear.left{left:8px}
+.cat-mochi .cat-ear.right{right:8px}
+.cat-mochi .cat-face{width:54px;height:48px;bottom:14px;left:18px;background:radial-gradient(ellipse at 40% 35%,#fff8f3,#fde8d8)}
+.cat-mochi .cat-eyes{display:flex;gap:10px;margin-bottom:2px}
+.cat-mochi .cat-cheek.left{background:#f8b0c0;bottom:14px;left:12px}
+.cat-mochi .cat-cheek.right{background:#f8b0c0;bottom:14px;right:12px}
+.cat-mochi .cat-tail{width:54px;height:15px;bottom:10px;right:-48px;background:linear-gradient(90deg,#fbd8c0,#fff3e8);transform:rotate(-14deg)}
+.cat-mochi .cat-paw.left{width:20px;height:13px;bottom:-8px;left:12px;background:#fce0c8}
+.cat-mochi .cat-paw.right{width:20px;height:13px;bottom:-8px;right:12px;background:#fce0c8}
+.cat-mochi .cat-stripe{position:absolute;width:4px;height:18px;border-radius:99px;background:rgba(220,160,140,.3)}
+
+/* Cat 3 — 星尘猫 (Stardust, misty blue-grey) */
+.cat-star .cat-body{width:72px;height:62px;bottom:0;left:9px;background:radial-gradient(ellipse at 40% 35%,#e8f0ff,#c8d8f0)}
+.cat-star .cat-ear{width:21px;height:25px;background:#c8d8f0}
+.cat-star .cat-ear::after{background:#e8d0f0}
+.cat-star .cat-ear.left{left:11px}
+.cat-star .cat-ear.right{right:11px}
+.cat-star .cat-face{width:50px;height:44px;bottom:12px;left:20px;background:radial-gradient(ellipse at 40% 35%,#f0f4ff,#dce8fc)}
+.cat-star .cat-eyes{display:flex;gap:9px;margin-bottom:2px}
+.cat-star .cat-cheek.left{background:#c8d8f8;bottom:12px;left:14px}
+.cat-star .cat-cheek.right{background:#c8d8f8;bottom:12px;right:14px}
+.cat-star .cat-tail{width:50px;height:13px;bottom:6px;right:-44px;background:linear-gradient(90deg,#c8d8f0,#e8f0ff);transform:rotate(-20deg)}
+.cat-star .cat-paw.left{width:17px;height:11px;bottom:-7px;left:14px;background:#d8e4f8}
+.cat-star .cat-paw.right{width:17px;height:11px;bottom:-7px;right:14px;background:#d8e4f8}
+.cat-star .cat-spot{position:absolute;border-radius:50%;background:rgba(140,160,210,.2)}
+
+/* cat idle float */
+.cat-wrapper{animation:catFloat 3s ease-in-out infinite}
+@keyframes catFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.cat-wrapper.fed{animation:catHappy .5s ease-out}
+@keyframes catHappy{0%{transform:scale(1) rotate(0)}25%{transform:scale(1.1) rotate(-6deg)}50%{transform:scale(1.12) rotate(6deg)}75%{transform:scale(1.08) rotate(-3deg)}100%{transform:scale(1) rotate(0)}}
+.cat-wrapper.petted{animation:catSpin .5s ease-out}
+@keyframes catSpin{0%{transform:scale(1)}30%{transform:scale(1.08) rotate(8deg)}70%{transform:scale(1.05) rotate(-5deg)}100%{transform:scale(1) rotate(0)}}
+.cat-wrapper.playing{animation:catJump .6s ease-out}
+@keyframes catJump{0%,100%{transform:translateY(0)}40%{transform:translateY(-22px) rotate(10deg)}70%{transform:translateY(-10px) rotate(-5deg)}}
+
+/* ═══════════════════════════════════════
+   PET ROOM MODAL
+═══════════════════════════════════════ */
+.pet-room-backdrop{
+  position:fixed;inset:0;z-index:200;display:none;place-items:center;padding:20px;
+  background:rgba(60,30,90,.5);backdrop-filter:blur(8px);
+}
+.pet-room-backdrop.open{display:grid}
+.pet-room{
+  background:linear-gradient(160deg,#fef9ff,#f0e8ff);
+  border:2px solid rgba(210,170,255,.5);border-radius:36px;
+  padding:0;width:min(860px,100%);max-height:92vh;overflow:hidden;
+  box-shadow:0 32px 80px rgba(120,60,200,.24);display:flex;flex-direction:column;
+}
+.pet-room-header{
+  padding:22px 28px 16px;
+  background:linear-gradient(160deg,rgba(255,255,255,.9),rgba(248,240,255,.9));
+  border-bottom:1px solid rgba(210,180,255,.4);
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+}
+.pet-room-header h3{margin:0;font-size:22px;color:var(--title)}
+.pet-room-body{display:grid;grid-template-columns:1.1fr .9fr;flex:1;min-height:0;overflow:hidden}
+.pet-scene{
+  position:relative;min-height:400px;overflow:hidden;
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(255,230,245,.6) 0, transparent 60%),
+    radial-gradient(ellipse at 30% 20%, rgba(220,210,255,.4) 0, transparent 50%),
+    linear-gradient(180deg,#f0eaff 0%,#e8f4fd 50%,#f0ffe8 100%);
+  display:flex;align-items:flex-end;justify-content:center;
+  border-right:1px solid rgba(210,180,255,.3);
+}
+.pet-scene-floor{
+  position:absolute;bottom:0;left:0;right:0;height:80px;
+  background:linear-gradient(180deg,rgba(255,240,250,.6),rgba(255,225,245,.9));
+  border-top:2px solid rgba(240,200,230,.6);border-radius:0;
+}
+.pet-scene-deco{position:absolute;font-size:24px;opacity:.5}
+.scene-cat-stage{position:relative;z-index:4;margin-bottom:40px;cursor:pointer}
+.scene-cat-stage:hover .cat-wrapper{filter:brightness(1.05)}
+
+/* floating hearts / stars on interaction */
+.float-particle{
+  position:absolute;font-size:20px;pointer-events:none;z-index:10;
+  animation:floatUp 1.2s ease-out forwards;
+}
+@keyframes floatUp{
+  0%{transform:translateY(0) scale(1);opacity:1}
+  100%{transform:translateY(-80px) scale(.6);opacity:0}
+}
+
+/* right panel — interactions + snacks */
+.pet-panel{padding:24px;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
+.pet-name-badge{
+  display:inline-flex;gap:8px;align-items:center;padding:10px 16px;
+  border-radius:999px;background:linear-gradient(135deg,#fce8ff,#e8e0ff);
+  border:1px solid var(--line);font-size:16px;font-weight:900;color:var(--title)
+}
+.pet-mood-bar-wrap{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:16px;padding:14px}
+.pet-mood-label{font-size:11px;font-weight:900;color:#a080c0;margin-bottom:6px}
+.pet-bar-track{height:10px;border-radius:999px;background:rgba(200,180,230,.25);overflow:hidden;margin-bottom:4px}
+.pet-bar-fill{height:100%;border-radius:999px;transition:.5s width}
+.pet-bar-fill.happiness{background:linear-gradient(90deg,#f472b6,#c084fc)}
+.pet-bar-fill.fullness{background:linear-gradient(90deg,#fb923c,#fbbf24)}
+.pet-bar-val{font-size:11px;font-weight:900;color:#b090c8;text-align:right}
+
+.pet-actions-title{font-size:13px;font-weight:900;color:#a080c0;margin-bottom:8px}
+.pet-action-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pet-action-btn{
+  padding:12px 10px;border-radius:18px;border:1.5px solid var(--line);
+  background:rgba(255,255,255,.85);font-family:inherit;font-weight:900;font-size:13px;
+  color:var(--title);cursor:pointer;transition:.15s transform,.15s box-shadow;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.pet-action-btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(150,100,220,.15)}
+.pet-action-btn:active{transform:scale(.96)}
+.pet-action-btn .act-icon{font-size:20px}
+.pet-action-btn .act-cost{font-size:10px;color:#c084fc;font-weight:900}
+
+.snack-shop-title{font-size:13px;font-weight:900;color:#a080c0;margin-bottom:8px}
+.snack-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.snack-card{
+  border:1.5px solid var(--line);border-radius:16px;padding:10px 8px;
+  background:rgba(255,255,255,.85);text-align:center;cursor:pointer;
+  transition:.15s transform,.15s border-color;
+}
+.snack-card:hover{transform:translateY(-2px);border-color:#c084fc}
+.snack-card:active{transform:scale(.95)}
+.snack-card .snack-icon{font-size:24px;margin-bottom:4px}
+.snack-card .snack-name{font-size:11px;font-weight:900;color:var(--title)}
+.snack-card .snack-price{font-size:11px;color:#c084fc;font-weight:900;margin-top:2px}
+.snack-card .snack-effect{font-size:10px;color:#b090c8;margin-top:2px}
+
+.pet-log{
+  background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:14px;
+  padding:10px 12px;max-height:90px;overflow-y:auto;font-size:12px;color:#9070b0;font-weight:700;
+  line-height:1.8;
+}
+
+/* stones display in pet panel */
+.stones-row{
+  display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;
+  background:linear-gradient(135deg,#f5eeff,#fce8ff);border:1px solid var(--line);
+  font-weight:900;font-size:14px;color:var(--title);
+}
+
+/* toy flying animation */
+.toy-fly{
+  position:absolute;z-index:8;font-size:22px;pointer-events:none;
+  animation:toyFly .8s cubic-bezier(.2,.8,.3,1) forwards;
+}
+@keyframes toyFly{
+  0%{transform:translate(0,0) rotate(0) scale(1);opacity:1}
+  60%{opacity:1}
+  100%{transform:translate(var(--tx),var(--ty)) rotate(360deg) scale(.4);opacity:0}
+}
 </style>
 </head>
 <body>
@@ -269,8 +493,9 @@ body{
     <div class="top-actions">
       <div class="chip" tabindex="0" data-tip="This is the story name of the child hero. After a name is chosen, the game uses Princess + Name.">👑 <span id="heroName">Hero Princess</span></div>
       <div class="chip" tabindex="0" data-tip="This shows the next main story level waiting for the princess.">🗺️ <span id="heroLevel">Level 1</span></div>
-      <div class="chip" tabindex="0" data-tip="Stars come from main levels and AMC Bonus Boss rewards.">⭐ <span id="heroStars">Stars 0</span></div>
+      <div class="chip" tabindex="0" data-tip="Spirit Stones are earned by answering questions. Use them to buy snacks for your cat!">💎 <span id="heroStars">0</span></div>
       <div class="chip" tabindex="0" data-tip="This shows how many main story levels are open right now.">🔓 <span id="heroUnlock">Unlocked 1/36</span></div>
+      <button id="petBtn" class="btn">🐱 My Cat</button>
       <button id="spellBookBtn" class="btn">📖 Spell Book</button>
       <button id="authBtn" class="btn">☁️ Sign In</button>
     </div>
@@ -321,7 +546,110 @@ body{
   </section>
 </div>
 
-<div id="authModal" class="modal-backdrop">
+<!-- ═══ PET UNLOCK MODAL ═══ -->
+<div id="petUnlockModal" class="pet-unlock-backdrop">
+  <div class="pet-unlock-box">
+    <div style="font-size:40px;margin-bottom:10px">🎉</div>
+    <h2 class="pet-unlock-title">You unlocked a magical companion!</h2>
+    <p class="pet-unlock-sub">A fairy cat will journey with you through the kingdom. Choose your partner!</p>
+    <div class="pet-choices">
+      <div class="pet-choice" data-cat="luna" id="choice-luna">
+        <div class="pet-choice-cat"><div id="unlock-cat-luna" style="transform:scale(.85)"></div></div>
+        <div class="pet-choice-name">Luna</div>
+        <div class="pet-choice-desc">Mysterious & quiet<br>studies with you late at night</div>
+        <div class="pet-choice-trait">💜 Focused</div>
+      </div>
+      <div class="pet-choice" data-cat="mochi" id="choice-mochi">
+        <div class="pet-choice-cat"><div id="unlock-cat-mochi" style="transform:scale(.85)"></div></div>
+        <div class="pet-choice-name">Mochi</div>
+        <div class="pet-choice-desc">Round & warm, born cheerful<br>bounces every time you get one right</div>
+        <div class="pet-choice-trait">🧡 Playful</div>
+      </div>
+      <div class="pet-choice" data-cat="star" id="choice-star">
+        <div class="pet-choice-cat"><div id="unlock-cat-star" style="transform:scale(.85)"></div></div>
+        <div class="pet-choice-name">Stardust</div>
+        <div class="pet-choice-desc">Calm & clever, starlight in her eyes<br>points out your mistakes with a tiny paw</div>
+        <div class="pet-choice-trait">💙 Wise</div>
+      </div>
+    </div>
+    <button id="confirmPetBtn" class="primary-btn" style="padding:16px 40px;font-size:16px" disabled>Choose this companion ✨</button>
+  </div>
+</div>
+
+<!-- ═══ PET ROOM MODAL ═══ -->
+<div id="petRoomModal" class="pet-room-backdrop">
+  <div class="pet-room">
+    <div class="pet-room-header">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <h3 id="petRoomTitle" style="margin:0;font-size:20px;color:var(--title)">🐱 Cat's Den</h3>
+        <div class="stones-row">💎 <span id="petRoomStones">0</span> Spirit Stones</div>
+      </div>
+      <button class="close-btn" id="petRoomCloseBtn">Close</button>
+    </div>
+    <div class="pet-room-body">
+      <div class="pet-scene" id="petScene">
+        <div class="pet-scene-deco" style="top:14px;left:18px">🌙</div>
+        <div class="pet-scene-deco" style="top:22px;right:22px">✨</div>
+        <div class="pet-scene-deco" style="top:60px;left:42%">🌸</div>
+        <div class="pet-scene-deco" style="bottom:100px;left:16px;font-size:18px">🪴</div>
+        <div class="pet-scene-deco" style="bottom:100px;right:20px;font-size:18px">🎀</div>
+        <div class="pet-scene-floor"></div>
+        <div class="scene-cat-stage" id="sceneCatStage">
+          <!-- JS renders cat here -->
+        </div>
+        <div id="petSpeechBubble" style="display:none;position:absolute;top:24px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.96);border:2px solid var(--line);border-radius:18px;padding:10px 18px;font-size:14px;font-weight:900;color:var(--title);white-space:nowrap;box-shadow:var(--shadow-soft);z-index:9">
+          Meow~
+        </div>
+      </div>
+      <div class="pet-panel">
+        <div id="petNameBadge" class="pet-name-badge">🐱 Luna</div>
+        <div class="pet-mood-bar-wrap">
+          <div class="pet-mood-label">💕 Happiness</div>
+          <div class="pet-bar-track"><div class="pet-bar-fill happiness" id="happinessBar" style="width:70%"></div></div>
+          <div class="pet-bar-val" id="happinessVal">70 / 100</div>
+          <div class="pet-mood-label" style="margin-top:10px">🍊 Fullness</div>
+          <div class="pet-bar-track"><div class="pet-bar-fill fullness" id="fullnessBar" style="width:50%"></div></div>
+          <div class="pet-bar-val" id="fullnessVal">50 / 100</div>
+        </div>
+        <div>
+          <div class="pet-actions-title">💫 Interact</div>
+          <div class="pet-action-btns">
+            <button class="pet-action-btn" id="patBtn">
+              <span class="act-icon">🤚</span>Pat<span class="act-cost">+5 happiness</span>
+            </button>
+            <button class="pet-action-btn" id="playBtn">
+              <span class="act-icon">🎀</span>Play<span class="act-cost">+10 happiness</span>
+            </button>
+          </div>
+        </div>
+        <div>
+          <div class="snack-shop-title">🛒 Snack Shop</div>
+          <div class="snack-grid">
+            <div class="snack-card" id="buyFish">
+              <div class="snack-icon">🐟</div>
+              <div class="snack-name">Dried Fish</div>
+              <div class="snack-price">💎 2 stones</div>
+              <div class="snack-effect">饱腹+20</div>
+            </div>
+            <div class="snack-card" id="buyCake">
+              <div class="snack-icon">🍰</div>
+              <div class="snack-name">Cake</div>
+              <div class="snack-price">💎 5 stones</div>
+              <div class="snack-effect">饱+25 开心+15</div>
+            </div>
+            <div class="snack-card" id="buyStar">
+              <div class="snack-icon">⭐</div>
+              <div class="snack-name">Star Candy</div>
+              <div class="snack-price">💎 8 stones</div>
+              <div class="snack-effect">开心+40!</div>
+            </div>
+          </div>
+        </div>
+        <div class="pet-log" id="petLog"><div>🐾 Welcome to the Cat's Den!</div></div>
+      </div>
+    </div>
+  </div>
+</div>
   <div class="modal" style="width:min(560px,100%)">
     <div class="close-row"><button class="close-btn" data-close="authModal">Close</button></div>
     <h3>Cloud Save Sign In</h3>
@@ -341,7 +669,7 @@ body{
     <ul>
       <li>Each main story level uses 12 questions.</li>
       <li>About 40% are older spells for review, and about 60% are newer spells introduced gently.</li>
-      <li>Stars come from main level results and AMC Bonus Boss rewards.</li>
+      <li>Spirit Stones come from main level results and AMC Bonus Boss rewards.</li>
       <li>A spell is <strong>mastered</strong> when its current accuracy reaches 100%.</li>
       <li>When a spell is new, Sir Knight gives a lesson page before the level starts.</li>
       <li>Bonus Boss levels use AMC 8 real-problem references, plus original knight hints.</li>
@@ -359,22 +687,25 @@ body{
 
 <div id="mapModal" class="modal-backdrop">
   <div class="modal" style="width:min(980px,100%)">
-    <div class="close-row"><button class="close-btn" data-close="mapModal">Close</button></div>
+    <div class="close-row">
+      <button id="calibrateBtn" class="btn" style="margin-right:8px;font-size:12px">🎯 Calibrate</button>
+      <button class="close-btn" data-close="mapModal">Close</button>
+    </div>
     <div class="map-legend">
       <div>
         <h3 style="margin-bottom:4px">The Fairy World Map</h3>
-        <div class="soft">Levels now travel from top to bottom along the kingdom road. Tap a circle to open that level.</div>
+        <div class="soft">Tap a level circle to open it. The princess marker shows your current level.</div>
       </div>
       <div class="pill" id="mapNextHint">Next stop: Level 1</div>
     </div>
     <div id="mapShell" class="map-shell">
       <div id="mapCanvas" class="map-canvas">
         <div id="mapLayer" class="map-layer"></div>
+        <div id="calibrateOverlay" style="display:none;position:absolute;inset:0;z-index:10;pointer-events:none"></div>
       </div>
     </div>
   </div>
 </div>
-/div>
 
 <div id="levelModal" class="modal-backdrop">
   <div class="modal" style="width:min(760px,100%)">
@@ -609,9 +940,11 @@ body{
     state.currentLevelNo = nextPlayableLevel(state.levels, state.progress);
     $('heroName').textContent = state.princessName || 'Hero Princess';
     $('heroLevel').textContent = `Level ${state.currentLevelNo}`;
-    $('heroStars').textContent = `Stars ${totalStars}`;
+    $('heroStars').textContent = `💎 ${totalStars}`;
     $('heroUnlock').textContent = `Unlocked ${unlockedCount(state.levels, state.progress)}/${state.levels.length || 36}`;
     $('authBtn').textContent = state.user ? '↩ Sign Out' : '☁️ Sign In';
+    window._appStones = totalStars;
+    if (typeof updateStonesDisplay === 'function') updateStonesDisplay();
   }
 
   function applyHome() {
@@ -720,20 +1053,6 @@ body{
       }
 
       layer.appendChild(node);
-
-      const title = document.createElement('div');
-      title.className = 'map-node-title';
-      title.textContent = level.title || `Level ${no}`;
-      title.style.position = 'absolute';
-      title.style.left = `${pos.x}%`;
-      title.style.top = `${pos.y + 4.4}%`;
-      title.style.transform = 'translateX(-50%)';
-      title.style.fontSize = '12px';
-      title.style.fontWeight = '900';
-      title.style.color = 'var(--title)';
-      title.style.whiteSpace = 'nowrap';
-      title.style.pointerEvents = 'none';
-      layer.appendChild(title);
 
       if (active) {
         const pin = document.createElement('img');
@@ -1222,7 +1541,7 @@ body{
 
       const result = (data && data[0]) || { score: attempts.filter(a => a.is_correct).length, stars: starsForScore(attempts.filter(a => a.is_correct).length), completed: false };
       $('quizScoreBox').classList.remove('hidden');
-      $('quizScoreBox').textContent = `Score ${result.score}/12 · ${result.stars} star(s) · ${result.completed ? 'Level completed' : 'Keep practicing and try again.'}`;
+      $('quizScoreBox').textContent = `Score ${result.score}/12 · ${result.stars} Spirit Stone(s) · ${result.completed ? 'Level completed! ✨' : 'Keep practicing and try again.'}`;
 
       await loadPlayerState();
       applyTopbar();
@@ -1271,10 +1590,426 @@ body{
   $('submitQuizBtn').addEventListener('click', submitQuiz);
   $('retryQuizBtn').addEventListener('click', startLevelFlow);
   $('claimBossBtn').addEventListener('click', claimBossReward);
+  $('petBtn').addEventListener('click', openPetRoom);
   document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', () => $(btn.dataset.close).classList.remove('open')));
+
+  // Map calibration overlay — click anywhere on map to log %x, %y coordinates
+  let calibrating = false;
+  $('calibrateBtn').addEventListener('click', () => {
+    calibrating = !calibrating;
+    const overlay = $('calibrateOverlay');
+    const btn = $('calibrateBtn');
+    if (calibrating) {
+      overlay.style.display = 'block';
+      overlay.style.pointerEvents = 'all';
+      overlay.style.cursor = 'crosshair';
+      btn.textContent = '🎯 Stop Calibrating';
+      btn.style.background = '#ffe0e0';
+      // draw grid lines
+      let gridHTML = '';
+      for (let x = 10; x < 100; x += 10) {
+        gridHTML += `<div style="position:absolute;left:${x}%;top:0;bottom:0;width:1px;background:rgba(180,80,220,.15)"></div>
+          <div style="position:absolute;left:${x}%;top:4px;font-size:9px;color:rgba(150,60,200,.5);transform:translateX(-50%);font-weight:900">${x}</div>`;
+      }
+      for (let y = 5; y < 100; y += 5) {
+        gridHTML += `<div style="position:absolute;top:${y}%;left:0;right:0;height:1px;background:rgba(180,80,220,.12)"></div>
+          <div style="position:absolute;top:${y}%;left:4px;font-size:9px;color:rgba(150,60,200,.5);transform:translateY(-50%);font-weight:900">${y}</div>`;
+      }
+      gridHTML += `<div id="calibrateCursor" style="position:absolute;display:none;pointer-events:none;z-index:20">
+        <div style="width:16px;height:16px;border:2px solid red;border-radius:50%;transform:translate(-50%,-50%)"></div>
+        <div id="calibrateLabel" style="position:absolute;top:12px;left:12px;background:rgba(0,0,0,.75);color:#fff;font-size:11px;font-weight:900;padding:2px 6px;border-radius:6px;white-space:nowrap"></div>
+      </div>`;
+      overlay.innerHTML = gridHTML;
+      overlay.addEventListener('mousemove', (e) => {
+        const rect = overlay.getBoundingClientRect();
+        const px = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+        const py = ((e.clientY - rect.top) / overlay.scrollHeight * 100).toFixed(1);
+        const cursor = document.getElementById('calibrateCursor');
+        const label = document.getElementById('calibrateLabel');
+        if (cursor) { cursor.style.display = 'block'; cursor.style.left = ((e.clientX - rect.left)/rect.width*100)+'%'; cursor.style.top = (e.clientY - rect.top + $('mapShell').scrollTop)+'px'; }
+        if (label) label.textContent = `[${px}, ${py}]`;
+      });
+      overlay.addEventListener('click', (e) => {
+        const rect = overlay.getBoundingClientRect();
+        const px = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+        const scrollTop = $('mapShell').scrollTop;
+        const py = ((e.clientY - rect.top + scrollTop) / parseFloat($('mapCanvas').style.minHeight || 1800) * 100).toFixed(1);
+        console.log(`[${px}, ${py}],  // click point`);
+        const dot = document.createElement('div');
+        dot.style.cssText = `position:absolute;width:8px;height:8px;background:red;border-radius:50%;left:${px}%;top:calc(${py}% );transform:translate(-50%,-50%);pointer-events:none;z-index:15`;
+        dot.title = `[${px},${py}]`;
+        overlay.appendChild(dot);
+        const tip = document.createElement('div');
+        tip.style.cssText = `position:absolute;left:${px}%;top:calc(${py}% + 6px);transform:translateX(-50%);font-size:9px;background:rgba(0,0,0,.7);color:#fff;padding:1px 4px;border-radius:4px;pointer-events:none;white-space:nowrap;font-weight:900`;
+        tip.textContent = `[${px},${py}]`;
+        overlay.appendChild(tip);
+      });
+    } else {
+      overlay.style.display = 'none';
+      overlay.style.pointerEvents = 'none';
+      overlay.innerHTML = '';
+      btn.textContent = '🎯 Calibrate';
+      btn.style.background = '';
+    }
+  });
 
   init();
 })();
+
+/* ═══════════════════════════════════════════════════════
+   PET SYSTEM  (standalone, uses localStorage for pet state)
+═══════════════════════════════════════════════════════ */
+const PET_KEY = 'princess_pet_v2';
+
+const CAT_DEFS = {
+  luna:  { name:'Luna',  emoji:'💜', color:'#d8c8f8', bodyColor:'#ede4ff', earInner:'#f5d8ee', cheek:'#f0c0d8', paw:'#e0d0f8', tailColor:'#d8c8f8' },
+  mochi: { name:'Mochi', emoji:'🧡', color:'#fbd8c0', bodyColor:'#fff3e8', earInner:'#ffc0d8', cheek:'#f8b0c0', paw:'#fce0c8', tailColor:'#fbd8c0' },
+  star:  { name:'Stardust', emoji:'💙', color:'#c8d8f0', bodyColor:'#e8f0ff', earInner:'#e8d0f0', cheek:'#c8d8f8', paw:'#d8e4f8', tailColor:'#c8d8f0' }
+};
+
+const CAT_SPEECHES = {
+  idle:  ['Meow~', 'Purrrr~', '(*ᵕ̤ᴗᵕ̤*)', 'I am right here!', '✨'],
+  pat:   ['Purrr~', 'I love you!', 'Mrrrow ♡', 'Nuzzle~', '(˘ε˘)♡'],
+  feed:  ['Yummy!', 'nyam nyam~', 'Nom nom!', 'More please~', 'So delicious!'],
+  play:  ['Here I come!', 'Got it!', 'I win!', 'Again again!', 'Yay~'],
+  full:  ['So full~', 'I am turning into a ball...', 'Tummy full meow~'],
+  happy: ['So happy!', 'What a beautiful day!', '♡♡♡']
+};
+
+const SNACKS = {
+  fish: { name:'Dried Fish', icon:'🐟', cost:2, fullness:20, happiness:5 },
+  cake: { name:'Cake',   icon:'🍰', cost:5, fullness:25, happiness:15 },
+  star: { name:'Star Candy', icon:'⭐', cost:8, fullness:0,  happiness:40 }
+};
+
+function petLoad() {
+  try { return JSON.parse(localStorage.getItem(PET_KEY) || '{}'); } catch { return {}; }
+}
+function petSave(patch) {
+  const d = Object.assign({}, petLoad(), patch);
+  localStorage.setItem(PET_KEY, JSON.stringify(d));
+}
+function getPetState() {
+  const d = petLoad();
+  return {
+    chosen:    d.chosen || null,
+    happiness: d.happiness ?? 70,
+    fullness:  d.fullness  ?? 50,
+    log:       d.log       || []
+  };
+}
+
+// Build CSS cat HTML string for a given cat id
+function buildCatHTML(catId, size = 90) {
+  const c = CAT_DEFS[catId];
+  if (!c) return '';
+  const s = size / 90; // scale factor
+  const w = Math.round(90*s), h = Math.round(110*s);
+  return `
+  <div class="cat-wrapper" style="width:${w}px;height:${h}px;animation-duration:${2.8 + Math.random()*.4}s">
+    <div style="position:relative;width:${w}px;height:${h}px">
+      <!-- ears -->
+      <div style="position:absolute;width:${Math.round(22*s)}px;height:${Math.round(26*s)}px;background:${c.color};border-radius:50% 50% 0 0;top:${Math.round(-14*s)}px;left:${Math.round(10*s)}px">
+        <div style="position:absolute;inset:${Math.round(4*s)}px ${Math.round(4*s)}px ${Math.round(2*s)}px;border-radius:50% 50% 0 0;background:${c.earInner}"></div>
+      </div>
+      <div style="position:absolute;width:${Math.round(22*s)}px;height:${Math.round(26*s)}px;background:${c.color};border-radius:50% 50% 0 0;top:${Math.round(-14*s)}px;right:${Math.round(10*s)}px">
+        <div style="position:absolute;inset:${Math.round(4*s)}px ${Math.round(4*s)}px ${Math.round(2*s)}px;border-radius:50% 50% 0 0;background:${c.earInner}"></div>
+      </div>
+      <!-- body -->
+      <div style="position:absolute;width:${Math.round(74*s)}px;height:${Math.round(64*s)}px;bottom:${Math.round(22*s)}px;left:${Math.round(8*s)}px;border-radius:50% 50% 46% 46%;background:radial-gradient(ellipse at 40% 35%,${c.bodyColor},${c.color})"></div>
+      <!-- face -->
+      <div style="position:absolute;width:${Math.round(52*s)}px;height:${Math.round(46*s)}px;bottom:${Math.round(34*s)}px;left:${Math.round(19*s)}px;border-radius:50%;background:radial-gradient(ellipse at 40% 35%,#fafaff,${c.bodyColor});display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${Math.round(3*s)}px">
+        <div style="display:flex;gap:${Math.round(10*s)}px">
+          <div class="cat-eye"></div><div class="cat-eye"></div>
+        </div>
+        <div class="cat-nose"></div>
+        <div class="cat-mouth"></div>
+      </div>
+      <!-- cheeks -->
+      <div style="position:absolute;width:${Math.round(14*s)}px;height:${Math.round(8*s)}px;border-radius:50%;background:${c.cheek};opacity:.55;bottom:${Math.round(44*s)}px;left:${Math.round(13*s)}px"></div>
+      <div style="position:absolute;width:${Math.round(14*s)}px;height:${Math.round(8*s)}px;border-radius:50%;background:${c.cheek};opacity:.55;bottom:${Math.round(44*s)}px;right:${Math.round(13*s)}px"></div>
+      <!-- paws -->
+      <div style="position:absolute;width:${Math.round(18*s)}px;height:${Math.round(12*s)}px;bottom:${Math.round(14*s)}px;left:${Math.round(12*s)}px;border-radius:50%;background:${c.paw}"></div>
+      <div style="position:absolute;width:${Math.round(18*s)}px;height:${Math.round(12*s)}px;bottom:${Math.round(14*s)}px;right:${Math.round(12*s)}px;border-radius:50%;background:${c.paw}"></div>
+      <!-- tail -->
+      <div style="position:absolute;width:${Math.round(52*s)}px;height:${Math.round(14*s)}px;bottom:${Math.round(20*s)}px;right:${Math.round(-42*s)}px;border-radius:0 999px 999px 0;background:linear-gradient(90deg,${c.tailColor},${c.bodyColor});transform:rotate(-18deg)"></div>
+    </div>
+  </div>`;
+}
+
+function petLog(msg) {
+  const log = $('petLog');
+  if (!log) return;
+  const d = petLoad();
+  const entry = document.createElement('div');
+  entry.textContent = msg;
+  log.insertBefore(entry, log.firstChild);
+  // trim log
+  while (log.children.length > 8) log.removeChild(log.lastChild);
+  const arr = d.log || [];
+  arr.unshift(msg);
+  if (arr.length > 20) arr.pop();
+  petSave({ log: arr });
+}
+
+function petSpeak(msgs) {
+  const bubble = $('petSpeechBubble');
+  if (!bubble) return;
+  const msg = msgs[Math.floor(Math.random() * msgs.length)];
+  bubble.textContent = msg;
+  bubble.style.display = 'block';
+  bubble.style.animation = 'none';
+  bubble.style.opacity = '1';
+  clearTimeout(bubble._hide);
+  bubble._hide = setTimeout(() => {
+    bubble.style.transition = 'opacity .4s';
+    bubble.style.opacity = '0';
+    setTimeout(() => { bubble.style.display = 'none'; bubble.style.transition = ''; }, 400);
+  }, 2200);
+}
+
+function spawnParticle(type) {
+  const scene = $('petScene');
+  if (!scene) return;
+  const icons = { heart:'❤️', star:'⭐', music:'🎵', fish:'🐟', cake:'🍰', sparkle:'✨' };
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'float-particle';
+      p.textContent = icons[type] || '✨';
+      p.style.left = (30 + Math.random() * 40) + '%';
+      p.style.bottom = '30%';
+      scene.appendChild(p);
+      setTimeout(() => p.remove(), 1300);
+    }, i * 180);
+  }
+}
+
+function updateBars() {
+  const d = getPetState();
+  const h = Math.max(0, Math.min(100, d.happiness));
+  const f = Math.max(0, Math.min(100, d.fullness));
+  const hBar = $('happinessBar'); const fBar = $('fullnessBar');
+  const hVal = $('happinessVal'); const fVal = $('fullnessVal');
+  if (hBar) hBar.style.width = h + '%';
+  if (fBar) fBar.style.width = f + '%';
+  if (hVal) hVal.textContent = h + ' / 100';
+  if (fVal) fVal.textContent = f + ' / 100';
+}
+
+function triggerCatAnim(className) {
+  const wrapper = document.querySelector('#sceneCatStage .cat-wrapper');
+  if (!wrapper) return;
+  wrapper.classList.remove('fed','petted','playing');
+  void wrapper.offsetWidth;
+  wrapper.classList.add(className);
+  setTimeout(() => wrapper.classList.remove(className), 700);
+}
+
+function petInteract(type) {
+  const d = getPetState();
+  if (!d.chosen) return;
+  let happiness = d.happiness;
+  let fullness  = d.fullness;
+  let anim = 'petted';
+  let particles = 'heart';
+  let speeches = CAT_SPEECHES.idle;
+
+  if (type === 'pat') {
+    happiness = Math.min(100, happiness + 5);
+    speeches = CAT_SPEECHES.pat; anim = 'petted'; particles = 'heart';
+    petLog('🤚 Patted ' + CAT_DEFS[d.chosen].name + ' on the head');
+  } else if (type === 'play') {
+    happiness = Math.min(100, happiness + 10);
+    speeches = CAT_SPEECHES.play; anim = 'playing'; particles = 'sparkle';
+    petLog('🎀 Played with ' + CAT_DEFS[d.chosen].name);
+    // launch toy
+    const toy = document.createElement('div');
+    toy.className = 'toy-fly';
+    toy.textContent = ['🎀','🧶','🪡'][Math.floor(Math.random()*3)];
+    toy.style.left = '50%'; toy.style.bottom = '35%';
+    toy.style.setProperty('--tx', (Math.random()*80-40) + 'px');
+    toy.style.setProperty('--ty', (-50 - Math.random()*40) + 'px');
+    const scene = $('petScene');
+    if (scene) { scene.appendChild(toy); setTimeout(() => toy.remove(), 900); }
+  } else if (type === 'pet') {
+    // click on cat directly
+    happiness = Math.min(100, happiness + 3);
+    speeches = CAT_SPEECHES.pat; anim = 'petted'; particles = 'heart';
+  }
+
+  if (happiness >= 90) speeches = CAT_SPEECHES.happy;
+  petSave({ happiness, fullness });
+  triggerCatAnim(anim);
+  spawnParticle(particles);
+  petSpeak(speeches);
+  updateBars();
+}
+
+function buySnack(type) {
+  const snack = SNACKS[type];
+  if (!snack) return;
+  // get global stones from state
+  const stones = sumStarsGlobal();
+  if (stones < snack.cost) {
+    petLog('💎 Not enough Spirit Stones! Need ' + snack.cost);
+    petSpeak(['Not enough stones...', 'Answer more questions!']);
+    return;
+  }
+  // deduct stones from localStorage piggyback
+  const local = JSON.parse(localStorage.getItem('princess_spiral_quest_v10') || '{}');
+  local.spentStones = (local.spentStones || 0) + snack.cost;
+  localStorage.setItem('princess_spiral_quest_v10', JSON.stringify(local));
+
+  const d = getPetState();
+  let happiness = Math.min(100, d.happiness + snack.happiness);
+  let fullness  = snack.fullness > 0 ? Math.min(100, d.fullness + snack.fullness) : d.fullness;
+  const overFull = fullness >= 95;
+
+  petSave({ happiness, fullness });
+  triggerCatAnim('fed');
+  spawnParticle(snack.icon === '⭐' ? 'star' : snack.icon === '🍰' ? 'cake' : 'fish');
+  petSpeak(overFull ? CAT_SPEECHES.full : CAT_SPEECHES.feed);
+  petLog(snack.icon + ' 喂了 ' + snack.name + ' (-' + snack.cost + '💎)');
+  updateBars();
+  updateStonesDisplay();
+}
+
+function sumStarsGlobal() {
+  // read from main app state if available, else from localStorage
+  try {
+    const local = JSON.parse(localStorage.getItem('princess_spiral_quest_v10') || '{}');
+    // total earned stones minus spent
+    const raw = JSON.parse(localStorage.getItem('princess_spiral_quest_v10') || '{}');
+    const spent = raw.spentStones || 0;
+    // use window._appStones if available (set by main app)
+    const earned = window._appStones || 0;
+    return Math.max(0, earned - spent);
+  } catch { return 0; }
+}
+
+function updateStonesDisplay() {
+  const n = sumStarsGlobal();
+  const el = $('petRoomStones');
+  if (el) el.textContent = n;
+}
+
+function renderPetInScene(catId) {
+  const stage = $('sceneCatStage');
+  if (!stage) return;
+  stage.innerHTML = buildCatHTML(catId, 110);
+  stage.querySelector('.cat-wrapper').addEventListener('click', () => petInteract('pet'));
+}
+
+function renderCatInUnlock(catId, containerId) {
+  const el = $(containerId);
+  if (!el) return;
+  el.innerHTML = buildCatHTML(catId, 80);
+}
+
+function openPetRoom() {
+  const d = getPetState();
+  if (!d.chosen) {
+    // show unlock modal
+    $('petUnlockModal').classList.add('open');
+    renderCatInUnlock('luna', 'unlock-cat-luna');
+    renderCatInUnlock('mochi', 'unlock-cat-mochi');
+    renderCatInUnlock('star', 'unlock-cat-star');
+    return;
+  }
+  showPetRoom(d.chosen);
+}
+
+function showPetRoom(catId) {
+  const def = CAT_DEFS[catId];
+  $('petRoomModal').classList.add('open');
+  $('petRoomTitle').textContent = '🐱 ' + def.name + "'s Den";
+  $('petNameBadge').textContent = def.emoji + ' ' + def.name;
+  renderPetInScene(catId);
+  updateBars();
+  updateStonesDisplay();
+  // restore log
+  const d = getPetState();
+  const log = $('petLog');
+  if (log && d.log && d.log.length) {
+    log.innerHTML = d.log.map(l => `<div>${l}</div>`).join('');
+  }
+}
+
+// Pet choice selection
+document.querySelectorAll('.pet-choice').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.pet-choice').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    $('confirmPetBtn').disabled = false;
+    $('confirmPetBtn').dataset.cat = el.dataset.cat;
+  });
+});
+
+$('confirmPetBtn').addEventListener('click', () => {
+  const catId = $('confirmPetBtn').dataset.cat;
+  if (!catId) return;
+  petSave({ chosen: catId, happiness: 80, fullness: 60 });
+  $('petUnlockModal').classList.remove('open');
+  petLog('🎉 ' + CAT_DEFS[catId].name + ' joined your journey!');
+  showPetRoom(catId);
+});
+
+$('petRoomCloseBtn').addEventListener('click', () => {
+  $('petRoomModal').classList.remove('open');
+});
+
+$('patBtn').addEventListener('click', () => petInteract('pat'));
+$('playBtn').addEventListener('click', () => petInteract('play'));
+$('buyFish').addEventListener('click', () => buySnack('fish'));
+$('buyCake').addEventListener('click', () => buySnack('cake'));
+$('buyStar').addEventListener('click', () => buySnack('star'));
+
+// Hook: after quiz submit, check if level 1 just completed → show unlock
+(function patchSubmitForPet() {
+  const origSubmit = window._origSubmitQuiz;
+  // We patch applyTopbar to track stones
+  const _origApplyTopbar = window._applyTopbarRef;
+})();
+
+// expose stones to pet system from main app closure
+// by patching heroStars updates
+const _heroStarsEl = document.getElementById('heroStars');
+if (_heroStarsEl) {
+  const obs = new MutationObserver(() => {
+    const txt = _heroStarsEl.textContent || '';
+    const n = parseInt(txt.replace(/[^0-9]/g,'')) || 0;
+    window._appStones = n;
+    updateStonesDisplay();
+  });
+  obs.observe(_heroStarsEl, { childList: true, characterData: true, subtree: true });
+}
+
+// Check after level 1 completion to show pet unlock
+const _scoreBoxEl = document.getElementById('quizScoreBox');
+if (_scoreBoxEl) {
+  const obs2 = new MutationObserver(() => {
+    const pet = getPetState();
+    if (pet.chosen) return; // already has a pet
+    // if score box becomes visible and level 1 was completed
+    if (!_scoreBoxEl.classList.contains('hidden')) {
+      const txt = _scoreBoxEl.textContent || '';
+      if (txt.includes('Level completed') || txt.includes('completed')) {
+        // check if it's level 1 area
+        const title = (document.getElementById('quizTitle') || {}).textContent || '';
+        if (title.includes('Level 1') || title.includes('1 ·')) {
+          setTimeout(() => {
+            $('petUnlockModal').classList.add('open');
+            renderCatInUnlock('luna',  'unlock-cat-luna');
+            renderCatInUnlock('mochi', 'unlock-cat-mochi');
+            renderCatInUnlock('star',  'unlock-cat-star');
+          }, 1400);
+        }
+      }
+    }
+  });
+  obs2.observe(_scoreBoxEl, { attributes: true, childList: true, subtree: true });
+}
 </script>
 </body>
 </html>
