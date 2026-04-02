@@ -10,9 +10,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
-  --line:#ead7ef;--text:#6e5688;--text2:#8a78a0;--title:#7a5796;
-  --shadow:0 20px 50px rgba(173,145,201,.16);--shadow-soft:0 12px 26px rgba(173,145,201,.12);
-  --pink:#f5a9d2;--lav:#efc7f8;--gold:#d9b24f;
+  --line:#e8d5f0;--text:#5d4a7e;--text2:#8a78a0;--title:#6b4a96;
+  --shadow:0 20px 60px rgba(150,110,200,.14);--shadow-soft:0 8px 24px rgba(150,110,200,.10);
+  --pink:#f5a9d2;--lav:#d8b4fe;--gold:#e2b84e;
+  --glass:rgba(255,252,255,.82);
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;min-height:100%}
@@ -25,17 +26,17 @@ body{
 }
 .app{max-width:1320px;margin:0 auto}
 .topbar,.panel,.modal{
-  background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,252,254,.94));
-  border:1px solid rgba(233,218,240,.9);box-shadow:var(--shadow);border-radius:30px;
+  background:linear-gradient(160deg,rgba(255,255,255,.92),rgba(253,248,255,.96));
+  border:1px solid rgba(220,200,240,.7);box-shadow:var(--shadow);border-radius:28px;
 }
 .topbar{
-  display:flex;justify-content:space-between;gap:16px;padding:18px 20px;
-  position:sticky;top:10px;z-index:20;backdrop-filter:blur(10px)
+  display:flex;justify-content:space-between;gap:16px;padding:14px 20px;
+  position:sticky;top:10px;z-index:20;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
 }
 .brand{display:flex;gap:14px;align-items:center}
-.badge{width:44px;height:44px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,#fce6f3,#ebe6ff);font-size:22px}
-.brand h1{margin:0;font-size:18px;line-height:1;color:var(--title);font-weight:900}
-.brand p{margin:4px 0 0;font-size:12px;color:var(--text2);font-weight:700}
+.badge{width:44px;height:44px;border-radius:16px;overflow:hidden;display:grid;place-items:center;background:linear-gradient(135deg,#fce6f3,#ebe6ff)}
+.brand h1{margin:0;font-size:17px;line-height:1.15;color:var(--title);font-weight:900;letter-spacing:.5px}
+.brand p{margin:4px 0 0;font-size:11px;color:var(--text2);font-weight:700;letter-spacing:.3px}
 .top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .chip{
   position:relative;display:inline-flex;align-items:center;gap:8px;background:rgba(255,251,253,.95);
@@ -48,41 +49,50 @@ body{
   font-size:12px;line-height:1.5;font-weight:700;box-shadow:var(--shadow-soft);z-index:50
 }
 .btn,.primary-btn,.ghost-btn{
-  border:none;cursor:pointer;border-radius:18px;font-family:inherit;font-weight:900;
-  transition:.2s transform,.2s opacity
+  border:none;cursor:pointer;border-radius:16px;font-family:inherit;font-weight:900;
+  transition:.18s transform,.18s box-shadow,.18s opacity;font-size:14px;
 }
-.btn:hover,.primary-btn:hover,.ghost-btn:hover{transform:translateY(-1px)}
+.btn:hover,.primary-btn:hover,.ghost-btn:hover{transform:translateY(-2px)}
+.btn:active,.primary-btn:active,.ghost-btn:active{transform:translateY(0)}
 .btn{
-  padding:12px 16px;background:linear-gradient(180deg,#ffffff,#f8f4ff);border:1px solid var(--line);
-  color:var(--title);box-shadow:var(--shadow-soft)
+  padding:11px 16px;background:linear-gradient(160deg,#ffffff,#f5eeff);border:1px solid var(--line);
+  color:var(--title);box-shadow:0 4px 12px rgba(150,110,200,.10)
 }
 .primary-btn{
-  padding:14px 20px;background:linear-gradient(135deg,var(--pink),var(--lav));color:#fff;
-  box-shadow:0 12px 24px rgba(230,130,186,.28)
+  padding:13px 22px;
+  background:linear-gradient(135deg,#f472b6,#c084fc);
+  color:#fff;letter-spacing:.2px;
+  box-shadow:0 8px 24px rgba(196,100,230,.3), inset 0 1px 0 rgba(255,255,255,.25)
 }
-.primary-btn.secondary{background:linear-gradient(135deg,#8fc7ff,#d8beff)}
-.ghost-btn{padding:14px 20px;background:#f7f7ff;color:var(--title);border:1px solid var(--line)}
+.primary-btn:hover{box-shadow:0 12px 32px rgba(196,100,230,.4), inset 0 1px 0 rgba(255,255,255,.25)}
+.primary-btn.secondary{background:linear-gradient(135deg,#60a5fa,#a78bfa)}
+.ghost-btn{padding:13px 22px;background:rgba(248,244,255,.8);color:var(--title);border:1px solid var(--line)}
 .hidden{display:none !important}
 .shell{display:grid;grid-template-columns:1.02fr .98fr;gap:22px;margin-top:18px}
 .panel{overflow:hidden;position:relative}
-.home-left{padding:30px 34px 30px}
+.home-left{padding:32px 36px 32px}
 .eyebrow{
-  display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;
-  background:#fff8fc;border:1px solid var(--line);color:#9a7cb0;font-size:13px;font-weight:900
+  display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;
+  background:linear-gradient(135deg,#fff0fa,#f5eeff);border:1px solid var(--line);color:#8b60b8;font-size:13px;font-weight:900;
+  box-shadow:0 2px 8px rgba(180,120,220,.1)
 }
 .home-title{
-  margin:18px 0 12px;color:var(--title);font-size:clamp(32px,4.2vw,58px);
-  line-height:1.02;font-weight:1000;letter-spacing:-1.2px
+  margin:16px 0 14px;color:var(--title);font-size:clamp(28px,3.6vw,52px);
+  line-height:1.05;font-weight:900;letter-spacing:-1px
 }
 .home-title small{
-  display:block;font-size:clamp(17px,2vw,25px);line-height:1.2;color:#9b83b1;
-  font-weight:800;letter-spacing:0;margin-top:10px
+  display:block;font-size:clamp(15px,1.8vw,22px);line-height:1.3;color:#a088c0;
+  font-weight:700;letter-spacing:0;margin-top:10px
 }
-.story-card{background:rgba(255,255,255,.65);border:1px solid var(--line);border-radius:26px;padding:22px 20px 18px}
-.story-card p{margin:0;font-size:17px;line-height:1.72;color:#78648d}
+.story-card{
+  background:linear-gradient(160deg,rgba(255,255,255,.9),rgba(252,246,255,.9));
+  border:1px solid var(--line);border-radius:22px;padding:20px 20px 16px;
+  box-shadow:0 4px 16px rgba(180,140,220,.08)
+}
+.story-card p{margin:0;font-size:16px;line-height:1.75;color:#7260a0}
 .quote-pill{
-  display:inline-flex;margin-top:18px;padding:10px 14px;border-radius:999px;background:#fff9fc;
-  border:1px solid var(--line);font-weight:900;color:#8d73a3
+  display:inline-flex;margin-top:16px;padding:9px 14px;border-radius:999px;background:linear-gradient(135deg,#fff5fb,#f5eeff);
+  border:1px solid var(--line);font-weight:900;color:#9070b8;font-size:14px
 }
 .name-row{margin-top:18px;display:grid;gap:12px}
 .field{background:rgba(255,255,255,.84);border:1px solid var(--line);border-radius:24px;padding:18px}
@@ -101,38 +111,38 @@ body{
 }
 .home-right{
   min-height:720px;position:relative;overflow:hidden;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.16)),
-    url('https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/main%20page.png') center/cover no-repeat,
-    linear-gradient(180deg,#e7f1ff 0%,#eef7ff 18%,#e7f6ee 18%,#e7f6ee 45%,#d9f0da 45%,#d9f0da 100%);
+  background: url('https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/main%20page.png') center/cover no-repeat, linear-gradient(180deg,#ddeeff,#e8f5ff);
 }
-.home-right::before{
-  content:"";position:absolute;inset:0;
-  background:
-    radial-gradient(circle at 72% 30%, rgba(206,223,255,.28) 0 210px, transparent 210px),
-    radial-gradient(circle at 22% 80%, rgba(248,209,231,.18) 0 170px, transparent 170px),
-    linear-gradient(180deg, rgba(255,255,255,.06) 0 58%, rgba(138,190,139,.04) 58% 100%);
-  pointer-events:none;
+.home-right::before{display:none}
+.hero-cloud{display:none}
+.hero-cloud::before,.hero-cloud::after{display:none}
+.mountain{display:none}
+.m1,.m2,.m3{display:none}
+.forest{display:none}
+.tree{display:none}
+.tree::after{display:none}
+.lake{display:none}
+.village{display:none}
+.house{display:none}
+.house::before{display:none}
+.princess-stage{
+  position:absolute;bottom:0;right:0;left:0;
+  display:flex;justify-content:center;align-items:flex-end;
+  pointer-events:none;z-index:3;
+  padding-bottom:0;
 }
-.hero-cloud{position:absolute;top:58px;left:72px;width:210px;height:76px;background:rgba(255,255,255,.82);border-radius:999px}
-.hero-cloud::before,.hero-cloud::after{content:"";position:absolute;background:inherit;border-radius:50%}
-.hero-cloud::before{width:86px;height:86px;left:20px;top:-24px}.hero-cloud::after{width:98px;height:98px;right:20px;top:-30px}
-.mountain{position:absolute;bottom:220px;border-radius:38px 38px 0 0 / 24px 24px 0 0}
-.m1{left:40px;width:250px;height:180px;background:linear-gradient(180deg,#cde0f8,#bdd5f0)}
-.m2{left:190px;width:320px;height:220px;background:linear-gradient(180deg,#b7d2ec,#a9c7e6)}
-.m3{right:26px;width:280px;height:210px;background:linear-gradient(180deg,#d0e5fa,#c2dcf6)}
-.forest{position:absolute;bottom:172px;left:0;right:0;height:120px}
-.tree{position:absolute;bottom:0;width:0;height:0;border-left:24px solid transparent;border-right:24px solid transparent;border-bottom:64px solid #8fb487}
-.tree::after{content:"";position:absolute;left:-4px;bottom:-80px;width:8px;height:18px;background:#8f7b6a;border-radius:6px}
-.lake{position:absolute;bottom:82px;left:60px;width:230px;height:80px;border-radius:999px;background:linear-gradient(180deg,#d8eeff,#c7e4ff);border:1px solid rgba(187,217,242,.8)}
-.village{position:absolute;bottom:124px;right:82px;display:flex;gap:12px;align-items:flex-end}
-.house{position:relative;width:52px;height:40px;background:#fff7f3;border:2px solid #ddb9c2;border-radius:10px}
-.house::before{content:"";position:absolute;left:2px;right:2px;top:-24px;border-left:22px solid transparent;border-right:22px solid transparent;border-bottom:26px solid #f2a2bb}
-.princess-stage{position:absolute;right:74px;bottom:152px;width:430px;height:430px;display:grid;place-items:end center}
-.princess-aura{position:absolute;inset:24px 18px 14px;background:radial-gradient(circle at 50% 50%, rgba(226,232,255,.96), rgba(221,221,252,.56) 55%, transparent 75%)}
-.hero-princess{position:relative;z-index:3;max-width:365px;max-height:410px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 18px 25px rgba(164,134,194,.22))}
-.hero-knight{position:absolute;right:4px;bottom:8px;z-index:4;width:132px;height:auto}
-.hero-cloud,.mountain,.forest,.lake,.village,.map-deco-label,.map-castle{opacity:.18}
+.princess-aura{
+  display:none;
+}
+.hero-princess{
+  display:block;
+  position:relative;z-index:3;
+  width:clamp(200px,52%,340px);
+  height:auto;object-fit:contain;
+  filter:drop-shadow(0 8px 32px rgba(120,60,180,.18)) drop-shadow(0 2px 8px rgba(255,200,240,.5));
+  margin-bottom:-4px;
+}
+.hero-knight{display:none}
 
 .modal-backdrop{
   position:fixed;inset:0;background:rgba(77,61,106,.34);display:none;place-items:center;z-index:100;padding:18px
@@ -156,34 +166,45 @@ body{
 .boss-btns,.modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 
 .map-shell{
-  position:relative;height:min(72vh,820px);border-radius:26px;overflow:auto;border:1px solid var(--line);
-  background:#fff;
+  position:relative;height:min(78vh,860px);border-radius:22px;overflow:auto;border:1px solid var(--line);
+  background:#c8e8ff;
+  scrollbar-width:thin;scrollbar-color:rgba(180,140,220,.4) transparent;
 }
+.map-shell::-webkit-scrollbar{width:6px}
+.map-shell::-webkit-scrollbar-thumb{background:rgba(180,140,220,.4);border-radius:99px}
 .map-canvas{
-  position:relative;min-height:1200px;
-  background:
-    radial-gradient(circle at 78% 12%, rgba(255,255,255,.9) 0 58px, transparent 58px),
-    linear-gradient(180deg,#dff0ff 0%,#e9f6ff 22%,#d6efd7 22%,#dff3dd 56%,#f2e5cb 56%,#f5ead7 100%);
+  position:relative;
+  min-height:1200px;
+  background: url('https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/map.png') center top / 100% auto no-repeat, #c8e8ff;
 }
-.map-canvas::before{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background:
-    radial-gradient(circle at 16% 84%, rgba(254,241,246,.45) 0 180px, transparent 180px),
-    radial-gradient(circle at 80% 66%, rgba(214,229,255,.38) 0 170px, transparent 170px),
-    linear-gradient(135deg, transparent 0 48%, rgba(255,255,255,.23) 48% 52%, transparent 52%);
-}
+.map-canvas::before{display:none}
 .map-legend{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:14px}
 .map-road{position:absolute;left:50%;top:86px;transform:translateX(-50%);width:56%;height:1000px;z-index:1}
 .map-road svg{width:100%;height:100%}
 .map-layer{position:absolute;inset:0;z-index:2}
 .map-node{
-  position:absolute;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;
-  display:grid;place-items:center;border:4px solid #fff;background:linear-gradient(180deg,#fff9fd,#f3eefb);
-  color:#9070a7;font-size:28px;font-weight:900;box-shadow:0 10px 24px rgba(165,139,198,.2);cursor:pointer
+  position:absolute;transform:translate(-50%,-50%);width:52px;height:52px;border-radius:50%;
+  display:grid;place-items:center;border:3px solid rgba(255,255,255,.95);
+  background:linear-gradient(160deg,rgba(255,248,255,.97),rgba(237,220,255,.95));
+  color:#7040a0;font-size:16px;font-weight:900;
+  box-shadow:0 4px 16px rgba(140,80,200,.25), 0 1px 0 rgba(255,255,255,.8) inset;
+  cursor:pointer;transition:.15s transform,.15s box-shadow;
+  text-shadow:0 1px 2px rgba(255,255,255,.8)
 }
-.map-node.locked{background:#f0eef5;color:#c1b3cf;cursor:not-allowed;filter:saturate(.5)}
-.map-node.done{background:linear-gradient(180deg,#fff9fd,#fff4c9)}
-.map-node.active{box-shadow:0 0 0 8px rgba(241,192,222,.34), 0 14px 28px rgba(165,139,198,.24)}
+.map-node:hover{transform:translate(-50%,-50%) scale(1.12);box-shadow:0 8px 24px rgba(140,80,200,.35)}
+.map-node.locked{background:linear-gradient(160deg,rgba(240,236,248,.9),rgba(226,218,240,.9));color:#b8a8cc;cursor:not-allowed}
+.map-node.locked:hover{transform:translate(-50%,-50%)}
+.map-node.done{background:linear-gradient(160deg,rgba(255,252,220,.97),rgba(255,240,180,.95));border-color:rgba(255,220,100,.9);color:#9a7000}
+.map-node.active{
+  background:linear-gradient(160deg,#fff5ff,#f0d8ff);
+  border-color:rgba(220,140,255,.9);
+  box-shadow:0 0 0 6px rgba(230,160,255,.25), 0 6px 20px rgba(180,100,255,.3), 0 1px 0 rgba(255,255,255,.8) inset;
+  animation:nodePulse 2s ease-in-out infinite;
+}
+@keyframes nodePulse{
+  0%,100%{box-shadow:0 0 0 6px rgba(230,160,255,.25), 0 6px 20px rgba(180,100,255,.3)}
+  50%{box-shadow:0 0 0 10px rgba(230,160,255,.15), 0 8px 28px rgba(180,100,255,.4)}
+}
 .map-node[data-label]:hover::after{
   content:attr(data-label);position:absolute;left:50%;bottom:calc(100% + 12px);transform:translateX(-50%);
   white-space:nowrap;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 12px;
@@ -192,7 +213,13 @@ body{
 .map-starline{position:absolute;left:50%;top:calc(100% + 6px);transform:translateX(-50%);font-size:12px;color:var(--gold);letter-spacing:2px;white-space:nowrap}
 .map-bonus{position:absolute;left:50%;top:calc(100% + 24px);transform:translateX(-50%);font-size:10px;font-weight:900;color:#c26b9a;background:#fff1f8;border:1px solid #efcbe1;border-radius:999px;padding:4px 8px;white-space:nowrap}
 .map-princess{position:absolute;z-index:4;width:56px;height:auto;transform:translate(-50%,-92%)}
-.map-node-title{text-shadow:0 1px 0 rgba(255,255,255,.9), 0 0 10px rgba(255,255,255,.55)}
+.map-node-title{
+  text-shadow:0 1px 4px rgba(255,255,255,.95), 0 0 8px rgba(255,255,255,.8);
+  background:rgba(255,255,255,.72);
+  border-radius:999px;
+  padding:2px 7px;
+  font-size:11px !important;
+}
 .auth-box{display:grid;gap:12px}
 .auth-box input{width:100%;padding:16px 18px;border-radius:18px;border:1px solid var(--line);font:inherit;font-size:16px}
 .option{
@@ -231,10 +258,12 @@ body{
 <div class="app">
   <div class="topbar">
     <div class="brand">
-      <div class="badge">🦄</div>
+      <div class="badge">
+        <img src="https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/5.png" alt="Princess" style="width:36px;height:36px;object-fit:cover;border-radius:12px">
+      </div>
       <div>
-        <h1>Princess Spiral Quest</h1>
-        <p>a spiral-learning fairy tale adventure</p>
+        <h1>用数学拯救王国</h1>
+        <p>A Princess · A Quest · A Math Adventure</p>
       </div>
     </div>
     <div class="top-actions">
@@ -469,13 +498,46 @@ body{
     return levels.length || 1;
   }
   function posForLevel(levelNo) {
+    // Positions calibrated to map.png winding road (% of canvas width x height)
+    // Road starts bottom-center, winds up in S-curves to castle at top-right
+    // Canvas is displayed with 100% width, height auto (~1800px natural)
     const positions = [
-      [76,7],[70,9.5],[62,12.5],[55,16],[46,19.5],[37,23],
-      [34,28],[42,31.5],[50,35],[58,39],[67,43],[76,47],
-      [67,52],[58,56],[49,60],[40,64],[31,69],[24,73],
-      [31,77],[40,80.5],[49,84],[58,87.5],[67,91],[76,94.5],
-      [68,99],[59,103],[50,107],[41,111],[32,115],[24,119],
-      [31,123],[40,127],[49,131],[58,135],[67,139],[76,143]
+      [50, 96],  // 1  - start bottom center
+      [38, 93],  // 2
+      [26, 90],  // 3
+      [20, 86],  // 4
+      [22, 82],  // 5
+      [32, 79],  // 6
+      [44, 76],  // 7
+      [54, 73],  // 8
+      [62, 70],  // 9
+      [66, 66],  // 10
+      [60, 62],  // 11
+      [50, 59],  // 12
+      [40, 56],  // 13
+      [30, 53],  // 14
+      [22, 50],  // 15
+      [20, 46],  // 16
+      [24, 42],  // 17
+      [34, 39],  // 18
+      [46, 37],  // 19
+      [56, 34],  // 20
+      [64, 31],  // 21
+      [68, 27],  // 22
+      [62, 24],  // 23
+      [52, 21],  // 24
+      [42, 18],  // 25
+      [34, 15],  // 26
+      [30, 11],  // 27
+      [36, 8],   // 28
+      [46, 6],   // 29
+      [56, 5],   // 30
+      [65, 7],   // 31
+      [72, 10],  // 32
+      [76, 14],  // 33
+      [78, 18],  // 34
+      [76, 22],  // 35
+      [72, 26]   // 36 - near castle
     ];
     const p = positions[levelNo - 1] || [50, 50];
     return { x: p[0], y: p[1] };
@@ -523,14 +585,23 @@ body{
   async function applyMapBackground() {
     const canvas = $('mapCanvas');
     if (!canvas) return;
-    for (const url of MAP_BG_CANDIDATES) {
-      const ok = await tryLoadImage(url);
-      if (ok) {
-        canvas.style.setProperty('--map-bg', `url("${ok}") center top / 100% auto no-repeat`);
-        return;
-      }
-    }
-    canvas.style.setProperty('--map-bg', 'linear-gradient(180deg,#eaf5ff,#eef8ff)');
+    const primaryUrl = 'https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/map.png';
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        const aspectRatio = img.naturalHeight / img.naturalWidth;
+        const canvasWidth = canvas.offsetWidth || canvas.parentElement.offsetWidth || 800;
+        const naturalH = Math.round(canvasWidth * aspectRatio);
+        canvas.style.background = `url("${primaryUrl}") center top / 100% auto no-repeat, #c8e8ff`;
+        canvas.style.minHeight = Math.max(naturalH, 1200) + 'px';
+        resolve();
+      };
+      img.onerror = () => {
+        canvas.style.background = 'linear-gradient(180deg,#c8e8ff,#d4f0d8)';
+        resolve();
+      };
+      img.src = primaryUrl;
+    });
   }
 
   function applyTopbar() {
