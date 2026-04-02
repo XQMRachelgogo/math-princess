@@ -1374,7 +1374,7 @@ body{
 
         // body/content/description field detection
         const body = l.body || l.content || l.description || l.lesson_text || l.text || '';
-        const title = l.title || l.lesson_title || l.name || (l.spells?.name ? `Spell: ${l.spells.name}` : 'Sir Knight's Lesson');
+        const title = l.title || l.lesson_title || l.name || (l.spells?.name ? `Spell: ${l.spells.name}` : "Sir Knight\u2019s Lesson");
 
         return `<div class="lesson-card">
           <div class="lesson-card-title">✨ ${title}</div>
