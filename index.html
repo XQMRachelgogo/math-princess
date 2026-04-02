@@ -690,7 +690,6 @@ body{
 <div id="mapModal" class="modal-backdrop">
   <div class="modal" style="width:min(980px,100%)">
     <div class="close-row">
-      <button id="calibrateBtn" class="btn" style="margin-right:8px;font-size:12px">🎯 Calibrate</button>
       <button class="close-btn" data-close="mapModal">Close</button>
     </div>
     <div class="map-legend">
@@ -703,7 +702,6 @@ body{
     <div id="mapShell" class="map-shell">
       <div id="mapCanvas" class="map-canvas">
         <div id="mapLayer" class="map-layer"></div>
-        <div id="calibrateOverlay" style="display:none;position:absolute;inset:0;z-index:10;pointer-events:none"></div>
       </div>
     </div>
   </div>
@@ -831,46 +829,44 @@ body{
     return levels.length || 1;
   }
   function posForLevel(levelNo) {
-    // Positions calibrated to map.png winding road (% of canvas width x height)
-    // Road starts bottom-center, winds up in S-curves to castle at top-right
-    // Canvas is displayed with 100% width, height auto (~1800px natural)
+    // Positions calibrated from live map.png click points
     const positions = [
-      [50, 96],  // 1  - start bottom center
-      [38, 93],  // 2
-      [26, 90],  // 3
-      [20, 86],  // 4
-      [22, 82],  // 5
-      [32, 79],  // 6
-      [44, 76],  // 7
-      [54, 73],  // 8
-      [62, 70],  // 9
-      [66, 66],  // 10
-      [60, 62],  // 11
-      [50, 59],  // 12
-      [40, 56],  // 13
-      [30, 53],  // 14
-      [22, 50],  // 15
-      [20, 46],  // 16
-      [24, 42],  // 17
-      [34, 39],  // 18
-      [46, 37],  // 19
-      [56, 34],  // 20
-      [64, 31],  // 21
-      [68, 27],  // 22
-      [62, 24],  // 23
-      [52, 21],  // 24
-      [42, 18],  // 25
-      [34, 15],  // 26
-      [30, 11],  // 27
-      [36, 8],   // 28
-      [46, 6],   // 29
-      [56, 5],   // 30
-      [65, 7],   // 31
-      [72, 10],  // 32
-      [76, 14],  // 33
-      [78, 18],  // 34
-      [76, 22],  // 35
-      [72, 26]   // 36 - near castle
+      [58.0, 17.6],  // 1
+      [40.1, 18.2],  // 2
+      [24.2, 19.9],  // 3
+      [24.7, 26.7],  // 4
+      [37.4, 28.0],  // 5
+      [50.6, 27.7],  // 6
+      [66.7, 27.8],  // 7
+      [80.0, 30.1],  // 8
+      [80.0, 35.6],  // 9
+      [53.0, 37.8],  // 10
+      [34.7, 37.9],  // 11
+      [19.0, 42.0],  // 12
+      [27.3, 46.6],  // 13
+      [43.9, 45.5],  // 14
+      [59.2, 47.7],  // 15
+      [73.8, 48.8],  // 16
+      [82.8, 52.8],  // 17
+      [73.1, 57.0],  // 18
+      [56.8, 56.6],  // 19
+      [40.9, 57.4],  // 20
+      [26.7, 58.4],  // 21
+      [19.4, 62.7],  // 22
+      [26.2, 66.7],  // 23
+      [38.7, 67.4],  // 24
+      [53.5, 67.6],  // 25
+      [68.5, 67.7],  // 26
+      [79.9, 70.3],  // 27
+      [77.6, 76.1],  // 28
+      [61.1, 78.1],  // 29
+      [43.7, 77.9],  // 30
+      [25.1, 78.9],  // 31
+      [21.3, 86.4],  // 32
+      [35.4, 88.6],  // 33
+      [52.7, 88.8],  // 34
+      [71.0, 89.9],  // 35
+      [79.6, 98.0],  // 36
     ];
     const p = positions[levelNo - 1] || [50, 50];
     return { x: p[0], y: p[1] };
@@ -1597,90 +1593,6 @@ body{
   $('claimBossBtn').addEventListener('click', claimBossReward);
   $('petBtn').addEventListener('click', openPetRoom);
   document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', () => $(btn.dataset.close).classList.remove('open')));
-
-  // Map calibration overlay — click anywhere on map to log %x, %y coordinates
-  let calibrating = false;
-  $('calibrateBtn').addEventListener('click', () => {
-    calibrating = !calibrating;
-    const overlay = $('calibrateOverlay');
-    const btn = $('calibrateBtn');
-    const shell = $('mapShell');
-    const canvas = $('mapCanvas');
-
-    if (calibrating) {
-      overlay.style.display = 'block';
-      overlay.style.pointerEvents = 'all';
-      overlay.style.cursor = 'crosshair';
-      btn.textContent = '🎯 Stop';
-      btn.style.background = '#ffe0e0';
-
-      // Build grid — overlay is position:absolute inset:0 inside canvas, so % coords are canvas-relative
-      let gridHTML = '';
-      for (let x = 10; x < 100; x += 10) {
-        gridHTML += `<div style="position:absolute;left:${x}%;top:0;bottom:0;width:1px;background:rgba(180,80,220,.18)"></div>
-          <div style="position:absolute;left:${x}%;top:6px;font-size:9px;color:rgba(130,50,200,.7);transform:translateX(-50%);font-weight:900;pointer-events:none">${x}</div>`;
-      }
-      for (let y = 5; y < 100; y += 5) {
-        gridHTML += `<div style="position:absolute;top:${y}%;left:0;right:0;height:1px;background:rgba(180,80,220,.12)"></div>
-          <div style="position:absolute;top:${y}%;left:4px;font-size:9px;color:rgba(130,50,200,.7);transform:translateY(-50%);font-weight:900;pointer-events:none">${y}</div>`;
-      }
-      // Cursor label (stays inside overlay)
-      gridHTML += `<div id="calibrateCursor" style="position:absolute;display:none;pointer-events:none;z-index:20;top:0;left:0">
-        <div style="width:14px;height:14px;border:2.5px solid #e00;border-radius:50%;transform:translate(-50%,-50%)"></div>
-        <div id="calibrateLabel" style="position:absolute;top:8px;left:10px;background:rgba(0,0,0,.8);color:#fff;font-size:11px;font-weight:900;padding:2px 7px;border-radius:6px;white-space:nowrap"></div>
-      </div>`;
-      overlay.innerHTML = gridHTML;
-
-      // Helper: get canvas-relative coords from a mouse event
-      function canvasCoords(e) {
-        const canvasRect = canvas.getBoundingClientRect();
-        // clientX/Y relative to canvas top-left (canvas may be scrolled within shell)
-        // canvas position = shell.getBoundingClientRect().top - shell.scrollTop
-        const shellRect = shell.getBoundingClientRect();
-        const canvasTop = shellRect.top - shell.scrollTop; // top of full canvas in viewport
-        const canvasLeft = shellRect.left; // canvas fills shell width
-        const relX = e.clientX - canvasLeft;
-        const relY = e.clientY - canvasTop;
-        const px = (relX / canvas.offsetWidth * 100).toFixed(1);
-        const py = (relY / canvas.offsetHeight * 100).toFixed(1);
-        return { px: Math.max(0,Math.min(100,parseFloat(px))).toFixed(1),
-                 py: Math.max(0,Math.min(100,parseFloat(py))).toFixed(1),
-                 relX, relY };
-      }
-
-      overlay.addEventListener('mousemove', (e) => {
-        const {px, py, relX, relY} = canvasCoords(e);
-        const cursor = document.getElementById('calibrateCursor');
-        const label = document.getElementById('calibrateLabel');
-        if (cursor) {
-          cursor.style.display = 'block';
-          cursor.style.left = (relX / canvas.offsetWidth * 100) + '%';
-          cursor.style.top  = (relY / canvas.offsetHeight * 100) + '%';
-        }
-        if (label) label.textContent = `[${px}, ${py}]`;
-      });
-
-      overlay.addEventListener('click', (e) => {
-        const {px, py, relX, relY} = canvasCoords(e);
-        console.log(`[${px}, ${py}],  // level node`);
-        const dot = document.createElement('div');
-        dot.style.cssText = `position:absolute;width:10px;height:10px;background:#e00;border:2px solid #fff;border-radius:50%;left:${(relX/canvas.offsetWidth*100).toFixed(2)}%;top:${(relY/canvas.offsetHeight*100).toFixed(2)}%;transform:translate(-50%,-50%);pointer-events:none;z-index:15;box-shadow:0 0 4px rgba(0,0,0,.4)`;
-        dot.title = `[${px},${py}]`;
-        overlay.appendChild(dot);
-        const tip = document.createElement('div');
-        tip.style.cssText = `position:absolute;left:${(relX/canvas.offsetWidth*100).toFixed(2)}%;top:calc(${(relY/canvas.offsetHeight*100).toFixed(2)}% + 8px);transform:translateX(-50%);font-size:9px;background:rgba(0,0,0,.75);color:#fff;padding:1px 5px;border-radius:4px;pointer-events:none;white-space:nowrap;font-weight:900;z-index:15`;
-        tip.textContent = `[${px},${py}]`;
-        overlay.appendChild(tip);
-      });
-
-    } else {
-      overlay.style.display = 'none';
-      overlay.style.pointerEvents = 'none';
-      overlay.innerHTML = '';
-      btn.textContent = '🎯 Calibrate';
-      btn.style.background = '';
-    }
-  });
 
   init();
 })();
