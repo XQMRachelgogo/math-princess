@@ -1867,42 +1867,42 @@ body{
       markQuizReview(attempts);
       $('submitQuizBtn').classList.add('hidden');
       $('retryQuizBtn').classList.remove('hidden');
-      $('nextLevelBtn').classList.add('hidden'); // reset
+      $('nextLevelBtn').classList.add('hidden');
 
       const result = (data && data[0]) || { score: rawScore, stars: earnedStars, completed: isCompleted };
-      // Ensure completed flag: if score >= 8 (2+ stars) always mark completed
       if (isCompleted && !result.completed) result.completed = true;
 
-      // Debug: log what Supabase returned
-      console.log('[submitQuiz] RPC result:', data, '| rawScore:', rawScore, '| completed:', result.completed);
+      console.log('[submitQuiz] rawScore:', rawScore, '| earnedStars:', earnedStars, '| completed:', result.completed);
 
       $('quizScoreBox').classList.remove('hidden');
-      $('quizScoreBox').textContent = `Score ${result.score ?? rawScore}/12 · ${result.stars ?? earnedStars} Spirit Stone(s) · ${result.completed ? 'Level completed! ✨' : 'Keep practicing and try again.'}`;
+      $('quizScoreBox').textContent = `Score ${rawScore}/12 · ${earnedStars} Spirit Stone(s) · ${result.completed ? 'Level completed! ✨' : 'Keep practicing and try again.'}`;
 
-      await loadPlayerState();
-
-      // Local override: force completion & stars in client state
+      // Update local state immediately — don't wait for Supabase round-trip
       if (result.completed && level) {
         const no = level.level_no;
         if (!state.progress[no]) state.progress[no] = { best_score: 0, stars: 0, completed: false, bonusStars: 0 };
         state.progress[no].completed = true;
-        state.progress[no].best_score = Math.max(state.progress[no].best_score, rawScore);
-        state.progress[no].stars = Math.max(state.progress[no].stars, earnedStars);
+        state.progress[no].best_score = Math.max(state.progress[no].best_score || 0, rawScore);
+        state.progress[no].stars = Math.max(state.progress[no].stars || 0, earnedStars);
         const spent2 = (() => { try { return JSON.parse(localStorage.getItem('snowball_v1')||'{}').spent||0; } catch{return 0;} })();
-        window._appStones = Math.max(0, sumStars(state.progress) - spent2);
-        console.log('[submitQuiz] Local progress level', no, '| stars earned:', earnedStars, '| total stones:', window._appStones);
+        const available = Math.max(0, sumStars(state.progress) - spent2);
+        window._appStones = available;
+        const heroStarsEl = $('heroStars');
+        if (heroStarsEl) heroStarsEl.textContent = available;
+        console.log('[submitQuiz] Level', no, '| earnedStars:', earnedStars, '| available stones:', available);
         $('nextLevelBtn').classList.remove('hidden');
         localSave({ progressBackup: state.progress });
-        // Update clearedLevels list for QA and pet unlock detection
         const _sk = localLoad();
         _sk.clearedLevels = Array.from(new Set([...(_sk.clearedLevels || []), no]));
         localSave({ clearedLevels: _sk.clearedLevels });
-        // Fire progress event for pet system and QA hooks
         if (no === 1) {
           window.__level1Cleared = true;
           window.dispatchEvent(new CustomEvent('story-progress-updated', { detail: { level1Cleared: true } }));
         }
       }
+
+      // Sync Supabase in background — don't block UI
+      loadPlayerState().catch(e => console.warn('[submitQuiz] background sync failed:', e));
 
       // Update UI without reopening level modal (which would hide nextLevelBtn)
       applyTopbar();
@@ -1910,20 +1910,38 @@ body{
       renderMap();
       setStatus(result.completed ? `Level ${level.level_no} complete! +${starsForScore(rawScore)} Spirit Stones earned.` : `Level ${level.level_no} saved.`);
 
-      // 🐱 Unlock cat after Level 1 first completion
+      // 🐱 Gift modal: show on first Level 1 completion this session
       if (level.level_no === 1 && result.completed) {
         const petData = JSON.parse(localStorage.getItem('snowball_v1') || '{}');
-        if (!petData.unlocked) {
-          window._petGiftSessionFlag = true; // mark this session as the trigger
-          const pd = Object.assign({}, petData);
-          pd.giftPending = true;
-          localStorage.setItem('snowball_v1', JSON.stringify(pd));
-          setTimeout(() => {
-            $('quizModal').classList.remove('open');
+        const alreadyGifted = !!window._petGiftShownThisSession;
+        if (!alreadyGifted) {
+          window._petGiftSessionFlag = true;
+          window._petGiftShownThisSession = true;
+          if (!petData.unlocked) {
+            // First ever unlock — show gift modal
+            const pd = Object.assign({}, petData);
+            pd.giftPending = true;
+            localStorage.setItem('snowball_v1', JSON.stringify(pd));
             setTimeout(() => {
-              if (typeof window._openPetGiftModal === 'function') window._openPetGiftModal();
-            }, 400);
-          }, 1000);
+              $('quizModal').classList.remove('open');
+              setTimeout(() => {
+                if (typeof window._openPetGiftModal === 'function') window._openPetGiftModal();
+              }, 400);
+            }, 1000);
+          } else {
+            // Already unlocked but show a welcome-back message via pet room
+            setTimeout(() => {
+              $('quizModal').classList.remove('open');
+              setTimeout(() => {
+                const pb = document.getElementById('petBtn');
+                if (pb) {
+                  pb.style.display = '';
+                  pb.animate([{transform:'scale(1)'},{transform:'scale(1.3)'},{transform:'scale(1)'}],
+                    {duration:600, iterations:3});
+                }
+              }, 400);
+            }, 800);
+          }
         }
       }
     } catch (err) {
