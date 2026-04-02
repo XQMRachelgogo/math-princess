@@ -1460,95 +1460,134 @@ body{
       .in('spell_id', spellIds);
     if (error) throw error;
 
+    // ── Progressive spiral ratio: new content % by level band ──
+    // Levels  1–4  : 0–30%  new  (introduction phase, mostly review)
+    // Levels  5–12 : 30–45% new  (building phase)
+    // Levels 13–24 : 45–65% new  (expansion phase)
+    // Levels 25–36 : 65–80% new  (mastery phase)
+    function getMaxNew(lno) {
+      if (lno <= 1)  return 0;   // Level 1 is pure review baseline
+      if (lno <= 4)  return Math.round(12 * 0.30);  // ≤3-4 new questions
+      if (lno <= 12) return Math.round(12 * 0.45);  // ≤5 new questions
+      if (lno <= 24) return Math.round(12 * 0.60);  // ≤7 new questions
+      return Math.round(12 * 0.75);                  // ≤9 new questions
+    }
+    const MAX_NEW = getMaxNew(levelNo);
+    const TOTAL   = 12;
+
+    const reviewPlans = plans.filter(p => p.role !== 'new' && p.role !== 'new_intro');
+    const newPlans    = plans.filter(p => p.role === 'new'  || p.role === 'new_intro');
+
     const bySpell = {};
     (allQs || []).forEach(q => {
       if (!bySpell[q.spell_id]) bySpell[q.spell_id] = [];
       bySpell[q.spell_id].push(q);
     });
 
-    const chosen = [];
+    const chosen   = [];
     const chosenIds = new Set();
-    const wrongIds = wrongRows.map(r => r.question_id);
-
-    // Separate plans by role for spiral ratio enforcement
-    const reviewPlans = plans.filter(p => p.role !== 'new' && p.role !== 'new_intro');
-    const newPlans    = plans.filter(p => p.role === 'new' || p.role === 'new_intro');
-    // Spiral design: max 4 new-content questions out of 12 (~33%)
-    // Review/practice fills the majority first
-    const MAX_NEW = Math.min(4, newPlans.length * 3);
+    const wrongIds  = wrongRows.map(r => r.question_id);
 
     function addQuestion(q) {
       if (!q || chosenIds.has(q.id)) return false;
       chosen.push(q); chosenIds.add(q.id); return true;
     }
 
-    function fillFromPlan(plan, limit) {
-      const candidates = bySpell[plan.spell_id] || [];
-      // Priority 1: wrong questions for this spell
-      const wrongCands = shuffle(candidates.filter(q => wrongIds.includes(q.id) && !chosenIds.has(q.id)));
-      for (const q of wrongCands) {
-        if (chosen.length >= 12) break;
-        const countForSpell = chosen.filter(x => x.spell_id === plan.spell_id).length;
-        if (countForSpell >= limit) break;
+    // ── Pick from a spell's pool: wrong-first, then difficulty-matched, then any ──
+    function pickFromSpell(spellId, limit, preferDifficulty) {
+      const pool = bySpell[spellId] || [];
+      const added = () => chosen.filter(x => x.spell_id === spellId).length;
+
+      // Priority 1: previously wrong questions (reinforce weak spots)
+      for (const q of shuffle(pool.filter(q => wrongIds.includes(q.id) && !chosenIds.has(q.id)))) {
+        if (chosen.length >= TOTAL || added() >= limit) break;
         addQuestion(q);
       }
-      // Priority 2: difficulty-matched questions
-      let filtered = candidates.filter(q => q.difficulty === plan.difficulty_band && !chosenIds.has(q.id));
-      if (filtered.length < limit) filtered = candidates.filter(q => !chosenIds.has(q.id));
-      for (const q of shuffle(filtered)) {
-        if (chosen.length >= 12) break;
-        const countForSpell = chosen.filter(x => x.spell_id === plan.spell_id).length;
-        if (countForSpell >= limit) break;
+      // Priority 2: difficulty-band match
+      const diffMatch = pool.filter(q => !chosenIds.has(q.id) && q.difficulty === preferDifficulty);
+      for (const q of shuffle(diffMatch)) {
+        if (chosen.length >= TOTAL || added() >= limit) break;
+        addQuestion(q);
+      }
+      // Priority 3: anything remaining from this spell
+      for (const q of shuffle(pool.filter(q => !chosenIds.has(q.id)))) {
+        if (chosen.length >= TOTAL || added() >= limit) break;
         addQuestion(q);
       }
     }
 
-    // Step 1: Fill review/practice spells first (majority of questions)
+    // ── Ensure variety: track question types used so far ──
+    function diversify(pool, wantMc, wantSa) {
+      // Try to include at least wantMc multiple-choice and wantSa short-answer
+      const mc = pool.filter(q => !chosenIds.has(q.id) && q.question_type === 'multiple_choice');
+      const sa = pool.filter(q => !chosenIds.has(q.id) && q.question_type === 'short_answer');
+      const others = pool.filter(q => !chosenIds.has(q.id) && q.question_type !== 'multiple_choice' && q.question_type !== 'short_answer');
+      const needed = Math.max(0, TOTAL - chosen.length);
+      const mcCount = Math.min(wantMc, mc.length);
+      const saCount = Math.min(wantSa, sa.length);
+      const out = [...shuffle(mc).slice(0, mcCount), ...shuffle(sa).slice(0, saCount), ...shuffle(others)];
+      return shuffle(out).slice(0, needed);
+    }
+
+    // ═══ STEP 1: Review questions — fill the majority first ═══
+    // Spread review across all review spells, at least 1 per spell
+    const reviewTarget = TOTAL - MAX_NEW;
+    const perReview = reviewPlans.length
+      ? Math.max(1, Math.floor(reviewTarget / reviewPlans.length))
+      : 0;
+
     for (const plan of reviewPlans) {
-      fillFromPlan(plan, Math.max(Number(plan.min_questions || 1), 2));
+      pickFromSpell(plan.spell_id, perReview, plan.difficulty_band);
     }
 
-    // Step 2: Add new-content questions (capped at MAX_NEW total)
-    const newBefore = chosen.length;
+    // ═══ STEP 2: New-content questions (capped at MAX_NEW) ═══
+    // For early levels: start with 'concept' difficulty to scaffold
+    // For later levels: use plan's own difficulty_band
+    const newDifficulty = levelNo <= 4 ? 'concept' : levelNo <= 12 ? 'guided' : null;
+    const perNew = newPlans.length
+      ? Math.max(1, Math.floor(MAX_NEW / newPlans.length))
+      : 0;
+
     for (const plan of newPlans) {
-      const newSoFar = chosen.length - newBefore; // rough proxy isn't perfect but works
-      // Count actual new-spell questions added
       const newCount = chosen.filter(q => newPlans.some(p => p.spell_id === q.spell_id)).length;
       if (newCount >= MAX_NEW) break;
-      const remaining = MAX_NEW - newCount;
-      fillFromPlan(plan, Math.min(Number(plan.min_questions || 1), remaining, 2));
+      const cap = Math.min(perNew, MAX_NEW - newCount);
+      pickFromSpell(plan.spell_id, cap, newDifficulty || plan.difficulty_band);
     }
 
-    // Step 3: Fill remaining slots with review questions (never new)
-    if (chosen.length < 12) {
+    // ═══ STEP 3: Fill remaining with review (type-diverse) ═══
+    if (chosen.length < TOTAL) {
       const reviewSpellIds = new Set(reviewPlans.map(p => p.spell_id));
-      const reviewLeftovers = shuffle((allQs || []).filter(q =>
-        !chosenIds.has(q.id) && reviewSpellIds.has(q.spell_id)
-      ));
-      for (const q of reviewLeftovers) {
-        if (chosen.length >= 12) break;
+      const reviewPool = (allQs || []).filter(q => !chosenIds.has(q.id) && reviewSpellIds.has(q.spell_id));
+      // Try to balance question types in the fill
+      const mcSoFar = chosen.filter(q => q.question_type === 'multiple_choice').length;
+      const saSoFar = chosen.filter(q => q.question_type === 'short_answer').length;
+      const wantMc = Math.max(0, 7 - mcSoFar);  // target ~7 MC out of 12
+      const wantSa = Math.max(0, 4 - saSoFar);  // target ~4 SA out of 12
+      for (const q of diversify(reviewPool, wantMc, wantSa)) {
+        if (chosen.length >= TOTAL) break;
         addQuestion(q);
       }
     }
 
-    // Step 4: If still short, fill with any remaining questions
-    if (chosen.length < 12) {
-      const any = shuffle((allQs || []).filter(q => !chosenIds.has(q.id)));
-      for (const q of any) {
-        if (chosen.length >= 12) break;
+    // ═══ STEP 4: Absolute fallback — any remaining question ═══
+    if (chosen.length < TOTAL) {
+      for (const q of shuffle((allQs || []).filter(q => !chosenIds.has(q.id)))) {
+        if (chosen.length >= TOTAL) break;
         addQuestion(q);
       }
     }
 
-    return chosen.slice(0, 12);
+    console.log(`[Level ${levelNo}] target new: ${MAX_NEW}/${TOTAL} | actual new: ${chosen.filter(q => newPlans.some(p=>p.spell_id===q.spell_id)).length} | total: ${chosen.length}`);
+    return chosen.slice(0, TOTAL);
   }
 
   function renderQuiz(levelNo, questions) {
     state.quizQuestions = questions;
     const level = state.levels.find(l => l.level_no === levelNo);
     const plans = state.spellPlanByLevel[levelNo] || [];
-    const hasNewContent = plans.some(p => p.role === 'new');
-    const newCount = questions.filter(q => plans.filter(p=>p.role==='new').some(p=>p.spell_id===q.spell_id)).length;
+    const hasNewContent = plans.some(p => p.role === 'new' || p.role === 'new_intro');
+    const newCount = questions.filter(q => plans.filter(p => p.role === 'new' || p.role === 'new_intro').some(p => p.spell_id === q.spell_id)).length;
 
     $('quizTitle').textContent = `Level ${levelNo} · ${level?.title || 'Quiz'}`;
     $('quizSubtitle').innerHTML = questions.length
@@ -1599,12 +1638,101 @@ body{
     }
     try {
       const questions = await fetchQuestionsForLevel(levelNo);
-      renderQuiz(levelNo, questions);
-      $('quizModal').classList.add('open');
+
+      // ── Knight teaching moment: show lesson screen before quiz if new content ──
+      const plans = state.spellPlanByLevel[levelNo] || [];
+      const newPlans = plans.filter(p => p.role === 'new' || p.role === 'new_intro');
+      const newSpellIds = uniqueBy(newPlans.map(p => p.spell_id), x => x);
+      const lessonRows = [];
+      newSpellIds.forEach(sid => {
+        (state.lessonsBySpellId[sid] || []).forEach(l => lessonRows.push(l));
+      });
+
+      if (lessonRows.length > 0) {
+        // Show knight teaching modal before the quiz
+        showKnightTeaching(levelNo, lessonRows, () => {
+          renderQuiz(levelNo, questions);
+          $('quizModal').classList.add('open');
+        });
+      } else {
+        renderQuiz(levelNo, questions);
+        $('quizModal').classList.add('open');
+      }
     } catch (err) {
       console.error(err);
       setStatus('Questions could not be loaded yet.');
     }
+  }
+
+  function showKnightTeaching(levelNo, lessons, onDone) {
+    // Build or reuse the knight teaching overlay
+    let overlay = $('knightTeachOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'knightTeachOverlay';
+      overlay.style.cssText = 'display:none;position:fixed;left:0;top:0;width:100%;height:100%;z-index:2147483646;background:rgba(30,10,60,.7);align-items:center;justify-content:center;padding:20px;box-sizing:border-box;overflow:auto';
+      document.body.appendChild(overlay);
+    }
+
+    const BASE = 'https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/';
+    const newSpellNames = [...new Set(lessons.map(l => l.spells?.name).filter(Boolean))];
+    const level = state.levels.find(l => l.level_no === levelNo);
+
+    const cardsHtml = lessons.map(l => {
+      const khanUrl = l.khan_url || '';
+      const ytUrl   = l.youtube_url || '';
+      const videoUrl = khanUrl || ytUrl;
+      const isKhan = !!khanUrl;
+      const body = l.concept_intro || l.knight_explanation_short || '';
+      const steps = l.step_by_step || '';
+      const mistakes = l.common_mistakes || '';
+      const spellName = l.spells?.name || 'New Spell';
+      const videoHtml = videoUrl
+        ? `<a href="${videoUrl}" target="_blank" rel="noopener noreferrer"
+             style="display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:10px 16px;border-radius:14px;background:linear-gradient(135deg,#e8f4ff,#f0e8ff);border:1px solid #c8d8f0;color:#4060b0;font-weight:900;font-size:13px;text-decoration:none">
+             ${isKhan ? '🎓' : '▶️'} ${isKhan ? 'Watch on Khan Academy' : 'Watch video'}
+           </a>` : '';
+      return `
+        <div style="background:rgba(255,255,255,.95);border:1px solid #e0d0f0;border-radius:20px;padding:18px 20px;margin-bottom:14px">
+          <div style="font-size:13px;font-weight:900;color:#9060c0;margin-bottom:6px">✨ New Spell: ${spellName}</div>
+          ${body ? `<div style="font-size:15px;line-height:1.7;color:#5a4070">${body}</div>` : ''}
+          ${steps ? `<div style="margin-top:10px;padding:10px 14px;border-radius:12px;background:#f5f0ff;font-size:13px;color:#6050a0;line-height:1.7"><strong>Steps:</strong><br>${steps}</div>` : ''}
+          ${mistakes ? `<div style="margin-top:8px;padding:8px 12px;border-radius:10px;background:#fff8f0;border-left:3px solid #f0a060;font-size:12px;color:#a06000"><strong>⚠️ Watch out:</strong> ${mistakes}</div>` : ''}
+          ${videoHtml}
+        </div>`;
+    }).join('');
+
+    overlay.innerHTML = `
+      <div style="background:linear-gradient(160deg,#fef9ff,#f0e8ff);border:2px solid rgba(210,180,255,.5);border-radius:32px;width:min(760px,100%);max-height:88vh;overflow-y:auto;box-shadow:0 32px 80px rgba(100,50,180,.3);display:flex;flex-direction:column">
+        <div style="padding:22px 26px 16px;background:linear-gradient(160deg,rgba(255,255,255,.95),rgba(248,240,255,.95));border-bottom:1px solid rgba(210,180,255,.4);flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:16px">
+            <img src="${BASE}knight.png" alt="Sir Knight" style="width:72px;height:auto;filter:drop-shadow(0 4px 12px rgba(100,60,180,.2))">
+            <div>
+              <div style="font-size:12px;font-weight:900;color:#9070b0;margin-bottom:4px">Level ${levelNo} · ${level?.title || ''}</div>
+              <h2 style="margin:0;font-size:22px;font-weight:900;color:#5a3a86">Sir Knight's Lesson</h2>
+              <p style="margin:4px 0 0;font-size:13px;color:#8060a0">New spells on this road — study before you begin!</p>
+            </div>
+          </div>
+          ${newSpellNames.length ? `<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">${newSpellNames.map(n=>`<span style="padding:5px 12px;border-radius:999px;background:linear-gradient(135deg,#f0e8ff,#e8f0ff);border:1px solid #d0c0f0;font-size:12px;font-weight:900;color:#6040a0">✨ ${n}</span>`).join('')}</div>` : ''}
+        </div>
+        <div style="padding:20px 26px;flex:1">
+          ${cardsHtml}
+        </div>
+        <div style="padding:16px 26px 22px;background:rgba(255,255,255,.6);border-top:1px solid rgba(210,180,255,.3);display:flex;justify-content:flex-end;flex-shrink:0">
+          <button id="knightTeachReadyBtn" style="padding:14px 32px;border:none;border-radius:18px;background:linear-gradient(135deg,#c084fc,#f472b6);color:#fff;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 8px 24px rgba(180,80,200,.3)">
+            I'm ready! Start the level →
+          </button>
+        </div>
+      </div>`;
+
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    $('knightTeachReadyBtn').addEventListener('click', () => {
+      overlay.style.display = 'none';
+      document.body.style.overflow = '';
+      onDone();
+    }, { once: true });
   }
 
   function collectQuizAnswers() {
