@@ -1122,23 +1122,28 @@ body{
       }
     }
 
-    // If logged in but still no playerId, try to create/link using local childName
-    if (state.user && !state.playerId && state.childName) {
-      console.log('[session] logged-in user has no player — creating and linking...');
-      const { data, error } = await state.client.rpc('get_or_create_player', { p_child_name: state.childName });
-      console.log('[get_or_create_player fallback] data:', data, 'error:', error);
-      if (!error && data && data.length) {
-        const row = data[0];
-        state.playerId = row.player_id;
-        state.childName = row.child_name;
-        state.princessName = row.princess_name;
-        // Link this player to the user account
-        await state.client.from('user_profiles').upsert(
-          { user_id: state.user.id, player_id: state.playerId, child_name: state.childName, updated_at: new Date().toISOString() },
-          { onConflict: 'user_id' }
-        );
-        localSave({ authUserId: state.user.id, childName: state.childName, storyReady: true, playerId: state.playerId });
-        console.log('[session] linked playerId:', state.playerId);
+    // If logged in but still no playerId — try harder to find or create
+    if (state.user && !state.playerId) {
+      if (state.childName) {
+        console.log('[session] logged-in user has no player — creating and linking with name:', state.childName);
+        const { data, error } = await state.client.rpc('get_or_create_player', { p_child_name: state.childName });
+        console.log('[get_or_create_player fallback] data:', data, 'error:', error);
+        if (!error && data && data.length) {
+          const row = data[0];
+          state.playerId = row.player_id;
+          state.childName = row.child_name;
+          state.princessName = row.princess_name;
+          await state.client.from('user_profiles').upsert(
+            { user_id: state.user.id, player_id: state.playerId, child_name: state.childName, updated_at: new Date().toISOString() },
+            { onConflict: 'user_id' }
+          );
+          localSave({ authUserId: state.user.id, childName: state.childName, storyReady: true, playerId: state.playerId });
+          console.log('[session] linked playerId:', state.playerId);
+        }
+      } else {
+        // No name and no profile — ask user to enter name on home screen
+        console.log('[session] logged-in user has no player and no name — prompting for name');
+        localSave({ authUserId: state.user.id, storyReady: false });
       }
     }
 
@@ -1969,8 +1974,17 @@ body{
   let sleeping=false, idleT=null, actionT=null, bubbleT=null;
 
   /* ── stones ── */
-  function stones(){ return Math.max(0,(window._appStones||0)-(load().spent||0)); }
-  function spend(n){ const d=load(); d.spent=(d.spent||0)+n; localStorage.setItem(KEY,JSON.stringify(d)); syncStones(); }
+  function stones(){ return Math.max(0, window._appStones || 0); }
+  function spend(n){ 
+    const d=load(); 
+    d.spent=(d.spent||0)+n; 
+    localStorage.setItem(KEY,JSON.stringify(d)); 
+    window._appStones = Math.max(0, (window._appStones||0) - n);
+    syncStones(); 
+    // Also update topbar to reflect new available balance
+    const heroEl = document.getElementById('heroStars');
+    if(heroEl) heroEl.textContent = window._appStones;
+  }
   function syncStones(){ const el=G('petRoomStones'); if(el) el.textContent=stones(); }
 
   /* ── build DOM ── */
