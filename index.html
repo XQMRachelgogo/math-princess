@@ -266,10 +266,6 @@ body{
   .map-shell{height:70vh}
   .map-canvas{min-height:1180px}
 }
-
-  60%{opacity:1}
-  100%{transform:translate(var(--tx),var(--ty)) rotate(360deg) scale(.4);opacity:0}
-}
 /* ═══ PET ROOM ═══ */
 .pet-room-backdrop{
   position:fixed;inset:0;z-index:9999;display:none;place-items:center;padding:20px;
@@ -762,6 +758,10 @@ body{
   function sumStars(progress) {
     return Object.values(progress || {}).reduce((acc, row) => acc + (row.stars || 0) + (row.bonusStars || 0), 0);
   }
+  function isLevelCleared(row) {
+    if (!row) return false;
+    return !!(row.completed || Number(row.best_score || 0) > 0 || Number(row.stars || 0) > 0);
+  }
   function hasAnySave(progress) {
     return Object.values(progress || {}).some(v => (v.best_score || 0) > 0 || v.completed || (v.stars || 0) > 0 || (v.bonusStars || 0) > 0);
   }
@@ -769,16 +769,21 @@ body{
     if (!levels.length) return 1;
     let count = 1;
     for (let i = 2; i <= levels.length; i++) {
-      if (progress[i - 1] && progress[i - 1].completed) count = i;
+      if (isLevelCleared(progress[i - 1])) count = i;
       else break;
     }
     return count;
   }
   function nextPlayableLevel(levels, progress) {
     for (let i = 1; i <= levels.length; i++) {
-      if (!(progress[i] && progress[i].completed)) return i;
+      if (!isLevelCleared(progress[i])) return i;
     }
     return levels.length || 1;
+  }
+  function emitProgressSignals() {
+    const level1Cleared = isLevelCleared(state.progress[1]);
+    window.__level1Cleared = level1Cleared;
+    window.dispatchEvent(new CustomEvent('story-progress-updated', { detail: { level1Cleared } }));
   }
   function posForLevel(levelNo) {
     // Positions calibrated from live map.png click points
@@ -1129,6 +1134,7 @@ body{
       await loadPlayerState();
     }
 
+    emitProgressSignals();
     applyTopbar();
     applyHome();
     renderSpellBook();
@@ -1201,6 +1207,7 @@ body{
 
     try { await loadPlayerState(); } catch (e) { console.error(e); }
     state.currentLevelNo = nextPlayableLevel(state.levels, state.progress);
+    emitProgressSignals();
     applyTopbar();
     applyHome();
     renderMap();
@@ -1580,6 +1587,7 @@ body{
       $('quizScoreBox').textContent = `Score ${result.score}/12 · ${result.stars} Spirit Stone(s) · ${result.completed ? 'Level completed! ✨' : 'Keep practicing and try again.'}`;
 
       await loadPlayerState();
+      emitProgressSignals();
       applyTopbar();
       applyHome();
       renderMap();
@@ -1587,7 +1595,7 @@ body{
       setStatus(`Level ${level.level_no} saved to Supabase.`);
 
       // 🐱 Unlock cat after Level 1 first completion
-      if (level.level_no === 1 && result.completed) {
+      if (level.level_no === 1 && isLevelCleared(state.progress[1])) {
         const petData = JSON.parse(localStorage.getItem('snowball_v1') || '{}');
         if (!petData.unlocked) {
           setTimeout(() => {
@@ -1668,6 +1676,13 @@ body{
 
   function load() { try { return JSON.parse(localStorage.getItem(PET_KEY)||'{}'); } catch { return {}; } }
   function save(p) { localStorage.setItem(PET_KEY, JSON.stringify(Object.assign({}, load(), p))); }
+  function syncPetAvailability() {
+    const btn = G('petBtn');
+    if (!btn) return;
+    const d = load();
+    const available = !!(d.unlocked && window.__level1Cleared);
+    btn.style.display = available ? '' : 'none';
+  }
 
   const SPEECHES = {
     main:  ['Meow~', 'Purrrr ♡', '(*ᵕ̤ᴗᵕ̤*)', "I'm here!", '✨'],
@@ -1886,8 +1901,10 @@ body{
 
   /* ── wire up ── */
   function init() {
+    syncPetAvailability();
+    window.addEventListener('story-progress-updated', syncPetAvailability);
     G('petBtn').addEventListener('click', () => {
-      if (!load().unlocked) {
+      if (!load().unlocked || !window.__level1Cleared) {
         // Cat not yet unlocked — pulse the button but don't open
         G('petBtn').style.animation = 'none';
         setTimeout(() => G('petBtn').style.animation = '', 10);
@@ -1912,6 +1929,7 @@ body{
       unlockBtn.addEventListener('click', () => {
         save({ unlocked: true, happiness: 80, fullness: 60, lastInteract: Date.now() });
         G('petGiftModal').classList.remove('open');
+        syncPetAvailability();
         openPetRoom();
       });
     }
