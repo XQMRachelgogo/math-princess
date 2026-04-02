@@ -272,8 +272,8 @@ body{
 }
 /* ═══ PET ROOM ═══ */
 .pet-room-backdrop{
-  position:fixed;inset:0;z-index:200;display:none;place-items:center;padding:20px;
-  background:rgba(40,20,70,.45);backdrop-filter:blur(10px);
+  position:fixed;inset:0;z-index:9999;display:none;place-items:center;padding:20px;
+  background:rgba(40,20,70,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
 }
 .pet-room-backdrop.open{display:grid}
 .pet-room{
@@ -305,7 +305,7 @@ body{
 }
 .pet-cat-img:active img{transform:scale(.96)}
 .pet-cat-img img{
-  width:clamp(140px,32%,200px);height:auto;
+  width:clamp(220px,50%,320px);height:auto;
   filter:drop-shadow(0 8px 20px rgba(80,40,140,.22));
   transition:.22s opacity, .22s transform;display:block;
 }
@@ -411,6 +411,39 @@ body{
   background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:12px;
   padding:10px 12px;max-height:100px;overflow-y:auto;font-size:12px;color:#9070b0;
   font-weight:700;line-height:1.8;flex:1;
+}
+/* ═══ PET GIFT UNLOCK MODAL ═══ */
+.pet-gift-backdrop{
+  position:fixed;inset:0;z-index:9999;display:none;place-items:center;padding:20px;
+  background:rgba(40,20,70,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.pet-gift-backdrop.open{display:grid}
+.pet-gift-box{
+  background:linear-gradient(160deg,#fff9fe,#f5eeff);
+  border:2px solid rgba(220,180,255,.5);border-radius:36px;
+  width:min(680px,100%);overflow:hidden;
+  box-shadow:0 32px 80px rgba(120,60,200,.28);
+  display:flex;flex-direction:column;align-items:center;
+  position:relative;
+}
+.pet-gift-img-wrap{
+  width:100%;height:260px;overflow:hidden;position:relative;
+  background:linear-gradient(180deg,#fce8ff,#e8d8ff);
+}
+.pet-gift-img{
+  width:100%;height:100%;object-fit:cover;object-position:center top;
+  display:block;
+}
+.pet-gift-content{
+  padding:28px 36px 32px;text-align:center;
+}
+.pet-gift-sparkle{font-size:40px;margin-bottom:8px;display:block}
+.pet-gift-title{font-size:26px;font-weight:900;color:var(--title);margin:0 0 10px}
+.pet-gift-sub{color:#7060a0;font-size:15px;line-height:1.7;margin:0 0 16px}
+.pet-gift-note{
+  display:inline-block;padding:12px 20px;border-radius:18px;
+  background:rgba(255,255,255,.8);border:1px solid var(--line);
+  font-size:13px;font-weight:800;color:#8060b0;line-height:1.8;
 }
 </style>
 </head>
@@ -549,6 +582,21 @@ body{
   </div>
 </div>
 
+<!-- ═══ PET GIFT UNLOCK MODAL ═══ -->
+<div id="petGiftModal" class="pet-gift-backdrop">
+  <div class="pet-gift-box">
+    <div class="pet-gift-img-wrap">
+      <img src="https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/cat-gift.png" alt="A cat in a gift box!" class="pet-gift-img">
+    </div>
+    <div class="pet-gift-content">
+      <div class="pet-gift-sparkle">🎉</div>
+      <h2 class="pet-gift-title">You have a new companion!</h2>
+      <p class="pet-gift-sub">Snowball has been waiting for you in the kingdom. Keep earning <strong>Spirit Stones</strong> by solving levels — use them to feed and play with your cat!</p>
+      <div class="pet-gift-note">💎 Spirit Stones = cat snacks &amp; playtime<br>🐾 Find Snowball anytime with the 🐱 button</div>
+      <button id="petGiftClaimBtn" class="primary-btn" style="margin-top:20px;padding:14px 36px;font-size:16px">Meet Snowball! 🐱</button>
+    </div>
+  </div>
+</div>
 
 <div id="authModal" class="modal-backdrop">
   <div class="modal" style="width:min(560px,100%)">
@@ -1537,6 +1585,17 @@ body{
       renderMap();
       openLevelDetail(level.level_no);
       setStatus(`Level ${level.level_no} saved to Supabase.`);
+
+      // 🐱 Unlock cat after Level 1 first completion
+      if (level.level_no === 1 && result.completed) {
+        const petData = JSON.parse(localStorage.getItem('snowball_v1') || '{}');
+        if (!petData.unlocked) {
+          setTimeout(() => {
+            const giftModal = document.getElementById('petGiftModal');
+            if (giftModal) giftModal.classList.add('open');
+          }, 1200);
+        }
+      }
     } catch (err) {
       console.error(err);
       setStatus('This level could not be submitted right now.');
@@ -1598,6 +1657,8 @@ body{
     happy: BASE + 'cat-happy.png',
     yawn:  BASE + 'cat-yawn.png',
     sleep: BASE + 'cat-sleep.png',
+    sad:   BASE + 'cat-sad.png',
+    gift:  BASE + 'cat-gift.png',
   };
   // Preload all images
   Object.values(IMGS).forEach(src => { const i = new Image(); i.src = src; });
@@ -1616,12 +1677,13 @@ body{
     happy: ['Purrr~', 'I love you! ♡', 'Nuzzle nuzzle~', '(˘ε˘)♡'],
     yawn:  ['Mrrr... sleepy...', 'zzz...', 'Just five more minutes...'],
     sleep: ['z z z', 'zZzZz~'],
+    sad:   ['...mew', 'Nobody played with me today...', '(；ω；)', 'Please come back soon...'],
   };
 
   // CSS animation class per mood
   const ANIM_CLASS = {
     main: 'idle', eat: 'eating', feast: 'feasting',
-    play: 'playing', happy: 'happy', yawn: 'yawning', sleep: 'sleeping'
+    play: 'playing', happy: 'happy', yawn: 'yawning', sleep: 'sleeping', sad: 'idle'
   };
   // Duration of action animations (ms), then return to main
   const ACTION_DUR = { eat: 2200, feast: 2600, play: 2400, happy: 2000 };
@@ -1788,35 +1850,71 @@ body{
     save({happiness:ps.happiness,fullness:ps.fullness});
   }
 
+  /* ── happiness decay: -10 per day missed ── */
+  function applyDecay() {
+    const d = load();
+    const last = d.lastInteract || Date.now();
+    const daysMissed = Math.floor((Date.now() - last) / (24*60*60*1000));
+    if (daysMissed > 0) {
+      ps.happiness = Math.max(0, ps.happiness - daysMissed * 10);
+      save({ happiness: ps.happiness });
+    }
+  }
+  function displayMood() { return ps.happiness < 20 ? 'sad' : 'main'; }
+  function markInteract() { save({ lastInteract: Date.now() }); }
+
   /* ── open / close ── */
   function openPetRoom() {
-    const d=load();
+    const d = load();
+    if (!d.unlocked) {
+      // not yet unlocked — shouldn't normally be called, but guard anyway
+      return;
+    }
     ps.happiness = d.happiness ?? 80;
     ps.fullness  = d.fullness  ?? 60;
     ps.log       = d.log || [];
     sleeping = false;
+    applyDecay();
     G('petRoomModal').classList.add('open');
-    setMood('main');
+    setMood(displayMood());
     updateBars();
     syncStonesUI();
-    const log=G('petLog');
-    if(log && ps.log.length) log.innerHTML=ps.log.map(l=>`<div>${l}</div>`).join('');
+    const log = G('petLog');
+    if (log && ps.log.length) log.innerHTML = ps.log.map(l=>`<div>${l}</div>`).join('');
     resetIdleTimer();
   }
 
   /* ── wire up ── */
   function init() {
-    G('petBtn').addEventListener('click', openPetRoom);
+    G('petBtn').addEventListener('click', () => {
+      if (!load().unlocked) {
+        // Cat not yet unlocked — pulse the button but don't open
+        G('petBtn').style.animation = 'none';
+        setTimeout(() => G('petBtn').style.animation = '', 10);
+        return;
+      }
+      openPetRoom();
+    });
     G('petRoomCloseBtn').addEventListener('click', () => {
       G('petRoomModal').classList.remove('open');
       clearTimeout(idleTimer); clearTimeout(actionTimer);
       save({happiness:ps.happiness, fullness:ps.fullness, log:ps.log});
     });
-    G('eatBtn').addEventListener('click',   doEat);
-    G('feastBtn').addEventListener('click', doFeast);
-    G('playBtn').addEventListener('click',  doPlay);
-    G('patBtn').addEventListener('click',   doPat);
-    G('petCatImg').addEventListener('click', () => { if(!sleeping) doPat(); });
+    G('eatBtn').addEventListener('click',   () => { doEat();   markInteract(); });
+    G('feastBtn').addEventListener('click', () => { doFeast(); markInteract(); });
+    G('playBtn').addEventListener('click',  () => { doPlay();  markInteract(); });
+    G('patBtn').addEventListener('click',   () => { doPat();   markInteract(); });
+    G('petCatImg').addEventListener('click', () => { if(!sleeping) { doPat(); markInteract(); } });
+
+    // Gift unlock button
+    const unlockBtn = G('petGiftClaimBtn');
+    if (unlockBtn) {
+      unlockBtn.addEventListener('click', () => {
+        save({ unlocked: true, happiness: 80, fullness: 60, lastInteract: Date.now() });
+        G('petGiftModal').classList.remove('open');
+        openPetRoom();
+      });
+    }
   }
   init();
 
