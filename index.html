@@ -654,6 +654,7 @@ body{
   const SUPABASE_URL = 'https://hokxngwigywyutilokya.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_RQlefCTSaipW2oWnv1zz7g_gqMWsoOv';
   const STORAGE_KEY = 'princess_spiral_quest_v10';
+  const MAX_MAIN_LEVELS = 36;
 
   const $ = (id) => document.getElementById(id);
   const modalIds = ['authModal','guideModal','spellModal','mapModal','levelModal','quizModal'];
@@ -675,6 +676,20 @@ body{
     currentLevelDetail: null,
     quizQuestions: []
   };
+
+  function normalizeLevels(rows) {
+    const seen = new Set();
+    return (rows || [])
+      .filter(row => Number.isFinite(Number(row?.level_no)))
+      .sort((a, b) => Number(a.level_no) - Number(b.level_no))
+      .filter(row => {
+        const no = Number(row.level_no);
+        if (no < 1 || no > MAX_MAIN_LEVELS) return false;
+        if (seen.has(no)) return false;
+        seen.add(no);
+        return true;
+      });
+  }
 
   function localLoad() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
@@ -826,7 +841,7 @@ body{
     $('heroName').textContent = shortName;
     $('heroLevel').textContent = `Lv ${state.currentLevelNo}`;
     $('heroStars').textContent = available;
-    const total = state.levels.length || 36;
+    const total = Math.min(MAX_MAIN_LEVELS, state.levels.length || MAX_MAIN_LEVELS);
     $('heroUnlock').textContent = `/ ${total}`;
     $('authBtn').textContent = state.user ? '↩ Sign Out' : '☁️ Sign In';
     window._appStones = available;
@@ -972,7 +987,7 @@ body{
     const client = state.client;
     const levelsRes = await client.from('levels').select('*').order('level_no');
     if (levelsRes.error) throw levelsRes.error;
-    state.levels = levelsRes.data || [];
+    state.levels = normalizeLevels(levelsRes.data || []);
 
     const idToNo = Object.fromEntries(state.levels.map(l => [l.id, l.level_no]));
     state.spellPlanByLevel = {};
@@ -999,15 +1014,24 @@ body{
     } catch {}
 
     try {
-      const lessonsRes = await client.from('spell_lessons').select('*, spells(name,code)').order('created_at');
+      const lessonsRes = await client
+        .from('spell_lessons')
+        .select('*, spells(name,code)')
+        .order('created_at', { ascending: false });
+
+      const latestBySpell = {};
       (lessonsRes.data || []).forEach(row => {
-        if (!state.lessonsBySpellId[row.spell_id]) state.lessonsBySpellId[row.spell_id] = [];
-        state.lessonsBySpellId[row.spell_id].push(row);
+        if (!row?.spell_id) return;
+        if (!latestBySpell[row.spell_id]) latestBySpell[row.spell_id] = row;
       });
-      // Log field names once so we can verify the schema
+
+      Object.values(latestBySpell).forEach(row => {
+        state.lessonsBySpellId[row.spell_id] = [row];
+      });
+
       if (lessonsRes.data && lessonsRes.data.length) {
-        console.log('[spell_lessons fields]', Object.keys(lessonsRes.data[0]));
-        console.log('[spell_lessons sample]', lessonsRes.data[0]);
+        console.log('[spell_lessons latest rows]', Object.keys(latestBySpell).length);
+        console.log('[spell_lessons sample]', Object.values(latestBySpell)[0]);
       } else if (lessonsRes.error) {
         console.warn('[spell_lessons error]', lessonsRes.error);
       } else {
