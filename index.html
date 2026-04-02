@@ -1016,25 +1016,33 @@ body{
     const local = localLoad();
     state.childName = local.childName || '';
     state.princessName = state.childName ? `Princess ${state.childName}` : 'Hero Princess';
-    state.playerId = null;
+    state.playerId = local.playerId || null; // restore from local if available
     state.progress = {};
     state.spellStats = [];
 
+    console.log('[session] user:', state.user?.id, '| localChildName:', state.childName, '| localPlayerId:', state.playerId);
+
     if (state.user) {
       const { data, error } = await state.client.rpc('get_current_user_story');
+      console.log('[get_current_user_story] data:', data, 'error:', error);
       if (!error && data && data.length) {
         const row = data[0];
         state.playerId = row.player_id;
         state.childName = row.child_name || '';
         state.princessName = row.princess_name || (state.childName ? `Princess ${state.childName}` : 'Hero Princess');
-        localSave({ childName: state.childName, storyReady: true });
+        localSave({ childName: state.childName, storyReady: true, playerId: state.playerId });
       } else {
-        const { data: profileData } = await state.client
+        const { data: profileData, error: pe } = await state.client
           .from('user_profiles')
           .select('player_id, child_name')
           .eq('user_id', state.user.id)
           .maybeSingle();
-        if (profileData?.child_name) {
+        console.log('[user_profiles]', profileData, 'error:', pe);
+        if (profileData?.player_id) {
+          state.playerId = profileData.player_id;
+          state.childName = profileData.child_name || '';
+          localSave({ childName: state.childName, storyReady: true, playerId: state.playerId });
+        } else if (profileData?.child_name) {
           state.childName = profileData.child_name || '';
           localSave({ childName: state.childName, storyReady: true });
         }
@@ -1043,13 +1051,17 @@ body{
 
     if (!state.playerId && state.childName) {
       const { data, error } = await state.client.rpc('get_or_create_player', { p_child_name: state.childName });
+      console.log('[get_or_create_player] data:', data, 'error:', error);
       if (!error && data && data.length) {
         const row = data[0];
         state.playerId = row.player_id;
         state.childName = row.child_name;
         state.princessName = row.princess_name;
+        localSave({ playerId: state.playerId });
       }
     }
+
+    console.log('[session] final playerId:', state.playerId);
 
     if (state.playerId) {
       await loadPlayerState();
@@ -1125,7 +1137,7 @@ body{
     state.playerId = row.player_id;
     state.childName = row.child_name;
     state.princessName = row.princess_name;
-    localSave({ childName: state.childName, storyReady: true });
+    localSave({ childName: state.childName, storyReady: true, playerId: state.playerId });
 
     if (state.user) {
       const profilePayload = { user_id: state.user.id, player_id: state.playerId, child_name: state.childName, updated_at: new Date().toISOString() };
@@ -1552,7 +1564,7 @@ body{
       if (level.level_no === 1 && result.completed) {
         const petData = JSON.parse(localStorage.getItem('snowball_v1') || '{}');
         if (!petData.unlocked) {
-          // Mark as pending so gift shows exactly once
+          window._petGiftSessionFlag = true; // mark this session as the trigger
           const pd = Object.assign({}, petData);
           pd.giftPending = true;
           localStorage.setItem('snowball_v1', JSON.stringify(pd));
@@ -1866,9 +1878,10 @@ body{
     });
   });
   window._openPetGiftModal = () => {
-    // Only show if genuinely pending and not yet unlocked
+    // Only show if triggered in this session (not on page reload)
+    if (!window._petGiftSessionFlag) return;
     const pd = JSON.parse(localStorage.getItem('snowball_v1')||'{}');
-    if (pd.unlocked) return; // already claimed, don't show
+    if (pd.unlocked) return;
     const m = G('petGiftModal');
     if (m) { try { if(!m.open) m.showModal(); } catch(e){ console.error('gift dialog:',e); } }
   };
