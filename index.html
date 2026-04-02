@@ -1874,9 +1874,19 @@ body{
     // ALWAYS clear giftPending on page load — it can only be re-set in the same session
     const _pd = JSON.parse(localStorage.getItem('snowball_v1')||'{}');
     if (!_pd.unlocked) {
-      _pd.giftPending = false; // clear unconditionally if not yet unlocked
+      // Auto-unlock if user already has level 1 completed in their local backup
+      const mainSave = JSON.parse(localStorage.getItem('princess_spiral_quest_v10')||'{}');
+      const backup = mainSave.progressBackup || {};
+      const level1Done = backup['1'] && backup['1'].completed;
+      if (level1Done) {
+        _pd.unlocked = true;
+        _pd.happiness = _pd.happiness || 80;
+        _pd.fullness = _pd.fullness || 60;
+        _pd.lastInteract = _pd.lastInteract || Date.now();
+        console.log('[pet init] auto-unlocked based on level 1 completion');
+      }
+      _pd.giftPending = false;
       localStorage.setItem('snowball_v1', JSON.stringify(_pd));
-      console.log('[pet init] cleared giftPending, unlocked:', _pd.unlocked);
     }
     buildModals();
 
