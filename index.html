@@ -770,38 +770,6 @@ body{
     }
     return out;
   }
-  function normalizeMainLevels(rows) {
-    const byLevelNo = new Map();
-    (rows || []).forEach(row => {
-      const no = Number(row.level_no);
-      if (!Number.isInteger(no) || no < 1 || no > 36) return;
-      const existing = byLevelNo.get(no);
-      if (!existing) {
-        byLevelNo.set(no, row);
-        return;
-      }
-      const existingTs = Date.parse(existing.updated_at || existing.created_at || 0) || 0;
-      const rowTs = Date.parse(row.updated_at || row.created_at || 0) || 0;
-      if (rowTs >= existingTs) byLevelNo.set(no, row);
-    });
-    return Array.from(byLevelNo.values()).sort((a, b) => Number(a.level_no) - Number(b.level_no));
-  }
-  function newestLessonPerSpell(rows) {
-    const bySpellId = new Map();
-    (rows || []).forEach(row => {
-      const spellId = row.spell_id;
-      if (!spellId) return;
-      const existing = bySpellId.get(spellId);
-      if (!existing) {
-        bySpellId.set(spellId, row);
-        return;
-      }
-      const existingTs = Date.parse(existing.updated_at || existing.created_at || 0) || 0;
-      const rowTs = Date.parse(row.updated_at || row.created_at || 0) || 0;
-      if (rowTs >= existingTs) bySpellId.set(spellId, row);
-    });
-    return Array.from(bySpellId.values());
-  }
   function shuffle(arr) {
     const copy = [...arr];
     for (let i = copy.length - 1; i > 0; i--) {
@@ -868,7 +836,7 @@ body{
   function applyHome() {
     const saveExists = hasAnySave(state.progress);
     const local = localLoad();
-    const hasStory = !!state.playerId || !!state.childName || !!local.storyReady || !!state.user;
+    const hasStory = !!state.playerId || !!state.childName || !!local.storyReady;
     const displayName = state.childName ? `Princess ${state.childName}` : 'the princess';
     $('storyText').textContent = state.childName
       ? `Far above the Cloud-Castle Kingdom, sleeping stars are waiting for ${displayName}. She must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.`
@@ -1004,7 +972,7 @@ body{
     const client = state.client;
     const levelsRes = await client.from('levels').select('*').order('level_no');
     if (levelsRes.error) throw levelsRes.error;
-    state.levels = normalizeMainLevels(levelsRes.data || []);
+    state.levels = levelsRes.data || [];
 
     const idToNo = Object.fromEntries(state.levels.map(l => [l.id, l.level_no]));
     state.spellPlanByLevel = {};
@@ -1032,8 +1000,7 @@ body{
 
     try {
       const lessonsRes = await client.from('spell_lessons').select('*, spells(name,code)').order('created_at');
-      const latestLessons = newestLessonPerSpell(lessonsRes.data || []);
-      latestLessons.forEach(row => {
+      (lessonsRes.data || []).forEach(row => {
         if (!state.lessonsBySpellId[row.spell_id]) state.lessonsBySpellId[row.spell_id] = [];
         state.lessonsBySpellId[row.spell_id].push(row);
       });
@@ -1054,13 +1021,20 @@ body{
     state.user = session?.user || null;
 
     const local = localLoad();
-    state.childName = local.childName || '';
+    const localAuthUserId = local.authUserId || null;
+    const switchedAccount = !!(state.user && localAuthUserId && localAuthUserId !== state.user.id);
+
+    state.childName = switchedAccount ? '' : (local.childName || '');
     state.princessName = state.childName ? `Princess ${state.childName}` : 'Hero Princess';
-    state.playerId = local.playerId || null; // restore from local if available
+    state.playerId = switchedAccount ? null : (local.playerId || null);
     state.progress = {};
     state.spellStats = [];
 
-    console.log('[session] user:', state.user?.id, '| localChildName:', state.childName, '| localPlayerId:', state.playerId);
+    if (switchedAccount) {
+      localSave({ authUserId: state.user.id, childName: '', playerId: null, storyReady: false });
+    }
+
+    console.log('[session] user:', state.user?.id, '| localChildName:', state.childName, '| localPlayerId:', state.playerId, '| switchedAccount:', switchedAccount);
 
     if (state.user) {
       const { data, error } = await state.client.rpc('get_current_user_story');
@@ -1070,7 +1044,7 @@ body{
         state.playerId = row.player_id;
         state.childName = row.child_name || '';
         state.princessName = row.princess_name || (state.childName ? `Princess ${state.childName}` : 'Hero Princess');
-        localSave({ childName: state.childName, storyReady: true, playerId: state.playerId });
+        localSave({ authUserId: state.user.id, childName: state.childName, storyReady: true, playerId: state.playerId });
       } else {
         const { data: profileData, error: pe } = await state.client
           .from('user_profiles')
@@ -1081,15 +1055,15 @@ body{
         if (profileData?.player_id) {
           state.playerId = profileData.player_id;
           state.childName = profileData.child_name || '';
-          localSave({ childName: state.childName, storyReady: true, playerId: state.playerId });
+          localSave({ authUserId: state.user.id, childName: state.childName, storyReady: true, playerId: state.playerId });
         } else if (profileData?.child_name) {
           state.childName = profileData.child_name || '';
-          localSave({ childName: state.childName, storyReady: true });
+          localSave({ authUserId: state.user.id, childName: state.childName, storyReady: true });
         }
       }
     }
 
-    if (!state.playerId && state.childName) {
+    if (!state.user && !state.playerId && state.childName) {
       const { data, error } = await state.client.rpc('get_or_create_player', { p_child_name: state.childName });
       console.log('[get_or_create_player] data:', data, 'error:', error);
       if (!error && data && data.length) {
@@ -1181,10 +1155,11 @@ body{
     state.playerId = row.player_id;
     state.childName = row.child_name;
     state.princessName = row.princess_name;
-    localSave({ childName: state.childName, storyReady: true, playerId: state.playerId });
+    localSave({ authUserId: state.user?.id || null, childName: state.childName, storyReady: true, playerId: state.playerId });
 
     if (state.user) {
       const profilePayload = { user_id: state.user.id, player_id: state.playerId, child_name: state.childName, updated_at: new Date().toISOString() };
+      localSave({ authUserId: state.user.id, childName: state.childName, storyReady: true, playerId: state.playerId });
       const { error: profileError } = await state.client.from('user_profiles').upsert(profilePayload, { onConflict: 'user_id' });
       if (profileError) {
         console.error(profileError);
@@ -1275,7 +1250,12 @@ body{
     newSpellIds.forEach(sid => {
       (state.lessonsBySpellId[sid] || []).forEach(l => lessonRows.push(l));
     });
-    const uniqueLessons = newestLessonPerSpell(lessonRows);
+    const seenLessonIds = new Set();
+    const uniqueLessons = lessonRows.filter(l => {
+      if (seenLessonIds.has(l.id)) return false;
+      seenLessonIds.add(l.id);
+      return true;
+    });
 
     // Debug: log what we found
     console.log(`[Level ${levelNo}] plans:`, plans.length, '| new spell plans:', newSpellIds.length, '| lessons found:', uniqueLessons.length);
