@@ -1093,6 +1093,17 @@ body{
     });
 
     state.spellStats = spellStatsRes.data || [];
+
+    // Merge any locally-backed-up progress (in case Supabase sync lagged)
+    const localBackup = (localLoad().progressBackup) || {};
+    Object.keys(localBackup).forEach(no => {
+      const nb = localBackup[no];
+      if (!state.progress[no]) state.progress[no] = { best_score: 0, stars: 0, completed: false, bonusStars: 0 };
+      if (nb.completed) state.progress[no].completed = true;
+      if ((nb.stars || 0) > (state.progress[no].stars || 0)) state.progress[no].stars = nb.stars;
+      if ((nb.best_score || 0) > (state.progress[no].best_score || 0)) state.progress[no].best_score = nb.best_score;
+    });
+    console.log('[loadPlayerState] progress after merge:', JSON.stringify(state.progress));
   }
 
   async function startJourney() {
@@ -1527,6 +1538,8 @@ body{
         window._appStones = sumStars(state.progress);
         console.log('[submitQuiz] Local progress level', no, '| stars earned:', earnedStars, '| total stones:', window._appStones);
         $('nextLevelBtn').classList.remove('hidden');
+        // Backup progress to localStorage in case Supabase sync lags
+        localSave({ progressBackup: state.progress });
       }
 
       // Update UI without reopening level modal (which would hide nextLevelBtn)
@@ -1539,14 +1552,15 @@ body{
       if (level.level_no === 1 && result.completed) {
         const petData = JSON.parse(localStorage.getItem('snowball_v1') || '{}');
         if (!petData.unlocked) {
+          // Mark as pending so gift shows exactly once
+          const pd = Object.assign({}, petData);
+          pd.giftPending = true;
+          localStorage.setItem('snowball_v1', JSON.stringify(pd));
           setTimeout(() => {
-            // Close quiz modal first so dialog stack doesn't conflict
             $('quizModal').classList.remove('open');
             setTimeout(() => {
-              if (typeof window._openPetGiftModal === 'function') {
-                window._openPetGiftModal();
-              }
-            }, 300);
+              if (typeof window._openPetGiftModal === 'function') window._openPetGiftModal();
+            }, 400);
           }, 1000);
         }
       }
@@ -1836,7 +1850,7 @@ body{
     G('petCatImg').addEventListener('click',()=>{ if(!sleeping) doPat(); });
 
     G('petGiftClaimBtn').addEventListener('click',()=>{
-      save({unlocked:true,happiness:80,fullness:60,lastInteract:Date.now()});
+      save({unlocked:true,happiness:80,fullness:60,lastInteract:Date.now(),giftPending:false});
       const pb=G('petBtn'); if(pb) pb.style.opacity='1';
       const gm=G('petGiftModal'); if(gm&&gm.open) gm.close();
       openPetRoom();
@@ -1844,8 +1858,20 @@ body{
   }
   init();
 
-  // Expose openPetRoom and gift modal for main app
-  window._openPetGiftModal = () => { const m=G('petGiftModal'); if(m) { try { if(!m.open) m.showModal(); } catch(e){ console.error('gift dialog:',e); } } };
+  // Safety: ensure dialogs start closed on every page load
+  requestAnimationFrame(() => {
+    ['petRoomModal','petGiftModal'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.tagName === 'DIALOG' && el.open) el.close();
+    });
+  });
+  window._openPetGiftModal = () => {
+    // Only show if genuinely pending and not yet unlocked
+    const pd = JSON.parse(localStorage.getItem('snowball_v1')||'{}');
+    if (pd.unlocked) return; // already claimed, don't show
+    const m = G('petGiftModal');
+    if (m) { try { if(!m.open) m.showModal(); } catch(e){ console.error('gift dialog:',e); } }
+  };
 
   // Sync stones
   const heroEl=document.getElementById('heroStars');
