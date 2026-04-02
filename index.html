@@ -37,11 +37,11 @@ body{
 .badge{width:44px;height:44px;border-radius:16px;overflow:hidden;display:grid;place-items:center;background:linear-gradient(135deg,#fce6f3,#ebe6ff)}
 .brand h1{margin:0;font-size:17px;line-height:1.15;color:var(--title);font-weight:900;letter-spacing:.5px}
 .brand p{margin:4px 0 0;font-size:11px;color:var(--text2);font-weight:700;letter-spacing:.3px}
-.top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;justify-content:flex-end}
 .chip{
-  position:relative;display:inline-flex;align-items:center;gap:8px;background:rgba(255,251,253,.95);
-  border:1px solid var(--line);border-radius:999px;padding:12px 16px;font-weight:800;color:var(--title);
-  min-height:46px;box-shadow:0 8px 18px rgba(187,166,209,.08)
+  position:relative;display:inline-flex;align-items:center;gap:6px;background:rgba(255,251,253,.95);
+  border:1px solid var(--line);border-radius:999px;padding:9px 13px;font-weight:800;color:var(--title);
+  font-size:13px;min-height:40px;box-shadow:0 4px 12px rgba(187,166,209,.08);white-space:nowrap
 }
 .chip[data-tip]:hover::after,.chip[data-tip]:focus-visible::after{
   content:attr(data-tip);position:absolute;top:calc(100% + 10px);right:0;width:230px;background:#fff;
@@ -55,8 +55,8 @@ body{
 .btn:hover,.primary-btn:hover,.ghost-btn:hover{transform:translateY(-2px)}
 .btn:active,.primary-btn:active,.ghost-btn:active{transform:translateY(0)}
 .btn{
-  padding:11px 16px;background:linear-gradient(160deg,#ffffff,#f5eeff);border:1px solid var(--line);
-  color:var(--title);box-shadow:0 4px 12px rgba(150,110,200,.10)
+  padding:9px 13px;background:linear-gradient(160deg,#ffffff,#f5eeff);border:1px solid var(--line);
+  color:var(--title);box-shadow:0 4px 12px rgba(150,110,200,.10);font-size:14px
 }
 .primary-btn{
   padding:13px 22px;
@@ -491,12 +491,12 @@ body{
       </div>
     </div>
     <div class="top-actions">
-      <div class="chip" tabindex="0" data-tip="This is the story name of the child hero. After a name is chosen, the game uses Princess + Name.">👑 <span id="heroName">Hero Princess</span></div>
-      <div class="chip" tabindex="0" data-tip="This shows the next main story level waiting for the princess.">🗺️ <span id="heroLevel">Level 1</span></div>
-      <div class="chip" tabindex="0" data-tip="Spirit Stones are earned by answering questions. Use them to buy snacks for your cat!">💎 <span id="heroStars">0</span></div>
-      <div class="chip" tabindex="0" data-tip="This shows how many main story levels are open right now.">🔓 <span id="heroUnlock">Unlocked 1/36</span></div>
-      <button id="petBtn" class="btn">🐱 My Cat</button>
-      <button id="spellBookBtn" class="btn">📖 Spell Book</button>
+      <div class="chip" tabindex="0" data-tip="Princess name — the story hero.">👑 <span id="heroName">Hero</span></div>
+      <div class="chip" tabindex="0" data-tip="Current level.">🗺️ <span id="heroLevel">Lv 1</span></div>
+      <div class="chip" tabindex="0" data-tip="Spirit Stones — earn by answering questions, spend on cat snacks!">💎 <span id="heroStars">0</span></div>
+      <div class="chip" tabindex="0" data-tip="Levels unlocked.">🔓 <span id="heroUnlock">1/36</span></div>
+      <button id="petBtn" class="btn">🐱</button>
+      <button id="spellBookBtn" class="btn">📖</button>
       <button id="authBtn" class="btn">☁️ Sign In</button>
     </div>
   </div>
@@ -650,6 +650,8 @@ body{
     </div>
   </div>
 </div>
+
+<div id="authModal" class="modal-backdrop">
   <div class="modal" style="width:min(560px,100%)">
     <div class="close-row"><button class="close-btn" data-close="authModal">Close</button></div>
     <h3>Cloud Save Sign In</h3>
@@ -938,10 +940,13 @@ body{
   function applyTopbar() {
     const totalStars = sumStars(state.progress);
     state.currentLevelNo = nextPlayableLevel(state.levels, state.progress);
-    $('heroName').textContent = state.princessName || 'Hero Princess';
-    $('heroLevel').textContent = `Level ${state.currentLevelNo}`;
+    const shortName = (state.princessName || 'Hero Princess').replace('Princess ', '');
+    $('heroName').textContent = shortName;
+    $('heroLevel').textContent = `Lv ${state.currentLevelNo}`;
     $('heroStars').textContent = totalStars;
-    $('heroUnlock').textContent = `Unlocked ${unlockedCount(state.levels, state.progress)}/${state.levels.length || 36}`;
+    const unlocked = unlockedCount(state.levels, state.progress);
+    const total = state.levels.length || 36;
+    $('heroUnlock').textContent = `${unlocked}/${total}`;
     $('authBtn').textContent = state.user ? '↩ Sign Out' : '☁️ Sign In';
     window._appStones = totalStars;
     if (typeof updateStonesDisplay === 'function') updateStonesDisplay();
@@ -1599,51 +1604,75 @@ body{
     calibrating = !calibrating;
     const overlay = $('calibrateOverlay');
     const btn = $('calibrateBtn');
+    const shell = $('mapShell');
+    const canvas = $('mapCanvas');
+
     if (calibrating) {
       overlay.style.display = 'block';
       overlay.style.pointerEvents = 'all';
       overlay.style.cursor = 'crosshair';
-      btn.textContent = '🎯 Stop Calibrating';
+      btn.textContent = '🎯 Stop';
       btn.style.background = '#ffe0e0';
-      // draw grid lines
+
+      // Build grid — overlay is position:absolute inset:0 inside canvas, so % coords are canvas-relative
       let gridHTML = '';
       for (let x = 10; x < 100; x += 10) {
-        gridHTML += `<div style="position:absolute;left:${x}%;top:0;bottom:0;width:1px;background:rgba(180,80,220,.15)"></div>
-          <div style="position:absolute;left:${x}%;top:4px;font-size:9px;color:rgba(150,60,200,.5);transform:translateX(-50%);font-weight:900">${x}</div>`;
+        gridHTML += `<div style="position:absolute;left:${x}%;top:0;bottom:0;width:1px;background:rgba(180,80,220,.18)"></div>
+          <div style="position:absolute;left:${x}%;top:6px;font-size:9px;color:rgba(130,50,200,.7);transform:translateX(-50%);font-weight:900;pointer-events:none">${x}</div>`;
       }
       for (let y = 5; y < 100; y += 5) {
         gridHTML += `<div style="position:absolute;top:${y}%;left:0;right:0;height:1px;background:rgba(180,80,220,.12)"></div>
-          <div style="position:absolute;top:${y}%;left:4px;font-size:9px;color:rgba(150,60,200,.5);transform:translateY(-50%);font-weight:900">${y}</div>`;
+          <div style="position:absolute;top:${y}%;left:4px;font-size:9px;color:rgba(130,50,200,.7);transform:translateY(-50%);font-weight:900;pointer-events:none">${y}</div>`;
       }
-      gridHTML += `<div id="calibrateCursor" style="position:absolute;display:none;pointer-events:none;z-index:20">
-        <div style="width:16px;height:16px;border:2px solid red;border-radius:50%;transform:translate(-50%,-50%)"></div>
-        <div id="calibrateLabel" style="position:absolute;top:12px;left:12px;background:rgba(0,0,0,.75);color:#fff;font-size:11px;font-weight:900;padding:2px 6px;border-radius:6px;white-space:nowrap"></div>
+      // Cursor label (stays inside overlay)
+      gridHTML += `<div id="calibrateCursor" style="position:absolute;display:none;pointer-events:none;z-index:20;top:0;left:0">
+        <div style="width:14px;height:14px;border:2.5px solid #e00;border-radius:50%;transform:translate(-50%,-50%)"></div>
+        <div id="calibrateLabel" style="position:absolute;top:8px;left:10px;background:rgba(0,0,0,.8);color:#fff;font-size:11px;font-weight:900;padding:2px 7px;border-radius:6px;white-space:nowrap"></div>
       </div>`;
       overlay.innerHTML = gridHTML;
+
+      // Helper: get canvas-relative coords from a mouse event
+      function canvasCoords(e) {
+        const canvasRect = canvas.getBoundingClientRect();
+        // clientX/Y relative to canvas top-left (canvas may be scrolled within shell)
+        // canvas position = shell.getBoundingClientRect().top - shell.scrollTop
+        const shellRect = shell.getBoundingClientRect();
+        const canvasTop = shellRect.top - shell.scrollTop; // top of full canvas in viewport
+        const canvasLeft = shellRect.left; // canvas fills shell width
+        const relX = e.clientX - canvasLeft;
+        const relY = e.clientY - canvasTop;
+        const px = (relX / canvas.offsetWidth * 100).toFixed(1);
+        const py = (relY / canvas.offsetHeight * 100).toFixed(1);
+        return { px: Math.max(0,Math.min(100,parseFloat(px))).toFixed(1),
+                 py: Math.max(0,Math.min(100,parseFloat(py))).toFixed(1),
+                 relX, relY };
+      }
+
       overlay.addEventListener('mousemove', (e) => {
-        const rect = overlay.getBoundingClientRect();
-        const px = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
-        const py = ((e.clientY - rect.top) / overlay.scrollHeight * 100).toFixed(1);
+        const {px, py, relX, relY} = canvasCoords(e);
         const cursor = document.getElementById('calibrateCursor');
         const label = document.getElementById('calibrateLabel');
-        if (cursor) { cursor.style.display = 'block'; cursor.style.left = ((e.clientX - rect.left)/rect.width*100)+'%'; cursor.style.top = (e.clientY - rect.top + $('mapShell').scrollTop)+'px'; }
+        if (cursor) {
+          cursor.style.display = 'block';
+          cursor.style.left = (relX / canvas.offsetWidth * 100) + '%';
+          cursor.style.top  = (relY / canvas.offsetHeight * 100) + '%';
+        }
         if (label) label.textContent = `[${px}, ${py}]`;
       });
+
       overlay.addEventListener('click', (e) => {
-        const rect = overlay.getBoundingClientRect();
-        const px = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
-        const scrollTop = $('mapShell').scrollTop;
-        const py = ((e.clientY - rect.top + scrollTop) / parseFloat($('mapCanvas').style.minHeight || 1800) * 100).toFixed(1);
-        console.log(`[${px}, ${py}],  // click point`);
+        const {px, py, relX, relY} = canvasCoords(e);
+        console.log(`[${px}, ${py}],  // level node`);
         const dot = document.createElement('div');
-        dot.style.cssText = `position:absolute;width:8px;height:8px;background:red;border-radius:50%;left:${px}%;top:calc(${py}% );transform:translate(-50%,-50%);pointer-events:none;z-index:15`;
+        dot.style.cssText = `position:absolute;width:10px;height:10px;background:#e00;border:2px solid #fff;border-radius:50%;left:${(relX/canvas.offsetWidth*100).toFixed(2)}%;top:${(relY/canvas.offsetHeight*100).toFixed(2)}%;transform:translate(-50%,-50%);pointer-events:none;z-index:15;box-shadow:0 0 4px rgba(0,0,0,.4)`;
         dot.title = `[${px},${py}]`;
         overlay.appendChild(dot);
         const tip = document.createElement('div');
-        tip.style.cssText = `position:absolute;left:${px}%;top:calc(${py}% + 6px);transform:translateX(-50%);font-size:9px;background:rgba(0,0,0,.7);color:#fff;padding:1px 4px;border-radius:4px;pointer-events:none;white-space:nowrap;font-weight:900`;
+        tip.style.cssText = `position:absolute;left:${(relX/canvas.offsetWidth*100).toFixed(2)}%;top:calc(${(relY/canvas.offsetHeight*100).toFixed(2)}% + 8px);transform:translateX(-50%);font-size:9px;background:rgba(0,0,0,.75);color:#fff;padding:1px 5px;border-radius:4px;pointer-events:none;white-space:nowrap;font-weight:900;z-index:15`;
         tip.textContent = `[${px},${py}]`;
         overlay.appendChild(tip);
       });
+
     } else {
       overlay.style.display = 'none';
       overlay.style.pointerEvents = 'none';
