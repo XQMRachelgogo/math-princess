@@ -460,14 +460,14 @@ body{
       </div>
       <div>
         <h1>Save the Kingdom with Math</h1>
-        <p>A Princess · A Quest · A Math Adventure <span style="background:#e8d5f0;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:900;color:#9060c0;letter-spacing:.3px">v0403-E</span></p>
+        <p>A Princess · A Quest · A Math Adventure</p>
       </div>
     </div>
     <div class="top-actions">
       <div class="chip" tabindex="0" data-tip="Princess name — the story hero.">👑 <span id="heroName">Hero</span></div>
       <div class="chip" tabindex="0" data-tip="Current level out of 36 total levels.">🗺️ <span id="heroLevel">Lv 1</span><span id="heroUnlock" style="color:var(--text2);font-size:11px;margin-left:2px">/ 36</span></div>
       <div class="chip" tabindex="0" data-tip="Spirit Stones — earn by answering questions, spend on cat snacks!">💎 <span id="heroStars">0</span></div>
-      <button id="petBtn" class="btn" style="display:none">🐱</button>
+      <button id="petBtn" class="btn">🐱</button>
       <button id="spellBookBtn" class="btn">📖</button>
       <button id="authBtn" class="btn">☁️ Sign In</button>
     </div>
@@ -654,7 +654,6 @@ body{
   const SUPABASE_URL = 'https://hokxngwigywyutilokya.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_RQlefCTSaipW2oWnv1zz7g_gqMWsoOv';
   const STORAGE_KEY = 'princess_spiral_quest_v10';
-  const MAX_MAIN_LEVELS = 36;
 
   const $ = (id) => document.getElementById(id);
   const modalIds = ['authModal','guideModal','spellModal','mapModal','levelModal','quizModal'];
@@ -677,20 +676,6 @@ body{
     quizQuestions: []
   };
 
-  function normalizeLevels(rows) {
-    const seen = new Set();
-    return (rows || [])
-      .filter(row => Number.isFinite(Number(row?.level_no)))
-      .sort((a, b) => Number(a.level_no) - Number(b.level_no))
-      .filter(row => {
-        const no = Number(row.level_no);
-        if (no < 1 || no > MAX_MAIN_LEVELS) return false;
-        if (seen.has(no)) return false;
-        seen.add(no);
-        return true;
-      });
-  }
-
   function localLoad() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
     catch { return {}; }
@@ -708,16 +693,6 @@ body{
   }
   function sumStars(progress) {
     return Object.values(progress || {}).reduce((acc, row) => acc + (row.stars || 0) + (row.bonusStars || 0), 0);
-  }
-  function isLevelCleared(row, levelNo = null) {
-    if (!row) return false;
-    if (row.completed) return true;
-    // Also check clearedLevels in localStorage
-    if (levelNo !== null) {
-      const local = localLoad();
-      return Array.isArray(local.clearedLevels) && local.clearedLevels.includes(levelNo);
-    }
-    return false;
   }
   function hasAnySave(progress) {
     return Object.values(progress || {}).some(v => (v.best_score || 0) > 0 || v.completed || (v.stars || 0) > 0 || (v.bonusStars || 0) > 0);
@@ -844,39 +819,24 @@ body{
 
   function applyTopbar() {
     const totalEarned = sumStars(state.progress);
-    const petData = (() => { try { return JSON.parse(localStorage.getItem('snowball_v1')||'{}'); } catch { return {}; } })();
-    const bonusStones = petData.bonusStones || 0;
-    const spent = petData.spent || 0;
-    const available = Math.max(0, totalEarned + bonusStones - spent);
+    const spent = (() => { try { return JSON.parse(localStorage.getItem('snowball_v1')||'{}').spent || 0; } catch { return 0; } })();
+    const available = Math.max(0, totalEarned - spent);
     state.currentLevelNo = nextPlayableLevel(state.levels, state.progress);
     const shortName = (state.princessName || 'Hero Princess').replace('Princess ', '');
     $('heroName').textContent = shortName;
     $('heroLevel').textContent = `Lv ${state.currentLevelNo}`;
     $('heroStars').textContent = available;
-    const total = Math.min(MAX_MAIN_LEVELS, state.levels.length || MAX_MAIN_LEVELS);
+    const total = state.levels.length || 36;
     $('heroUnlock').textContent = `/ ${total}`;
     $('authBtn').textContent = state.user ? '↩ Sign Out' : '☁️ Sign In';
     window._appStones = available;
     if (typeof updateStonesDisplay === 'function') updateStonesDisplay();
-    // Show/hide pet button based on level 1 completion
-    const _petBtn = $('petBtn');
-    if (_petBtn) {
-      const _l1 = window.__level1Cleared
-        || (Object.values(state.progress || {}).some((v,i) => false) === false && (() => {
-          const _lc = localLoad().clearedLevels || [];
-          return _lc.includes(1);
-        })())
-        || !!(state.progress && state.progress[1] && state.progress[1].completed)
-        || !!(localLoad().progressBackup && localLoad().progressBackup['1'] && localLoad().progressBackup['1'].completed);
-      _petBtn.style.display = _l1 ? '' : 'none';
-      if (_l1) window.__level1Cleared = true;
-    }
   }
 
   function applyHome() {
     const saveExists = hasAnySave(state.progress);
     const local = localLoad();
-    const hasStory = !!state.playerId || !!state.childName || !!local.storyReady;
+    const hasStory = !!state.playerId || !!state.childName || !!local.storyReady || !!state.user;
     const displayName = state.childName ? `Princess ${state.childName}` : 'the princess';
     $('storyText').textContent = state.childName
       ? `Far above the Cloud-Castle Kingdom, sleeping stars are waiting for ${displayName}. She must cross moon bridges, solve everyday math puzzles, practice old spells, and learn new ones little by little. A winged knight follows close behind, ready to explain the next step whenever the road feels hard.`
@@ -1012,7 +972,7 @@ body{
     const client = state.client;
     const levelsRes = await client.from('levels').select('*').order('level_no');
     if (levelsRes.error) throw levelsRes.error;
-    state.levels = normalizeLevels(levelsRes.data || []);
+    state.levels = levelsRes.data || [];
 
     const idToNo = Object.fromEntries(state.levels.map(l => [l.id, l.level_no]));
     state.spellPlanByLevel = {};
@@ -1039,24 +999,15 @@ body{
     } catch {}
 
     try {
-      const lessonsRes = await client
-        .from('spell_lessons')
-        .select('*, spells(name,code)')
-        .order('created_at', { ascending: false });
-
-      const latestBySpell = {};
+      const lessonsRes = await client.from('spell_lessons').select('*, spells(name,code)').order('created_at');
       (lessonsRes.data || []).forEach(row => {
-        if (!row?.spell_id) return;
-        if (!latestBySpell[row.spell_id]) latestBySpell[row.spell_id] = row;
+        if (!state.lessonsBySpellId[row.spell_id]) state.lessonsBySpellId[row.spell_id] = [];
+        state.lessonsBySpellId[row.spell_id].push(row);
       });
-
-      Object.values(latestBySpell).forEach(row => {
-        state.lessonsBySpellId[row.spell_id] = [row];
-      });
-
+      // Log field names once so we can verify the schema
       if (lessonsRes.data && lessonsRes.data.length) {
-        console.log('[spell_lessons latest rows]', Object.keys(latestBySpell).length);
-        console.log('[spell_lessons sample]', Object.values(latestBySpell)[0]);
+        console.log('[spell_lessons fields]', Object.keys(lessonsRes.data[0]));
+        console.log('[spell_lessons sample]', lessonsRes.data[0]);
       } else if (lessonsRes.error) {
         console.warn('[spell_lessons error]', lessonsRes.error);
       } else {
@@ -1070,20 +1021,13 @@ body{
     state.user = session?.user || null;
 
     const local = localLoad();
-    const localAuthUserId = local.authUserId || null;
-    const switchedAccount = !!(state.user && localAuthUserId && localAuthUserId !== state.user.id);
-
-    state.childName = switchedAccount ? '' : (local.childName || '');
+    state.childName = local.childName || '';
     state.princessName = state.childName ? `Princess ${state.childName}` : 'Hero Princess';
-    state.playerId = switchedAccount ? null : (local.playerId || null);
+    state.playerId = local.playerId || null; // restore from local if available
     state.progress = {};
     state.spellStats = [];
 
-    if (switchedAccount) {
-      localSave({ authUserId: state.user.id, childName: '', playerId: null, storyReady: false });
-    }
-
-    console.log('[session] user:', state.user?.id, '| localChildName:', state.childName, '| localPlayerId:', state.playerId, '| switchedAccount:', switchedAccount);
+    console.log('[session] user:', state.user?.id, '| localChildName:', state.childName, '| localPlayerId:', state.playerId);
 
     if (state.user) {
       const { data, error } = await state.client.rpc('get_current_user_story');
@@ -1093,7 +1037,7 @@ body{
         state.playerId = row.player_id;
         state.childName = row.child_name || '';
         state.princessName = row.princess_name || (state.childName ? `Princess ${state.childName}` : 'Hero Princess');
-        localSave({ authUserId: state.user.id, childName: state.childName, storyReady: true, playerId: state.playerId });
+        localSave({ childName: state.childName, storyReady: true, playerId: state.playerId });
       } else {
         const { data: profileData, error: pe } = await state.client
           .from('user_profiles')
@@ -1104,15 +1048,15 @@ body{
         if (profileData?.player_id) {
           state.playerId = profileData.player_id;
           state.childName = profileData.child_name || '';
-          localSave({ authUserId: state.user.id, childName: state.childName, storyReady: true, playerId: state.playerId });
+          localSave({ childName: state.childName, storyReady: true, playerId: state.playerId });
         } else if (profileData?.child_name) {
           state.childName = profileData.child_name || '';
-          localSave({ authUserId: state.user.id, childName: state.childName, storyReady: true });
+          localSave({ childName: state.childName, storyReady: true });
         }
       }
     }
 
-    if (!state.user && !state.playerId && state.childName) {
+    if (!state.playerId && state.childName) {
       const { data, error } = await state.client.rpc('get_or_create_player', { p_child_name: state.childName });
       console.log('[get_or_create_player] data:', data, 'error:', error);
       if (!error && data && data.length) {
@@ -1121,31 +1065,6 @@ body{
         state.childName = row.child_name;
         state.princessName = row.princess_name;
         localSave({ playerId: state.playerId });
-      }
-    }
-
-    // If logged in but still no playerId — try harder to find or create
-    if (state.user && !state.playerId) {
-      if (state.childName) {
-        console.log('[session] logged-in user has no player — creating and linking with name:', state.childName);
-        const { data, error } = await state.client.rpc('get_or_create_player', { p_child_name: state.childName });
-        console.log('[get_or_create_player fallback] data:', data, 'error:', error);
-        if (!error && data && data.length) {
-          const row = data[0];
-          state.playerId = row.player_id;
-          state.childName = row.child_name;
-          state.princessName = row.princess_name;
-          await state.client.from('user_profiles').upsert(
-            { user_id: state.user.id, player_id: state.playerId, child_name: state.childName, updated_at: new Date().toISOString() },
-            { onConflict: 'user_id' }
-          );
-          localSave({ authUserId: state.user.id, childName: state.childName, storyReady: true, playerId: state.playerId });
-          console.log('[session] linked playerId:', state.playerId);
-        }
-      } else {
-        // No name and no profile — ask user to enter name on home screen
-        console.log('[session] logged-in user has no player and no name — prompting for name');
-        localSave({ authUserId: state.user.id, storyReady: false });
       }
     }
 
@@ -1229,11 +1148,10 @@ body{
     state.playerId = row.player_id;
     state.childName = row.child_name;
     state.princessName = row.princess_name;
-    localSave({ authUserId: state.user?.id || null, childName: state.childName, storyReady: true, playerId: state.playerId });
+    localSave({ childName: state.childName, storyReady: true, playerId: state.playerId });
 
     if (state.user) {
       const profilePayload = { user_id: state.user.id, player_id: state.playerId, child_name: state.childName, updated_at: new Date().toISOString() };
-      localSave({ authUserId: state.user.id, childName: state.childName, storyReady: true, playerId: state.playerId });
       const { error: profileError } = await state.client.from('user_profiles').upsert(profilePayload, { onConflict: 'user_id' });
       if (profileError) {
         console.error(profileError);
@@ -1356,31 +1274,29 @@ body{
         const videoUrl = khanUrl || ytUrl;
         const isKhan = !!khanUrl;
         const videoIcon = isKhan ? '🎓' : ytUrl ? '▶️' : '🔗';
-        const videoLabel    = isKhan ? 'Watch on Khan Academy' : ytUrl ? 'Watch on YouTube' : 'Watch lesson video';
+        const videoLabel = isKhan ? 'Watch on Khan Academy' : ytUrl ? 'Watch on YouTube' : 'Watch lesson video';
+        const resourceNote = l.resource_note || '';
+        const resourceTitle = l.resource_title || '';
 
         const videoHtml = videoUrl
           ? `<a class="lesson-video-link" href="${videoUrl}" target="_blank" rel="noopener noreferrer">
-               <span class="vid-icon">${videoIcon}</span>${l.resource_title || videoLabel}
+               <span class="vid-icon">${videoIcon}</span>${videoLabel}${resourceTitle ? ' · ' + resourceTitle : ''}
              </a>
-             ${l.resource_note ? `<div style="font-size:11px;color:#9070b0;margin-top:4px">${l.resource_note}</div>` : ''}`
+             ${resourceNote ? `<div style="font-size:12px;color:#9070b0;margin-top:6px">${resourceNote}</div>` : ''}`
           : '';
 
-        const definition    = l.concept_intro || '';
-        const tip           = l.knight_explanation_short || '';
-        const steps         = l.step_by_step || '';
-        const mistakes      = l.common_mistakes || '';
-        const title = l.spells?.name ? `✨ ${l.spells.name}` : "✨ Sir Knight\u2019s Lesson";
-
-        const stepsHtml = steps
-          ? `<div style="margin-top:10px;padding:9px 12px;border-radius:10px;background:#f5f0ff;font-size:13px;color:#6050a0;line-height:1.8"><strong>Steps</strong><br>${steps.replace(/(\d+\))/g,'<br>$1').replace(/^<br>/,'')}</div>`
-          : '';
+        const body = l.concept_intro || l.knight_explanation_short || '';
+        const detail = l.knight_explanation_long || '';
+        const steps = l.step_by_step || '';
+        const mistakes = l.common_mistakes || '';
+        const title = l.spells?.name ? `✨ New Spell: ${l.spells.name}` : "✨ Sir Knight\u2019s Lesson";
 
         return `<div class="lesson-card">
           <div class="lesson-card-title">${title}</div>
-          ${definition ? `<div class="lesson-card-body">${definition}</div>` : ''}
-          ${tip        ? `<div style="font-size:13px;color:#6050a0;padding:7px 11px;border-radius:9px;background:rgba(200,180,255,.12);border-left:3px solid #c084fc;margin-bottom:8px">${tip}</div>` : ''}
-          ${stepsHtml}
-          ${mistakes   ? `<div style="margin-top:7px;padding:7px 10px;border-radius:9px;background:#fff8f0;border-left:3px solid #f0a060;font-size:12px;color:#a06000"><strong>⚠ Watch out:</strong> ${mistakes}</div>` : ''}
+          ${body ? `<div class="lesson-card-body">${body}</div>` : ''}
+          ${detail ? `<div class="lesson-card-body" style="margin-top:6px;font-size:13px">${detail}</div>` : ''}
+          ${steps ? `<div style="margin-top:8px;padding:10px;border-radius:10px;background:rgba(255,255,255,.7);font-size:13px;color:#7060a0"><strong>Steps:</strong> ${steps}</div>` : ''}
+          ${mistakes ? `<div style="margin-top:6px;padding:8px 10px;border-radius:10px;background:#fff8f0;font-size:12px;color:#b06000"><strong>Watch out:</strong> ${mistakes}</div>` : ''}
           <div style="margin-top:10px">${videoHtml}</div>
         </div>`;
       }).join('');
@@ -1489,138 +1405,95 @@ body{
       .in('spell_id', spellIds);
     if (error) throw error;
 
-    // ── Progressive spiral: new content % by level band ──────────────────
-    // L1=0%, L2-4=30%, L5-12=45%, L13-24=60%, L25-36=75%
-    function getMaxNew(lno) {
-      if (lno <= 1)  return 0;
-      if (lno <= 4)  return Math.round(12 * 0.30);
-      if (lno <= 12) return Math.round(12 * 0.45);
-      if (lno <= 24) return Math.round(12 * 0.60);
-      return Math.round(12 * 0.75);
-    }
-    const MAX_NEW = getMaxNew(levelNo);
-    const TOTAL   = 12;
-
-    // Difficulty progression order (easy → hard)
-    const DIFF_ORDER = ['concept', 'guided', 'practice', 'challenge'];
-
-    const reviewPlans = plans.filter(p => p.role !== 'new' && p.role !== 'new_intro');
-    const newPlans    = plans.filter(p => p.role === 'new'  || p.role === 'new_intro');
-
     const bySpell = {};
     (allQs || []).forEach(q => {
       if (!bySpell[q.spell_id]) bySpell[q.spell_id] = [];
       bySpell[q.spell_id].push(q);
     });
 
-    const chosen    = [];
+    const chosen = [];
     const chosenIds = new Set();
-    const wrongIds  = wrongRows.map(r => r.question_id);
+    const wrongIds = wrongRows.map(r => r.question_id);
 
-    function addQ(q) {
+    // Separate plans by role for spiral ratio enforcement
+    const reviewPlans = plans.filter(p => p.role !== 'new' && p.role !== 'new_intro');
+    const newPlans    = plans.filter(p => p.role === 'new' || p.role === 'new_intro');
+    // Spiral design: max 4 new-content questions out of 12 (~33%)
+    // Review/practice fills the majority first
+    const MAX_NEW = Math.min(4, newPlans.length * 3);
+
+    function addQuestion(q) {
       if (!q || chosenIds.has(q.id)) return false;
       chosen.push(q); chosenIds.add(q.id); return true;
     }
 
-    // Pick up to `limit` questions from a spell in difficulty order
-    function pickFromSpell(spellId, limit, preferDifficulty) {
-      if (limit <= 0) return;
-      const pool = bySpell[spellId] || [];
-      const countForSpell = () => chosen.filter(x => x.spell_id === spellId).length;
-
-      // Priority 1: previously wrong questions (reinforce weak spots)
-      for (const q of shuffle(pool.filter(q => wrongIds.includes(q.id) && !chosenIds.has(q.id)))) {
-        if (chosen.length >= TOTAL || countForSpell() >= limit) break;
-        addQ(q);
+    function fillFromPlan(plan, limit) {
+      const candidates = bySpell[plan.spell_id] || [];
+      // Priority 1: wrong questions for this spell
+      const wrongCands = shuffle(candidates.filter(q => wrongIds.includes(q.id) && !chosenIds.has(q.id)));
+      for (const q of wrongCands) {
+        if (chosen.length >= 12) break;
+        const countForSpell = chosen.filter(x => x.spell_id === plan.spell_id).length;
+        if (countForSpell >= limit) break;
+        addQuestion(q);
       }
-      // Priority 2: preferred difficulty first, then easier→harder
-      const diffOrder = preferDifficulty
-        ? [preferDifficulty, ...DIFF_ORDER.filter(d => d !== preferDifficulty)]
-        : DIFF_ORDER;
-      for (const diff of diffOrder) {
-        for (const q of shuffle(pool.filter(q => !chosenIds.has(q.id) && q.difficulty === diff))) {
-          if (chosen.length >= TOTAL || countForSpell() >= limit) break;
-          addQ(q);
-        }
-        if (countForSpell() >= limit) break;
+      // Priority 2: difficulty-matched questions
+      let filtered = candidates.filter(q => q.difficulty === plan.difficulty_band && !chosenIds.has(q.id));
+      if (filtered.length < limit) filtered = candidates.filter(q => !chosenIds.has(q.id));
+      for (const q of shuffle(filtered)) {
+        if (chosen.length >= 12) break;
+        const countForSpell = chosen.filter(x => x.spell_id === plan.spell_id).length;
+        if (countForSpell >= limit) break;
+        addQuestion(q);
       }
     }
 
-    // ═══ STEP 1: Review spells — fill the majority first ═══
-    // Review difficulty: early levels use practice, later allow challenge
-    const reviewDiff = levelNo <= 12 ? 'practice' : levelNo <= 24 ? 'challenge' : null;
-    const reviewTarget = TOTAL - MAX_NEW;
-    const perReview = reviewPlans.length
-      ? Math.max(1, Math.floor(reviewTarget / reviewPlans.length))
-      : 0;
+    // Step 1: Fill review/practice spells first (majority of questions)
     for (const plan of reviewPlans) {
-      pickFromSpell(plan.spell_id, perReview, reviewDiff || plan.difficulty_band);
+      fillFromPlan(plan, Math.max(Number(plan.min_questions || 1), 2));
     }
 
-    // ═══ STEP 2: New-content — capped at MAX_NEW, easiest questions first ═══
-    // Early levels: concept only; mid: guided; late: practice/challenge
-    const newDiff = levelNo <= 4  ? 'concept'
-                  : levelNo <= 8  ? 'guided'
-                  : levelNo <= 16 ? 'practice'
-                  : null; // null = natural DIFF_ORDER spread
-    const perNew = newPlans.length
-      ? Math.max(1, Math.floor(MAX_NEW / newPlans.length))
-      : 0;
+    // Step 2: Add new-content questions (capped at MAX_NEW total)
+    const newBefore = chosen.length;
     for (const plan of newPlans) {
+      const newSoFar = chosen.length - newBefore; // rough proxy isn't perfect but works
+      // Count actual new-spell questions added
       const newCount = chosen.filter(q => newPlans.some(p => p.spell_id === q.spell_id)).length;
       if (newCount >= MAX_NEW) break;
-      const cap = Math.min(perNew, MAX_NEW - newCount);
-      pickFromSpell(plan.spell_id, cap, newDiff || plan.difficulty_band);
+      const remaining = MAX_NEW - newCount;
+      fillFromPlan(plan, Math.min(Number(plan.min_questions || 1), remaining, 2));
     }
 
-    // ═══ STEP 3: Fill remaining with review, balancing question types ═══
-    if (chosen.length < TOTAL) {
+    // Step 3: Fill remaining slots with review questions (never new)
+    if (chosen.length < 12) {
       const reviewSpellIds = new Set(reviewPlans.map(p => p.spell_id));
-      const pool = (allQs || []).filter(q => !chosenIds.has(q.id) && reviewSpellIds.has(q.spell_id));
-      const mcWant = Math.max(0, 7 - chosen.filter(q => q.question_type === 'multiple_choice').length);
-      const saWant = Math.max(0, 4 - chosen.filter(q => q.question_type === 'short_answer').length);
-      const mc = shuffle(pool.filter(q => q.question_type === 'multiple_choice')).slice(0, mcWant);
-      const sa = shuffle(pool.filter(q => q.question_type === 'short_answer')).slice(0, saWant);
-      const mcSet = new Set(mc.map(q=>q.id)), saSet = new Set(sa.map(q=>q.id));
-      const rest = shuffle(pool.filter(q => !mcSet.has(q.id) && !saSet.has(q.id)));
-      for (const q of [...mc, ...sa, ...rest]) {
-        if (chosen.length >= TOTAL) break;
-        addQ(q);
+      const reviewLeftovers = shuffle((allQs || []).filter(q =>
+        !chosenIds.has(q.id) && reviewSpellIds.has(q.spell_id)
+      ));
+      for (const q of reviewLeftovers) {
+        if (chosen.length >= 12) break;
+        addQuestion(q);
       }
     }
 
-    // ═══ STEP 4: Absolute fallback ═══
-    if (chosen.length < TOTAL) {
-      for (const q of shuffle((allQs || []).filter(q => !chosenIds.has(q.id)))) {
-        if (chosen.length >= TOTAL) break;
-        addQ(q);
+    // Step 4: If still short, fill with any remaining questions
+    if (chosen.length < 12) {
+      const any = shuffle((allQs || []).filter(q => !chosenIds.has(q.id)));
+      for (const q of any) {
+        if (chosen.length >= 12) break;
+        addQuestion(q);
       }
     }
 
-    // ═══ FINAL SORT: review first, then new; within each group easy→hard ═══
-    const newSpellIdSet = new Set(newPlans.map(p => p.spell_id));
-    chosen.sort((a, b) => {
-      const aNew = newSpellIdSet.has(a.spell_id) ? 1 : 0;
-      const bNew = newSpellIdSet.has(b.spell_id) ? 1 : 0;
-      if (aNew !== bNew) return aNew - bNew;          // review before new
-      const aDi = DIFF_ORDER.indexOf(a.difficulty);
-      const bDi = DIFF_ORDER.indexOf(b.difficulty);
-      return (aDi < 0 ? 2 : aDi) - (bDi < 0 ? 2 : bDi);  // easier first
-    });
-
-    const actualNew = chosen.filter(q => newSpellIdSet.has(q.spell_id)).length;
-    console.log('[Level ' + levelNo + '] maxNew=' + MAX_NEW + ' actualNew=' + actualNew + ' total=' + chosen.length
-      + ' | ' + chosen.map(q => (newSpellIdSet.has(q.spell_id)?'NEW':'rev') + ':' + q.difficulty).join(' '));
-    return chosen.slice(0, TOTAL);
+    return chosen.slice(0, 12);
   }
-
 
   function renderQuiz(levelNo, questions) {
     state.quizQuestions = questions;
     const level = state.levels.find(l => l.level_no === levelNo);
     const plans = state.spellPlanByLevel[levelNo] || [];
-    const hasNewContent = plans.some(p => p.role === 'new' || p.role === 'new_intro');
-    const newCount = questions.filter(q => plans.filter(p => p.role === 'new' || p.role === 'new_intro').some(p => p.spell_id === q.spell_id)).length;
+    const hasNewContent = plans.some(p => p.role === 'new');
+    const newCount = questions.filter(q => plans.filter(p=>p.role==='new').some(p=>p.spell_id===q.spell_id)).length;
 
     $('quizTitle').textContent = `Level ${levelNo} · ${level?.title || 'Quiz'}`;
     $('quizSubtitle').innerHTML = questions.length
@@ -1671,131 +1544,12 @@ body{
     }
     try {
       const questions = await fetchQuestionsForLevel(levelNo);
-
-      // ── Knight teaching moment: show lesson screen before quiz if new content ──
-      const plans = state.spellPlanByLevel[levelNo] || [];
-      const newPlans = plans.filter(p => p.role === 'new' || p.role === 'new_intro');
-      const newSpellIds = uniqueBy(newPlans.map(p => p.spell_id), x => x);
-      const lessonRows = [];
-      newSpellIds.forEach(sid => {
-        (state.lessonsBySpellId[sid] || []).forEach(l => lessonRows.push(l));
-      });
-
-      if (lessonRows.length > 0) {
-        // Show knight teaching modal before the quiz
-        showKnightTeaching(levelNo, lessonRows, () => {
-          renderQuiz(levelNo, questions);
-          $('quizModal').classList.add('open');
-        });
-      } else {
-        renderQuiz(levelNo, questions);
-        $('quizModal').classList.add('open');
-      }
+      renderQuiz(levelNo, questions);
+      $('quizModal').classList.add('open');
     } catch (err) {
       console.error(err);
       setStatus('Questions could not be loaded yet.');
     }
-  }
-
-  function showKnightTeaching(levelNo, lessons, onDone) {
-    let overlay = $('knightTeachOverlay');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'knightTeachOverlay';
-      overlay.style.cssText = 'display:none;position:fixed;left:0;top:0;width:100%;height:100%;z-index:2147483646;background:rgba(30,10,60,.7);align-items:center;justify-content:center;padding:20px;box-sizing:border-box;overflow:auto';
-      document.body.appendChild(overlay);
-    }
-
-    const BASE = 'https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/';
-    const newSpellNames = [...new Set(lessons.map(l => l.spells?.name).filter(Boolean))];
-    const level = state.levels.find(l => l.level_no === levelNo);
-
-    // Deduplicate by spell_id — one card per new spell
-    const seen = new Set();
-    const uniqueLessons = lessons.filter(l => {
-      if (seen.has(l.spell_id)) return false;
-      seen.add(l.spell_id); return true;
-    });
-
-    const cardsHtml = uniqueLessons.map(l => {
-      const khanUrl = l.khan_url || '';
-      const ytUrl   = l.youtube_url || '';
-      const videoUrl = khanUrl || ytUrl;
-      const isKhan   = !!khanUrl;
-
-      // Content hierarchy — use knight_explanation_short as the primary hook,
-      // concept_intro as the one-line definition
-      const definition  = l.concept_intro || '';
-      const tip          = l.knight_explanation_short || '';
-      const steps        = l.step_by_step || '';
-      const mistakes     = l.common_mistakes || '';
-      const resourceTitle = l.resource_title || (isKhan ? 'Watch on Khan Academy' : 'Watch video');
-      const resourceNote  = l.resource_note || '';
-      const spellName     = l.spells?.name || 'New Spell';
-
-      // Step list: numbered, split on ") " or ".) "
-      const stepsHtml = steps
-        ? `<div style="margin-top:12px;padding:10px 14px;border-radius:12px;background:#f5f0ff;font-size:13px;color:#6050a0;line-height:1.8">
-             <strong style="display:block;margin-bottom:4px">Steps</strong>
-             ${steps.replace(/(\d+\))/g, '<br>$1').replace(/^<br>/, '')}
-           </div>`
-        : '';
-
-      const mistakesHtml = mistakes
-        ? `<div style="margin-top:8px;padding:8px 12px;border-radius:10px;background:#fff8f0;border-left:3px solid #f0a060;font-size:12px;color:#a06000;line-height:1.6">
-             <strong>⚠ Watch out:</strong> ${mistakes}
-           </div>`
-        : '';
-
-      const videoHtml = videoUrl
-        ? `<a href="${videoUrl}" target="_blank" rel="noopener noreferrer"
-             style="display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:9px 16px;border-radius:14px;background:linear-gradient(135deg,#e8f4ff,#f0e8ff);border:1px solid #c8d8f0;color:#4060b0;font-weight:900;font-size:13px;text-decoration:none">
-             ${isKhan ? '🎓' : '▶️'} ${resourceTitle}
-           </a>${resourceNote ? `<div style="font-size:11px;color:#9070b0;margin-top:5px">${resourceNote}</div>` : ''}`
-        : '';
-
-      return `
-        <div style="background:rgba(255,255,255,.96);border:1px solid #e0d0f0;border-radius:20px;padding:16px 18px;margin-bottom:12px">
-          <div style="font-size:12px;font-weight:900;color:#9060c0;letter-spacing:.3px;margin-bottom:6px">✨ ${spellName}</div>
-          ${definition ? `<div style="font-size:15px;font-weight:700;color:#3a2860;line-height:1.55;margin-bottom:6px">${definition}</div>` : ''}
-          ${tip        ? `<div style="font-size:13px;color:#6050a0;line-height:1.6;padding:8px 12px;border-radius:10px;background:rgba(200,180,255,.12);border-left:3px solid #c084fc">${tip}</div>` : ''}
-          ${stepsHtml}
-          ${mistakesHtml}
-          ${videoHtml}
-        </div>`;
-    }).join('');
-
-    overlay.innerHTML = `
-      <div style="background:linear-gradient(160deg,#fef9ff,#f0e8ff);border:2px solid rgba(210,180,255,.5);border-radius:32px;width:min(720px,100%);max-height:88vh;overflow-y:auto;box-shadow:0 32px 80px rgba(100,50,180,.3);display:flex;flex-direction:column">
-        <div style="padding:18px 24px 14px;background:linear-gradient(160deg,rgba(255,255,255,.96),rgba(248,240,255,.96));border-bottom:1px solid rgba(210,180,255,.4);flex-shrink:0;position:sticky;top:0;z-index:2">
-          <div style="display:flex;align-items:center;gap:14px">
-            <img src="${BASE}knight.png" alt="Sir Knight" style="width:60px;height:auto;flex-shrink:0;filter:drop-shadow(0 4px 10px rgba(100,60,180,.18))">
-            <div style="flex:1;min-width:0">
-              <div style="font-size:11px;font-weight:900;color:#9070b0;margin-bottom:2px">Level ${levelNo}${level?.title ? ' · ' + level.title : ''}</div>
-              <div style="font-size:19px;font-weight:900;color:#5a3a86;line-height:1.1">Sir Knight's Lesson</div>
-              <div style="font-size:12px;color:#8060a0;margin-top:3px">Read before the level starts — you can scroll back anytime.</div>
-            </div>
-            ${newSpellNames.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end">${newSpellNames.map(n=>`<span style="padding:4px 10px;border-radius:999px;background:#f0e8ff;border:1px solid #d0c0f0;font-size:11px;font-weight:900;color:#6040a0;white-space:nowrap">✨ ${n}</span>`).join('')}</div>` : ''}
-          </div>
-        </div>
-        <div style="padding:18px 24px 8px;flex:1">
-          ${cardsHtml}
-        </div>
-        <div style="padding:14px 24px 20px;background:rgba(255,255,255,.6);border-top:1px solid rgba(210,180,255,.3);display:flex;justify-content:flex-end;flex-shrink:0;position:sticky;bottom:0">
-          <button id="knightTeachReadyBtn" style="padding:13px 28px;border:none;border-radius:16px;background:linear-gradient(135deg,#c084fc,#f472b6);color:#fff;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 6px 20px rgba(180,80,200,.28)">
-            Ready! Start the level →
-          </button>
-        </div>
-      </div>`;
-
-    overlay.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-
-    $('knightTeachReadyBtn').addEventListener('click', () => {
-      overlay.style.display = 'none';
-      document.body.style.overflow = '';
-      onDone();
-    }, { once: true });
   }
 
   function collectQuizAnswers() {
@@ -1869,49 +1623,33 @@ body{
       markQuizReview(attempts);
       $('submitQuizBtn').classList.add('hidden');
       $('retryQuizBtn').classList.remove('hidden');
-      $('nextLevelBtn').classList.add('hidden');
+      $('nextLevelBtn').classList.add('hidden'); // reset
 
       const result = (data && data[0]) || { score: rawScore, stars: earnedStars, completed: isCompleted };
+      // Ensure completed flag: if score >= 8 (2+ stars) always mark completed
       if (isCompleted && !result.completed) result.completed = true;
 
-      console.log('[submitQuiz] rawScore:', rawScore, '| earnedStars:', earnedStars, '| completed:', result.completed);
+      // Debug: log what Supabase returned
+      console.log('[submitQuiz] RPC result:', data, '| rawScore:', rawScore, '| completed:', result.completed);
 
       $('quizScoreBox').classList.remove('hidden');
-      $('quizScoreBox').textContent = `Score ${rawScore}/12 · ${earnedStars} Spirit Stone(s) · ${result.completed ? 'Level completed! ✨' : 'Keep practicing and try again.'}`;
+      $('quizScoreBox').textContent = `Score ${result.score ?? rawScore}/12 · ${result.stars ?? earnedStars} Spirit Stone(s) · ${result.completed ? 'Level completed! ✨' : 'Keep practicing and try again.'}`;
 
-      // Update local state immediately — don't wait for Supabase round-trip
+      await loadPlayerState();
+
+      // Local override: force completion & stars in client state
       if (result.completed && level) {
         const no = level.level_no;
         if (!state.progress[no]) state.progress[no] = { best_score: 0, stars: 0, completed: false, bonusStars: 0 };
-        const prevStars = state.progress[no].stars || 0;
         state.progress[no].completed = true;
-        state.progress[no].best_score = Math.max(state.progress[no].best_score || 0, rawScore);
-        state.progress[no].stars = Math.max(prevStars, earnedStars);
-        // Give bonus stones only for net star improvement (retry reward)
-        const starImprovement = Math.max(0, earnedStars - prevStars);
-        if (starImprovement > 0 && typeof window._addBonusStonesForImprovement === 'function') {
-          window._addBonusStonesForImprovement(starImprovement);
-        }
+        state.progress[no].best_score = Math.max(state.progress[no].best_score, rawScore);
+        state.progress[no].stars = Math.max(state.progress[no].stars, earnedStars);
         const spent2 = (() => { try { return JSON.parse(localStorage.getItem('snowball_v1')||'{}').spent||0; } catch{return 0;} })();
-        const bonusEarned = (() => { try { return JSON.parse(localStorage.getItem('snowball_v1')||'{}').bonusStones||0; } catch{return 0;} })();
-        const available = Math.max(0, sumStars(state.progress) + bonusEarned - spent2);
-        window._appStones = available;
-        const heroStarsEl = $('heroStars');
-        if (heroStarsEl) heroStarsEl.textContent = available;
-        console.log('[submitQuiz] Level', no, '| earnedStars:', earnedStars, '| prevStars:', prevStars, '| improvement:', starImprovement, '| available:', available);
+        window._appStones = Math.max(0, sumStars(state.progress) - spent2);
+        console.log('[submitQuiz] Local progress level', no, '| stars earned:', earnedStars, '| total stones:', window._appStones);
         $('nextLevelBtn').classList.remove('hidden');
         localSave({ progressBackup: state.progress });
-        const _sk = localLoad();
-        _sk.clearedLevels = Array.from(new Set([...(_sk.clearedLevels || []), no]));
-        localSave({ clearedLevels: _sk.clearedLevels });
-        if (no === 1) {
-          window.__level1Cleared = true;
-          window.dispatchEvent(new CustomEvent('story-progress-updated', { detail: { level1Cleared: true } }));
-        }
       }
-
-      // Sync Supabase in background — don't block UI
-      loadPlayerState().catch(e => console.warn('[submitQuiz] background sync failed:', e));
 
       // Update UI without reopening level modal (which would hide nextLevelBtn)
       applyTopbar();
@@ -1919,38 +1657,20 @@ body{
       renderMap();
       setStatus(result.completed ? `Level ${level.level_no} complete! +${starsForScore(rawScore)} Spirit Stones earned.` : `Level ${level.level_no} saved.`);
 
-      // 🐱 Gift modal: show on first Level 1 completion this session
+      // 🐱 Unlock cat after Level 1 first completion
       if (level.level_no === 1 && result.completed) {
         const petData = JSON.parse(localStorage.getItem('snowball_v1') || '{}');
-        const alreadyGifted = !!window._petGiftShownThisSession;
-        if (!alreadyGifted) {
-          window._petGiftSessionFlag = true;
-          window._petGiftShownThisSession = true;
-          if (!petData.unlocked) {
-            // First ever unlock — show gift modal
-            const pd = Object.assign({}, petData);
-            pd.giftPending = true;
-            localStorage.setItem('snowball_v1', JSON.stringify(pd));
+        if (!petData.unlocked) {
+          window._petGiftSessionFlag = true; // mark this session as the trigger
+          const pd = Object.assign({}, petData);
+          pd.giftPending = true;
+          localStorage.setItem('snowball_v1', JSON.stringify(pd));
+          setTimeout(() => {
+            $('quizModal').classList.remove('open');
             setTimeout(() => {
-              $('quizModal').classList.remove('open');
-              setTimeout(() => {
-                if (typeof window._openPetGiftModal === 'function') window._openPetGiftModal();
-              }, 400);
-            }, 1000);
-          } else {
-            // Already unlocked but show a welcome-back message via pet room
-            setTimeout(() => {
-              $('quizModal').classList.remove('open');
-              setTimeout(() => {
-                const pb = document.getElementById('petBtn');
-                if (pb) {
-                  pb.style.display = '';
-                  pb.animate([{transform:'scale(1)'},{transform:'scale(1.3)'},{transform:'scale(1)'}],
-                    {duration:600, iterations:3});
-                }
-              }, 400);
-            }, 800);
-          }
+              if (typeof window._openPetGiftModal === 'function') window._openPetGiftModal();
+            }, 400);
+          }, 1000);
         }
       }
     } catch (err) {
@@ -2037,98 +1757,9 @@ body{
   let sleeping=false, idleT=null, actionT=null, bubbleT=null;
 
   /* ── stones ── */
-  // Stone accounting:
-  // window._appStones = earned from levels (set by main app)
-  // load().bonusStones = bonus pool (daily login + snowball finds + retry improvements)
-  // load().spent = total spent from both pools
-  // available = _appStones + bonusStones - spent
-
-  // Ground truth: level stars from progressBackup + bonusStones - spent
-  function levelStars(){
-    try {
-      const backup = JSON.parse(localStorage.getItem('princess_spiral_quest_v10')||'{}').progressBackup || {};
-      return Object.values(backup).reduce((a,r)=>(a + (r.stars||0) + (r.bonusStars||0)), 0);
-    } catch { return window._appStones || 0; }
-  }
-  function stones(){
-    const d = load();
-    return Math.max(0, levelStars() + (d.bonusStones||0) - (d.spent||0));
-  }
-  function syncAll(){
-    const avail = stones();
-    const el = G('petRoomStones'); if(el) el.textContent = avail;
-    // Keep topbar in sync too
-    const heroEl = document.getElementById('heroStars');
-    if(heroEl && parseInt(heroEl.textContent) !== avail) heroEl.textContent = avail;
-    window._appStones = levelStars(); // keep _appStones = level stars only (for applyTopbar)
-  }
-
-  function addBonusStones(n, reason){
-    if(n > 0){
-      const d = load();
-      d.bonusStones = (d.bonusStones||0) + n;
-      localStorage.setItem(KEY, JSON.stringify(d));
-    }
-    syncAll();
-    if(n > 0 && reason){
-      addLog('💎 +' + n + ' ' + reason);
-      const b = G('petBubble');
-      if(b){ b.textContent = '💎 +' + n + ' ' + reason; b.style.opacity='1';
-        clearTimeout(bubbleT); bubbleT=setTimeout(()=>b.style.opacity='0',3000); }
-    }
-  }
-
-  function spend(n){
-    const d = load();
-    d.spent = (d.spent||0) + n;
-    localStorage.setItem(KEY, JSON.stringify(d));
-    syncAll();
-  }
-  function syncStones(){ syncAll(); }
-
-  // ── Daily login bonus: +1 stone per day ───────────────────────────────
-  function checkDailyBonus(){
-    const d = load();
-    const now = Date.now();
-    const lastBonus = d.lastDailyBonus || 0;
-    const oneDayMs = 24 * 60 * 60 * 1000;
-    if(now - lastBonus >= oneDayMs){
-      d.lastDailyBonus = now;
-      d.bonusStones = (d.bonusStones||0) + 1;
-      localStorage.setItem(KEY, JSON.stringify(d));
-      setTimeout(()=>{
-        syncAll();
-        addLog('🌟 Daily bonus: +1 Spirit Stone!');
-        speak('happy');
-      }, 800);
-    }
-  }
-
-  // ── Snowball daily find: 1-2 stones per day ───────────────────────────
-  function checkSnowballFind(){
-    const d = load();
-    const now = Date.now();
-    const lastFind = d.lastSnowballFind || 0;
-    const oneDayMs = 24 * 60 * 60 * 1000;
-    if(now - lastFind >= oneDayMs){
-      const found = Math.random() < 0.5 ? 1 : 2;
-      d.lastSnowballFind = now;
-      d.bonusStones = (d.bonusStones||0) + found;
-      localStorage.setItem(KEY, JSON.stringify(d));
-      const msgs = [
-        'Snowball found a shiny gem! 💎',
-        'Snowball brought you a treasure! ✨',
-        'Snowball dug up a spirit stone! 🐾',
-      ];
-      const msg = msgs[Math.floor(Math.random()*msgs.length)];
-      setTimeout(()=>{
-        syncAll();
-        addLog('🐾 ' + msg + ' (+' + found + ')');
-        speak('happy');
-        doAction('happy');
-      }, 1600);
-    }
-  }
+  function stones(){ return Math.max(0,(window._appStones||0)-(load().spent||0)); }
+  function spend(n){ const d=load(); d.spent=(d.spent||0)+n; localStorage.setItem(KEY,JSON.stringify(d)); syncStones(); }
+  function syncStones(){ const el=G('petRoomStones'); if(el) el.textContent=stones(); }
 
   /* ── build DOM ── */
   function buildModals(){
@@ -2147,13 +1778,13 @@ body{
           </div>
           <button id="petRoomCloseBtn" style="border:none;background:#f7f2ff;color:#8e75a7;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer;font-family:inherit">Close</button>
         </div>
-        <div style="display:flex;flex:1;min-height:0;overflow:hidden;align-items:stretch">
-          <div id="petScene" style="position:relative;flex:1.15 1 0;min-width:0;min-height:520px;overflow:hidden;background:url('${BASE}cat-home.png') center center / cover no-repeat;border-right:1px solid rgba(210,180,255,.3)">
-            <div id="petCatImg" style="position:absolute;bottom:18px;left:50%;transform:translateX(-50%);z-index:3;cursor:pointer;user-select:none;line-height:0">
-              <img id="catStateImg" src="${IMGS.main}" alt="Snowball" draggable="false" style="width:clamp(200px,50%,300px);max-width:100%;height:auto;filter:drop-shadow(0 8px 20px rgba(80,40,140,.22));transition:.22s opacity;display:block;object-fit:contain">
+        <div style="display:flex;flex:1;min-height:0;overflow:hidden">
+          <div id="petScene" style="position:relative;flex:1.3;min-height:380px;overflow:hidden;background:url('${BASE}cat-home.png') center/cover no-repeat;border-right:1px solid rgba(210,180,255,.3);display:flex;align-items:flex-end;justify-content:center">
+            <div id="petCatImg" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);z-index:3;cursor:pointer;user-select:none">
+              <img id="catStateImg" src="${IMGS.main}" alt="Snowball" draggable="false" style="width:clamp(200px,45%,280px);height:auto;filter:drop-shadow(0 8px 20px rgba(80,40,140,.22));transition:.22s opacity;display:block">
             </div>
-            <div id="petBubble" style="position:absolute;bottom:76%;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.97);border:2px solid #e0ccf5;border-radius:22px;padding:10px 22px;font-size:17px;font-weight:900;color:#6b4a96;white-space:nowrap;box-shadow:0 6px 20px rgba(150,110,200,.14);z-index:9;opacity:0;transition:.3s opacity;pointer-events:none">Meow~</div>
-            <div id="petZzz" style="display:none;position:absolute;bottom:80%;left:55%;font-size:26px;font-weight:900;color:#a090c0;letter-spacing:4px;z-index:10;animation:zzzFloat 2.2s ease-in-out infinite">z z z</div>
+            <div id="petBubble" style="position:absolute;top:18px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.96);border:2px solid #e8d5f0;border-radius:20px;padding:9px 18px;font-size:14px;font-weight:900;color:#6b4a96;white-space:nowrap;box-shadow:0 8px 24px rgba(150,110,200,.10);z-index:9;opacity:0;transition:.3s opacity;pointer-events:none">Meow~</div>
+            <div id="petZzz" style="display:none;position:absolute;top:30px;left:55%;font-size:20px;font-weight:900;color:#a090c0;letter-spacing:3px;z-index:10;animation:zzzFloat 2.2s ease-in-out infinite">z z z</div>
             <div id="petSleepOverlay" style="display:none;position:absolute;inset:0;z-index:20;background:rgba(60,40,100,.08);align-items:center;justify-content:center">
               <div style="background:rgba(255,255,255,.92);border:2px solid #e8d5f0;border-radius:20px;padding:14px 22px;font-size:15px;font-weight:900;color:#6b4a96;text-align:center;line-height:1.6;max-width:240px;box-shadow:0 8px 24px rgba(150,110,200,.10)">🌙 Snowball is asleep...<br>Come back after your adventure!</div>
             </div>
@@ -2172,39 +1803,12 @@ body{
               </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <button id="eatBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer">
-                <span style="font-size:20px">🐟</span>
-                <span style="font-size:12px;font-weight:900;color:#6b4a96">Eat</span>
-                <span style="font-size:10px;color:#c084fc;font-weight:900">💎 2</span>
-                <span style="font-size:9px;color:#b090c0;line-height:1.3;text-align:center">+15 fullness<br>+5 happiness</span>
-              </button>
-              <button id="feastBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px;border-radius:18px;border:1.5px solid rgba(251,146,60,.3);background:linear-gradient(160deg,#fff8f0,#fff0e8);font-family:inherit;cursor:pointer">
-                <span style="font-size:20px">🍱</span>
-                <span style="font-size:12px;font-weight:900;color:#6b4a96">Feast</span>
-                <span style="font-size:10px;color:#c084fc;font-weight:900">💎 3</span>
-                <span style="font-size:9px;color:#b090c0;line-height:1.3;text-align:center">+30 fullness<br>+15 happiness</span>
-              </button>
-              <button id="playBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer">
-                <span style="font-size:20px">🎀</span>
-                <span style="font-size:12px;font-weight:900;color:#6b4a96">Play</span>
-                <span style="font-size:10px;color:#c084fc;font-weight:900">💎 1</span>
-                <span style="font-size:9px;color:#b090c0;line-height:1.3;text-align:center">+12 happiness<br>-5 fullness</span>
-              </button>
-              <button id="patBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer">
-                <span style="font-size:20px">✋</span>
-                <span style="font-size:12px;font-weight:900;color:#6b4a96">Pat</span>
-                <span style="font-size:10px;color:#22c55e;font-weight:900">FREE ✨</span>
-                <span style="font-size:9px;color:#b090c0;line-height:1.3;text-align:center">+8 happiness<br>always free</span>
-              </button>
+              <button id="eatBtn" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer"><span style="font-size:22px">🐟</span><span style="font-size:12px;font-weight:900;color:#6b4a96">Eat</span><span style="font-size:10px;color:#c084fc;font-weight:900">💎 2</span></button>
+              <button id="feastBtn" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px;border-radius:18px;border:1.5px solid rgba(251,146,60,.3);background:linear-gradient(160deg,#fff8f0,#fff0e8);font-family:inherit;cursor:pointer"><span style="font-size:22px">🍱</span><span style="font-size:12px;font-weight:900;color:#6b4a96">Feast</span><span style="font-size:10px;color:#c084fc;font-weight:900">💎 5</span></button>
+              <button id="playBtn" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer"><span style="font-size:22px">🎀</span><span style="font-size:12px;font-weight:900;color:#6b4a96">Play</span><span style="font-size:10px;color:#c084fc;font-weight:900">💎 2</span></button>
+              <button id="patBtn" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px;border-radius:18px;border:1.5px solid #e8d5f0;background:rgba(255,255,255,.85);font-family:inherit;cursor:pointer"><span style="font-size:22px">✋</span><span style="font-size:12px;font-weight:900;color:#6b4a96">Pat</span><span style="font-size:10px;color:#c084fc;font-weight:900">💎 1</span></button>
             </div>
-            <div style="background:rgba(255,255,255,.6);border:1px solid #e8d5f0;border-radius:12px;padding:10px 12px;font-size:10px;color:#9070b0;font-weight:700;line-height:1.9">
-              <div style="font-size:11px;font-weight:900;color:#7a5a96;margin-bottom:4px">💎 How to earn stones</div>
-              <div>⭐ Complete a level → 1–3 stones</div>
-              <div>⬆️ Improve your score → bonus stones</div>
-              <div>🌟 Visit daily → +1 stone</div>
-              <div>🐾 Snowball finds gems → +1–2 / day</div>
-            </div>
-            <div id="petLog" style="background:rgba(255,255,255,.6);border:1px solid #e8d5f0;border-radius:12px;padding:10px 12px;max-height:80px;overflow-y:auto;font-size:12px;color:#9070b0;font-weight:700;line-height:1.8;flex:1"><div>🐾 Snowball is waiting for you!</div></div>
+            <div id="petLog" style="background:rgba(255,255,255,.6);border:1px solid #e8d5f0;border-radius:12px;padding:10px 12px;max-height:100px;overflow-y:auto;font-size:12px;color:#9070b0;font-weight:700;line-height:1.8;flex:1"><div>🐾 Snowball is waiting for you!</div></div>
           </div>
         </div>
       </div>`;
@@ -2244,21 +1848,33 @@ body{
     ps.mood=mood; sleeping=(mood==='sleep');
     const img=G('catStateImg'), wrap=G('petCatImg'), zzz=G('petZzz'), so=G('petSleepOverlay');
     if(!img) return;
-    img.style.opacity='0';
-    setTimeout(()=>{
-      img.src=IMGS[mood]||IMGS.main;
-      img.style.opacity='1';
-      img.style.width = mood==='sleep' ? '90%' : 'clamp(200px,50%,300px)';
-      if(wrap){
-        wrap.style.bottom = mood==='sleep' ? '0px' : '18px';
+
+    if(wrap){
+      wrap.style.left='50%';
+      wrap.style.transform='translateX(-50%)';
+      wrap.style.width='100%';
+      wrap.style.display='flex';
+      wrap.style.justifyContent='center';
+      wrap.style.pointerEvents='auto';
+      if(mood==='sleep'){
+        wrap.style.bottom='-4px';
+        img.style.width='clamp(460px, 92%, 720px)';
+        img.style.maxWidth='96%';
+      }else{
+        wrap.style.bottom='18px';
+        img.style.width='clamp(220px, 50%, 320px)';
+        img.style.maxWidth='78%';
       }
-    },180);
+      img.style.height='auto';
+      img.style.display='block';
+    }
+
+    img.style.opacity='0';
+    setTimeout(()=>{ img.src=IMGS[mood]||IMGS.main; img.style.opacity='1'; },180);
     if(wrap){
       const animMap={main:'catIdle',eat:'catEat',feast:'catFeast',play:'catPlay',happy:'catHappy',yawn:'catYawn',sleep:'catSleep',sad:'catIdle'};
       wrap.style.animation='none';
-      if(mood!=='sleep'){
-        setTimeout(()=>{ wrap.style.animation=`${animMap[mood]||'catIdle'} ${mood==='yawn'?'3s':'0.55s'} ${mood==='main'||mood==='yawn'?'ease-in-out infinite':'ease-in-out 4'}`; },10);
-      }
+      setTimeout(()=>{ wrap.style.animation=`${animMap[mood]||'catIdle'} ${mood==='sleep'||mood==='yawn'?'3s':'0.55s'} ${mood==='main'||mood==='sleep'||mood==='yawn'?'ease-in-out infinite':'ease-in-out 4'}`; },10);
     }
     if(zzz) zzz.style.display=mood==='sleep'?'block':'none';
     if(so) so.style.display=mood==='sleep'?'flex':'none';
@@ -2269,42 +1885,9 @@ body{
   function returnToMain(){ if(sleeping) return; clearTimeout(actionT); setMood(ps.happiness<20?'sad':'main'); }
   function doAction(mood,ms){ if(sleeping) return; clearTimeout(actionT); setMood(mood); actionT=setTimeout(returnToMain,ms||2000); resetIdle(); }
 
-  // Absolute session timer — starts when room opens, never reset by activity
-  // 2min → yawn, 3min → sleep. Once asleep, locked for 15min from sleep time.
-  const SESSION_YAWN_MS  = 2 * 60 * 1000;   // 2 minutes
-  const SESSION_SLEEP_MS = 3 * 60 * 1000;   // 3 minutes from open
-  const SLEEP_LOCK_MS    = 15 * 60 * 1000;  // 15-minute cooldown
-
-  function startSessionTimer(){
+  function resetIdle(){
     clearTimeout(idleT);
-    // Yawn at 2 min
-    idleT = setTimeout(()=>{
-      if(sleeping) return;
-      setMood('yawn');
-      // Sleep at 3 min (1 more minute after yawn)
-      idleT = setTimeout(()=>{
-        if(sleeping) return;
-        setMood('sleep');
-        // Record sleep time for 15-min lock
-        const d = load();
-        d.sleepLockedUntil = Date.now() + SLEEP_LOCK_MS;
-        localStorage.setItem(KEY, JSON.stringify(d));
-        addLog('😴 Snowball fell asleep. Come back in 15 minutes!');
-      }, 1 * 60 * 1000);
-    }, SESSION_YAWN_MS);
-  }
-
-  function resetIdle(){ /* no-op: session timer is absolute, not resettable */ }
-
-  function isSleepLocked(){
-    const d = load();
-    return d.sleepLockedUntil && Date.now() < d.sleepLockedUntil;
-  }
-
-  function sleepLockMinutesLeft(){
-    const d = load();
-    if(!d.sleepLockedUntil) return 0;
-    return Math.ceil((d.sleepLockedUntil - Date.now()) / 60000);
+    idleT=setTimeout(()=>{ if(sleeping) return; setMood('yawn'); idleT=setTimeout(()=>setMood('sleep'),2*60*1000); },3*60*1000);
   }
 
   function hearts(e,n=3){
@@ -2346,49 +1929,25 @@ body{
 
   /* ── actions ── */
   function doEat(){ if(sleeping) return; if(stones()<2){ noStones(2); return; } spend(2); ps.fullness=Math.min(100,ps.fullness+15); ps.happiness=Math.min(100,ps.happiness+5); updateBars(); hearts('🐟',2); addLog('🐟 Snowball ate a fish!'); doAction('eat'); save({happiness:ps.happiness,fullness:ps.fullness}); }
-  function doFeast(){ if(sleeping) return; if(stones()<3){ noStones(3); return; } spend(3); ps.fullness=Math.min(100,ps.fullness+30); ps.happiness=Math.min(100,ps.happiness+15); updateBars(); hearts('🍱',5); addLog('🍱 Snowball had a feast!!'); doAction('feast',2600); save({happiness:ps.happiness,fullness:ps.fullness}); }
-  function doPlay(){ if(sleeping) return; if(stones()<1){ noStones(1); return; } spend(1); ps.happiness=Math.min(100,ps.happiness+12); ps.fullness=Math.max(0,ps.fullness-5); updateBars(); hearts('🎀',3); addLog('🎀 Snowball played!'); doAction('play',2400); save({happiness:ps.happiness,fullness:ps.fullness}); }
-  function doPat(){ if(sleeping) return; ps.happiness=Math.min(100,ps.happiness+8); updateBars(); hearts('💕',3); addLog('✋ You patted Snowball!'); doAction('happy'); save({happiness:ps.happiness,fullness:ps.fullness,lastInteract:Date.now()}); }
+  function doFeast(){ if(sleeping) return; if(stones()<5){ noStones(5); return; } spend(5); ps.fullness=Math.min(100,ps.fullness+30); ps.happiness=Math.min(100,ps.happiness+15); updateBars(); hearts('🍱',5); addLog('🍱 Snowball had a feast!!'); doAction('feast',2600); save({happiness:ps.happiness,fullness:ps.fullness}); }
+  function doPlay(){ if(sleeping) return; if(stones()<2){ noStones(2); return; } spend(2); ps.happiness=Math.min(100,ps.happiness+12); ps.fullness=Math.max(0,ps.fullness-5); updateBars(); hearts('🎀',3); addLog('🎀 Snowball played!'); doAction('play',2400); save({happiness:ps.happiness,fullness:ps.fullness}); }
+  function doPat(){ if(sleeping) return; if(stones()<1){ noStones(1); return; } spend(1); ps.happiness=Math.min(100,ps.happiness+8); updateBars(); hearts('💕',3); addLog('✋ You patted Snowball!'); doAction('happy'); save({happiness:ps.happiness,fullness:ps.fullness,lastInteract:Date.now()}); }
 
   /* ── open ── */
   function openPetRoom(){
     const d=load(); if(!d.unlocked) return;
     ps.happiness=d.happiness??80; ps.fullness=d.fullness??60; ps.log=d.log||[];
-    const m=G('petRoomModal'); if(!m) return;
-    // Check 15-min sleep lock FIRST — before resetting sleeping state
-    if(isSleepLocked()){
-      const mins = sleepLockMinutesLeft();
-      m.style.display = 'flex';
-      document.body.style.overflow='hidden';
-      sleeping=true;
-      updateBars();
-      syncAll();
-      const log=G('petLog');
-      if(log) log.innerHTML=ps.log.map(l=>`<div>${l}</div>`).join('');
-      // Directly set sleep image using IMGS map (has correct full URL)
-      const img=G('catStateImg');
-      if(img){ img.style.width='90%'; img.style.opacity='1'; img.src=IMGS['sleep']; }
-      const wrapEl=G('petCatImg'); if(wrapEl) { wrapEl.style.animation='none'; wrapEl.style.bottom='0px'; }
-      const zzz=G('petZzz'); if(zzz) zzz.style.display='block';
-      const so=G('petSleepOverlay'); if(so) so.style.display='flex';
-      addLog('🌙 Still resting... ' + mins + ' min left.');
-      // Check daily bonuses even during lock
-      checkDailyBonus();
-      checkSnowballFind();
-      return;
-    }
     sleeping=false; applyDecay();
-    // Check daily bonuses on every open
-    checkDailyBonus();
-    checkSnowballFind();
+    const m=G('petRoomModal'); if(!m) return;
     m.style.display = 'flex';
     document.body.style.overflow='hidden';
     setMood(ps.happiness<20?'sad':'main');
     updateBars();
-    syncAll();
+    window._appStones=parseInt((G('heroStars')||{}).textContent||'0')||0;
+    syncStones();
     const log=G('petLog');
     if(log&&ps.log.length) log.innerHTML=ps.log.map(l=>`<div>${l}</div>`).join('');
-    startSessionTimer();
+    resetIdle();
   }
 
   /* ── init ── */
@@ -2416,14 +1975,7 @@ body{
     const isUnlocked=!!load().unlocked;
     if(petBtn) petBtn.style.opacity=isUnlocked?'1':'0.4';
 
-    petBtn && petBtn.addEventListener('click',()=>{
-      if(!load().unlocked) {
-        // Not yet unlocked — show gift modal instead
-        if (typeof window._openPetGiftModal === 'function') window._openPetGiftModal(true);
-        return;
-      }
-      openPetRoom();
-    });
+    petBtn && petBtn.addEventListener('click',()=>{ if(!load().unlocked) return; openPetRoom(); });
 
     G('petRoomCloseBtn').addEventListener('click',()=>{
       document.body.style.overflow='';
@@ -2439,47 +1991,25 @@ body{
 
     G('petGiftClaimBtn').addEventListener('click',()=>{
       save({unlocked:true,happiness:80,fullness:60,lastInteract:Date.now(),giftPending:false});
-      const pb=G('petBtn'); if(pb) { pb.style.display=''; pb.style.opacity='1'; }
+      const pb=G('petBtn'); if(pb) pb.style.opacity='1';
       const gm=G('petGiftModal'); if(gm) gm.style.display='none';
-      // Small delay to ensure save() completed before openPetRoom reads it
-      setTimeout(() => openPetRoom(), 50);
+      openPetRoom();
     });
   }
   init();
 
-  window._openPetGiftModal = (force = false) => {
+  window._openPetGiftModal = () => {
+    if (!window._petGiftSessionFlag) { console.log('[gift] blocked - no session flag'); return; }
     const pd = JSON.parse(localStorage.getItem('snowball_v1')||'{}');
-    // Block only if gift was already shown (giftShown flag), not based on unlocked
-    if (pd.giftShown && !force) { console.log('[gift] already shown before'); return; }
-    if (!force && !window._petGiftSessionFlag) { console.log('[gift] no session flag'); return; }
+    if (pd.unlocked) { console.log('[gift] blocked - already unlocked'); return; }
     console.log('[gift] showing modal');
-    // Mark gift as shown
-    const d = JSON.parse(localStorage.getItem('snowball_v1')||'{}');
-    d.giftShown = true;
-    localStorage.setItem('snowball_v1', JSON.stringify(d));
     const m = G('petGiftModal');
     if (m) m.style.display = 'flex';
   };
 
-  // Expose bonus stone adder for main app (retry improvement reward)
-  window._addBonusStonesForImprovement = (n) => {
-    if (!load().unlocked) return; // only if cat is unlocked
-    addBonusStones(n, 'improvement bonus!');
-  };
-
-  // Listen for level1 cleared event from main script
-  window.addEventListener('story-progress-updated', (e) => {
-    if (e.detail && e.detail.level1Cleared) {
-      window.__level1Cleared = true;
-      const pb = G('petBtn');
-      if (pb) pb.style.display = '';
-    }
-  });
-
   // Sync stones
   const heroEl=document.getElementById('heroStars');
-  // MutationObserver: topbar changed → re-sync pet room display
-  if(heroEl) new MutationObserver(()=>{ syncAll(); }).observe(heroEl,{childList:true,characterData:true,subtree:true});
+  if(heroEl) new MutationObserver(()=>{ window._appStones=parseInt(heroEl.textContent)||0; syncStones(); }).observe(heroEl,{childList:true,characterData:true,subtree:true});
 })();
 </script>
 </body>
