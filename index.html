@@ -460,7 +460,7 @@ body{
       </div>
       <div>
         <h1>Save the Kingdom with Math</h1>
-        <p>A Princess · A Quest · A Math Adventure <span style="background:#e8d5f0;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:900;color:#9060c0;letter-spacing:.3px">v2025-04-03</span></p>
+        <p>A Princess · A Quest · A Math Adventure <span style="background:#e8d5f0;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:900;color:#9060c0;letter-spacing:.3px">v0403-B</span></p>
       </div>
     </div>
     <div class="top-actions">
@@ -2363,9 +2363,10 @@ body{
       syncAll();
       const log=G('petLog');
       if(log) log.innerHTML=ps.log.map(l=>`<div>${l}</div>`).join('');
-      // Directly set sleep image without triggering setMood (which would call startSessionTimer)
+      // Directly set sleep image using IMGS map (has correct full URL)
       const img=G('catStateImg');
-      if(img){ img.style.width='clamp(300px,75%,450px)'; img.src='${BASE}cat-sleep.png'; }
+      if(img){ img.style.width='clamp(300px,75%,450px)'; img.style.opacity='1'; img.src=IMGS['sleep']; }
+      const wrapEl=G('petCatImg'); if(wrapEl) wrapEl.style.animation='none';
       const zzz=G('petZzz'); if(zzz) zzz.style.display='block';
       const so=G('petSleepOverlay'); if(so) so.style.display='flex';
       addLog('🌙 Still resting... ' + mins + ' min left.');
