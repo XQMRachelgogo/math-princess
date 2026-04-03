@@ -460,7 +460,7 @@ body{
       </div>
       <div>
         <h1>Save the Kingdom with Math</h1>
-        <p>A Princess · A Quest · A Math Adventure <span style="background:#e8d5f0;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:900;color:#9060c0;letter-spacing:.3px">v0403-D</span></p>
+        <p>A Princess · A Quest · A Math Adventure <span style="background:#e8d5f0;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:900;color:#9060c0;letter-spacing:.3px">v0403-E</span></p>
       </div>
     </div>
     <div class="top-actions">
@@ -2139,7 +2139,7 @@ body{
     overlay.id = 'petRoomModal';
     overlay.style.cssText = 'display:none;position:fixed;left:0;top:0;width:100%;height:100%;z-index:2147483647;background:rgba(30,10,60,.6);align-items:center;justify-content:center;padding:20px;box-sizing:border-box;overflow:auto';
     overlay.innerHTML = `
-      <div style="background:linear-gradient(160deg,#fef9ff,#f0e8ff);border:2px solid rgba(210,180,255,.5);border-radius:32px;width:min(820px,100%);min-width:min(700px,100%);max-height:90vh;overflow:hidden;box-shadow:0 32px 80px rgba(100,50,180,.28);display:flex;flex-direction:column;">
+      <div style="background:linear-gradient(160deg,#fef9ff,#f0e8ff);border:2px solid rgba(210,180,255,.5);border-radius:32px;width:min(820px,100%);max-height:90vh;overflow:hidden;box-shadow:0 32px 80px rgba(100,50,180,.28);display:flex;flex-direction:column;">
         <div style="padding:18px 24px 14px;background:linear-gradient(160deg,rgba(255,255,255,.92),rgba(248,240,255,.92));border-bottom:1px solid rgba(210,180,255,.4);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-shrink:0">
           <div style="display:flex;align-items:center;gap:12px">
             <h3 style="margin:0;font-size:20px;color:#6b4a96">🐱 Snowball's Den</h3>
@@ -2148,7 +2148,7 @@ body{
           <button id="petRoomCloseBtn" style="border:none;background:#f7f2ff;color:#8e75a7;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer;font-family:inherit">Close</button>
         </div>
         <div style="display:flex;flex:1;min-height:0;overflow:hidden;align-items:stretch">
-          <div id="petScene" style="position:relative;flex:0 0 420px;min-width:420px;width:420px;height:420px;overflow:hidden;background:url('${BASE}cat-home.png') center/cover no-repeat;border-right:1px solid rgba(210,180,255,.3)">
+          <div id="petScene" style="position:relative;flex:1 1 0;min-width:0;aspect-ratio:1/1;max-width:420px;overflow:hidden;background:url('${BASE}cat-home.png') center/cover no-repeat;background-size:cover;background-position:center;border-right:1px solid rgba(210,180,255,.3)">
             <div id="petCatImg" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);z-index:3;cursor:pointer;user-select:none;line-height:0">
               <img id="catStateImg" src="${IMGS.main}" alt="Snowball" draggable="false" style="width:clamp(200px,50%,300px);max-width:100%;height:auto;filter:drop-shadow(0 8px 20px rgba(80,40,140,.22));transition:.22s opacity;display:block">
             </div>
@@ -2249,7 +2249,7 @@ body{
       img.src=IMGS[mood]||IMGS.main;
       img.style.opacity='1';
       // Sleep image is full-body/horizontal — scale up 1.5x
-      img.style.width = mood==='sleep' ? '380px' : 'clamp(200px,50%,300px)';
+      img.style.width = mood==='sleep' ? '90%' : 'clamp(200px,50%,300px)';
     },180);
     if(wrap){
       const animMap={main:'catIdle',eat:'catEat',feast:'catFeast',play:'catPlay',happy:'catHappy',yawn:'catYawn',sleep:'catSleep',sad:'catIdle'};
@@ -2365,7 +2365,7 @@ body{
       if(log) log.innerHTML=ps.log.map(l=>`<div>${l}</div>`).join('');
       // Directly set sleep image using IMGS map (has correct full URL)
       const img=G('catStateImg');
-      if(img){ img.style.width='380px'; img.style.opacity='1'; img.src=IMGS['sleep']; }
+      if(img){ img.style.width='90%'; img.style.opacity='1'; img.src=IMGS['sleep']; }
       const wrapEl=G('petCatImg'); if(wrapEl) wrapEl.style.animation='none';
       const zzz=G('petZzz'); if(zzz) zzz.style.display='block';
       const so=G('petSleepOverlay'); if(so) so.style.display='flex';
