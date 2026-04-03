@@ -1803,7 +1803,18 @@ body{
       const checked = document.querySelector(`input[name="q_${q.id}"]:checked`);
       const textInput = document.querySelector(`input[name="q_${q.id}"]:not([type="radio"])`);
       const selectedAnswer = checked ? checked.value : (textInput ? textInput.value.trim() : '');
-      const isCorrect = String(selectedAnswer).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase();
+      const correctRaw = String(q.correct_answer).trim();
+      const selectedNorm = String(selectedAnswer).trim().toLowerCase();
+      const correctNorm  = correctRaw.toLowerCase();
+      // Support both: correct_answer = "A" (letter) or correct_answer = "3 3/4" (content)
+      let isCorrect = selectedNorm === correctNorm;
+      if (!isCorrect && /^[A-Da-d]$/.test(correctRaw)) {
+        // correct_answer is a letter — map to the actual option content
+        const optIdx = correctRaw.toUpperCase().charCodeAt(0) - 65; // A→0, B→1, C→2, D→3
+        const opts = [q.option_a, q.option_b, q.option_c, q.option_d];
+        const correctContent = String(opts[optIdx] ?? '').trim().toLowerCase();
+        isCorrect = selectedNorm === correctContent;
+      }
       return {
         question_id: q.id,
         spell_id: q.spell_id,
@@ -2148,9 +2159,9 @@ body{
           <button id="petRoomCloseBtn" style="border:none;background:#f7f2ff;color:#8e75a7;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer;font-family:inherit">Close</button>
         </div>
         <div style="display:flex;flex:1;min-height:0;overflow:hidden;align-items:stretch">
-          <div id="petScene" style="position:relative;flex:1.15 1 0;min-width:0;min-height:520px;overflow:hidden;background:url('${BASE}cat-home.png') center center / cover no-repeat;border-right:1px solid rgba(210,180,255,.3)">
-            <div id="petCatImg" style="position:absolute;bottom:18px;left:50%;transform:translateX(-50%);z-index:3;cursor:pointer;user-select:none;line-height:0">
-              <img id="catStateImg" src="${IMGS.main}" alt="Snowball" draggable="false" style="width:clamp(200px,50%,300px);max-width:100%;height:auto;filter:drop-shadow(0 8px 20px rgba(80,40,140,.22));transition:.22s opacity;display:block;object-fit:contain">
+          <div id="petScene" style="position:relative;flex:1 1 0;min-width:0;aspect-ratio:1/1;max-width:420px;overflow:hidden;background:url('${BASE}cat-home.png') center/cover no-repeat;background-size:cover;background-position:center;border-right:1px solid rgba(210,180,255,.3)">
+            <div id="petCatImg" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);z-index:3;cursor:pointer;user-select:none;line-height:0">
+              <img id="catStateImg" src="${IMGS.main}" alt="Snowball" draggable="false" style="width:clamp(200px,50%,300px);max-width:100%;height:auto;filter:drop-shadow(0 8px 20px rgba(80,40,140,.22));transition:.22s opacity;display:block">
             </div>
             <div id="petBubble" style="position:absolute;bottom:76%;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.97);border:2px solid #e0ccf5;border-radius:22px;padding:10px 22px;font-size:17px;font-weight:900;color:#6b4a96;white-space:nowrap;box-shadow:0 6px 20px rgba(150,110,200,.14);z-index:9;opacity:0;transition:.3s opacity;pointer-events:none">Meow~</div>
             <div id="petZzz" style="display:none;position:absolute;bottom:80%;left:55%;font-size:26px;font-weight:900;color:#a090c0;letter-spacing:4px;z-index:10;animation:zzzFloat 2.2s ease-in-out infinite">z z z</div>
@@ -2248,10 +2259,8 @@ body{
     setTimeout(()=>{
       img.src=IMGS[mood]||IMGS.main;
       img.style.opacity='1';
+      // Sleep image is full-body/horizontal — scale up 1.5x
       img.style.width = mood==='sleep' ? '90%' : 'clamp(200px,50%,300px)';
-      if(wrap){
-        wrap.style.bottom = mood==='sleep' ? '0px' : '18px';
-      }
     },180);
     if(wrap){
       const animMap={main:'catIdle',eat:'catEat',feast:'catFeast',play:'catPlay',happy:'catHappy',yawn:'catYawn',sleep:'catSleep',sad:'catIdle'};
@@ -2368,7 +2377,7 @@ body{
       // Directly set sleep image using IMGS map (has correct full URL)
       const img=G('catStateImg');
       if(img){ img.style.width='90%'; img.style.opacity='1'; img.src=IMGS['sleep']; }
-      const wrapEl=G('petCatImg'); if(wrapEl) { wrapEl.style.animation='none'; wrapEl.style.bottom='0px'; }
+      const wrapEl=G('petCatImg'); if(wrapEl) wrapEl.style.animation='none';
       const zzz=G('petZzz'); if(zzz) zzz.style.display='block';
       const so=G('petSleepOverlay'); if(so) so.style.display='flex';
       addLog('🌙 Still resting... ' + mins + ' min left.');
