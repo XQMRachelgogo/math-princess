@@ -1547,14 +1547,25 @@ body{
     }
 
     // ═══ STEP 1: Review spells — fill the majority first ═══
-    // Review difficulty: early levels use practice, later allow challenge
-    const reviewDiff = levelNo <= 12 ? 'practice' : levelNo <= 24 ? 'challenge' : null;
+    // KEY: vary difficulty by level so each level draws from a DIFFERENT difficulty band
+    // L1=concept, L2=guided, L3=practice, L4+=challenge → different questions each time
+    const reviewDiff = levelNo <= 1  ? 'concept'
+                     : levelNo <= 2  ? 'guided'
+                     : levelNo <= 4  ? 'practice'
+                     : levelNo <= 8  ? 'challenge'
+                     : null; // later levels: natural spread (all difficulties)
     const reviewTarget = TOTAL - MAX_NEW;
+
+    // Spread evenly across review spells, but ensure we use the full reviewTarget
+    // by giving each spell a fair share and then filling remainders
     const perReview = reviewPlans.length
-      ? Math.max(1, Math.floor(reviewTarget / reviewPlans.length))
+      ? Math.max(1, Math.ceil(reviewTarget / reviewPlans.length))
       : 0;
     for (const plan of reviewPlans) {
-      pickFromSpell(plan.spell_id, perReview, reviewDiff || plan.difficulty_band);
+      const remaining = reviewTarget - chosen.filter(q => !newPlans.some(p=>p.spell_id===q.spell_id)).length;
+      if (remaining <= 0) break;
+      const cap = Math.min(perReview, remaining);
+      pickFromSpell(plan.spell_id, cap, reviewDiff || plan.difficulty_band);
     }
 
     // ═══ STEP 2: New-content — capped at MAX_NEW, easiest questions first ═══
@@ -1573,16 +1584,20 @@ body{
       pickFromSpell(plan.spell_id, cap, newDiff || plan.difficulty_band);
     }
 
-    // ═══ STEP 3: Fill remaining with review, balancing question types ═══
+    // ═══ STEP 3: Fill remaining with review, respecting difficulty progression ═══
     if (chosen.length < TOTAL) {
       const reviewSpellIds = new Set(reviewPlans.map(p => p.spell_id));
-      const pool = (allQs || []).filter(q => !chosenIds.has(q.id) && reviewSpellIds.has(q.spell_id));
+      let pool = (allQs || []).filter(q => !chosenIds.has(q.id) && reviewSpellIds.has(q.spell_id));
+      // Prefer same difficulty band as Step 1 to avoid pulling easier questions
+      const diffPool = reviewDiff ? pool.filter(q => q.difficulty === reviewDiff) : [];
+      const restPool = pool.filter(q => !diffPool.includes(q));
+      const orderedPool = [...shuffle(diffPool), ...shuffle(restPool)];
       const mcWant = Math.max(0, 7 - chosen.filter(q => q.question_type === 'multiple_choice').length);
       const saWant = Math.max(0, 4 - chosen.filter(q => q.question_type === 'short_answer').length);
-      const mc = shuffle(pool.filter(q => q.question_type === 'multiple_choice')).slice(0, mcWant);
-      const sa = shuffle(pool.filter(q => q.question_type === 'short_answer')).slice(0, saWant);
+      const mc = orderedPool.filter(q => q.question_type === 'multiple_choice').slice(0, mcWant);
+      const sa = orderedPool.filter(q => q.question_type === 'short_answer').slice(0, saWant);
       const mcSet = new Set(mc.map(q=>q.id)), saSet = new Set(sa.map(q=>q.id));
-      const rest = shuffle(pool.filter(q => !mcSet.has(q.id) && !saSet.has(q.id)));
+      const rest = orderedPool.filter(q => !mcSet.has(q.id) && !saSet.has(q.id));
       for (const q of [...mc, ...sa, ...rest]) {
         if (chosen.length >= TOTAL) break;
         addQ(q);
