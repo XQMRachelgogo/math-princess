@@ -1922,6 +1922,8 @@ body{
 
       $('quizScoreBox').classList.remove('hidden');
       $('quizScoreBox').textContent = `Score ${rawScore}/12 · ${earnedStars} Spirit Stone(s) · ${result.completed ? 'Level completed! ✨' : 'Keep practicing and try again.'}`;
+      // Show result popup
+      setTimeout(() => showResultModal(rawScore, earnedStars, isCompleted, level?.level_no || 1), 400);
 
       // Update local state immediately — don't wait for Supabase round-trip
       if (result.completed && level) {
@@ -2029,6 +2031,36 @@ body{
   }
 
   $('guideBtn').addEventListener('click', () => $('guideModal').classList.add('open'));
+  function showResultModal(rawScore, earnedStars, isCompleted, levelNo) {
+    const pct = rawScore / 12;
+    const BASE_URL = 'https://raw.githubusercontent.com/XQMRachelgogo/math-princess/main/';
+    let imgSrc, title, msg;
+
+    if (rawScore === 12) {
+      imgSrc = BASE_URL + '1.png';
+      title  = '✨ Perfect Score!';
+      msg    = 'Amazing, Princess ' + (state.childName || '') + '! Every single answer was right. The kingdom shines because of you!';
+    } else if (pct >= 0.6) {
+      imgSrc = BASE_URL + '3.png';
+      title  = 'Well Done! 🌟';
+      msg    = 'Great effort! You got ' + rawScore + ' out of 12. Review the ones you missed — you are almost there!';
+    } else {
+      imgSrc = BASE_URL + '2.png';
+      title  = 'Keep Practicing! 💪';
+      msg    = 'You got ' + rawScore + ' out of 12. Take your time and try again — every princess grows stronger with practice!';
+    }
+
+    const m = document.getElementById('resultModal');
+    if (!m) return;
+    document.getElementById('resultImg').src         = imgSrc;
+    document.getElementById('resultTitle').textContent = title;
+    document.getElementById('resultScore').textContent = 'Score: ' + rawScore + '/12' + (earnedStars > 0 ? ' · +' + earnedStars + ' Spirit Stone' + (earnedStars > 1 ? 's' : '') : '');
+    document.getElementById('resultMsg').textContent   = msg;
+    document.getElementById('resultRetryBtn').style.display = isCompleted ? 'none' : '';
+    document.getElementById('resultNextBtn').style.display  = isCompleted ? '' : 'none';
+    m.style.display = 'flex';
+  }
+
   $('spellBookBtn').addEventListener('click', openSpellBook);
   $('authBtn').addEventListener('click', toggleAuth);
   $('sendMagicBtn').addEventListener('click', sendMagicLink);
@@ -2036,6 +2068,23 @@ body{
   $('continueBtn').addEventListener('click', continueJourney);
   $('startLevelBtn').addEventListener('click', startLevelFlow);
   $('submitQuizBtn').addEventListener('click', submitQuiz);
+
+  $('resultRetryBtn').addEventListener('click', () => {
+    $('resultModal').style.display = 'none';
+    startLevelFlow();
+  });
+  $('resultNextBtn').addEventListener('click', () => {
+    $('resultModal').style.display = 'none';
+    $('quizModal').classList.remove('open');
+    openMapModal();
+  });
+  $('resultReviewBtn').addEventListener('click', () => {
+    $('resultModal').style.display = 'none';
+    // quiz modal stays open, user can scroll to review
+    const qc = $('quizQuestions');
+    if (qc) qc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
   $('retryQuizBtn').addEventListener('click', startLevelFlow);
   $('nextLevelBtn').addEventListener('click', () => {
     modalIds.forEach(id => $(id).classList.remove('open'));
@@ -2526,5 +2575,19 @@ body{
   if(heroEl) new MutationObserver(()=>{ syncAll(); }).observe(heroEl,{childList:true,characterData:true,subtree:true});
 })();
 </script>
+
+<div id="resultModal" style="display:none;position:fixed;inset:0;z-index:2147483640;background:rgba(40,20,80,.55);align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+  <div style="background:linear-gradient(160deg,#fef9ff,#f3eeff);border:2px solid rgba(210,180,255,.5);border-radius:32px;width:min(480px,100%);box-shadow:0 32px 80px rgba(100,50,180,.28);overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:32px 28px 28px;gap:0;text-align:center">
+    <img id="resultImg" src="" alt="" style="width:200px;height:200px;object-fit:contain;margin-bottom:16px">
+    <div id="resultTitle" style="font-size:26px;font-weight:900;color:#5a3a86;margin-bottom:8px;line-height:1.2"></div>
+    <div id="resultScore" style="font-size:15px;font-weight:800;color:#9070b0;margin-bottom:6px"></div>
+    <div id="resultMsg" style="font-size:14px;color:#8060a0;line-height:1.6;margin-bottom:24px;max-width:340px"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <button id="resultRetryBtn" class="ghost-btn" style="display:none">Try Again</button>
+      <button id="resultNextBtn" class="primary-btn" style="display:none">Next Level →</button>
+      <button id="resultReviewBtn" class="primary-btn secondary">Review Answers</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
