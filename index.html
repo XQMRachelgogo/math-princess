@@ -1000,8 +1000,14 @@ body{
   }
 
   async function initClient() {
+    // Wait up to 8s for Supabase SDK to load (CDN may be slow)
+    let waited = 0;
+    while ((!window.supabase || typeof window.supabase.createClient !== 'function') && waited < 8000) {
+      await new Promise(r => setTimeout(r, 200));
+      waited += 200;
+    }
     if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-      throw new Error('Supabase SDK failed to load.');
+      throw new Error('Supabase SDK failed to load. Please check your connection and refresh.');
     }
     state.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
@@ -1288,7 +1294,15 @@ body{
   async function sendMagicLink() {
     const email = $('emailInput').value.trim();
     if (!email) { $('authStatus').textContent = 'Please enter an email address first.'; return; }
-    if (!state.client) { $('authStatus').textContent = 'Still connecting... please wait a moment and try again.'; return; }
+    if (!state.client) {
+      $('authStatus').textContent = 'Connecting to server...';
+      let waited = 0;
+      while (!state.client && waited < 5000) {
+        await new Promise(r => setTimeout(r, 300));
+        waited += 300;
+      }
+      if (!state.client) { $('authStatus').textContent = 'Could not connect. Please refresh the page and try again.'; return; }
+    }
     $('authStatus').textContent = 'Sending magic link...';
     const { error } = await state.client.auth.signInWithOtp({
       email,
