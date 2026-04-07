@@ -1287,10 +1287,8 @@ body{
 
   async function sendMagicLink() {
     const email = $('emailInput').value.trim();
-    if (!email) {
-      $('authStatus').textContent = 'Please enter an email address first.';
-      return;
-    }
+    if (!email) { $('authStatus').textContent = 'Please enter an email address first.'; return; }
+    if (!state.client) { $('authStatus').textContent = 'Still connecting... please wait a moment and try again.'; return; }
     $('authStatus').textContent = 'Sending magic link...';
     const { error } = await state.client.auth.signInWithOtp({
       email,
@@ -2100,6 +2098,20 @@ body{
 })();
 
 </script>
+<div id="resultModal" style="display:none;position:fixed;inset:0;z-index:2147483640;background:rgba(40,20,80,.55);align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+  <div style="background:linear-gradient(160deg,#fef9ff,#f3eeff);border:2px solid rgba(210,180,255,.5);border-radius:32px;width:min(480px,100%);box-shadow:0 32px 80px rgba(100,50,180,.28);overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:32px 28px 28px;gap:0;text-align:center">
+    <img id="resultImg" src="" alt="" style="width:200px;height:200px;object-fit:contain;margin-bottom:16px">
+    <div id="resultTitle" style="font-size:26px;font-weight:900;color:#5a3a86;margin-bottom:8px;line-height:1.2"></div>
+    <div id="resultScore" style="font-size:15px;font-weight:800;color:#9070b0;margin-bottom:6px"></div>
+    <div id="resultMsg" style="font-size:14px;color:#8060a0;line-height:1.6;margin-bottom:24px;max-width:340px"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <button id="resultRetryBtn" class="ghost-btn" style="display:none">Try Again</button>
+      <button id="resultNextBtn" class="primary-btn" style="display:none">Next Level →</button>
+      <button id="resultReviewBtn" class="primary-btn secondary">Review Answers</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ═══ SNOWBALL PET SYSTEM — DOM built entirely via JS ═══ */
 (function() {
@@ -2578,18 +2590,5 @@ body{
 })();
 </script>
 
-<div id="resultModal" style="display:none;position:fixed;inset:0;z-index:2147483640;background:rgba(40,20,80,.55);align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
-  <div style="background:linear-gradient(160deg,#fef9ff,#f3eeff);border:2px solid rgba(210,180,255,.5);border-radius:32px;width:min(480px,100%);box-shadow:0 32px 80px rgba(100,50,180,.28);overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:32px 28px 28px;gap:0;text-align:center">
-    <img id="resultImg" src="" alt="" style="width:200px;height:200px;object-fit:contain;margin-bottom:16px">
-    <div id="resultTitle" style="font-size:26px;font-weight:900;color:#5a3a86;margin-bottom:8px;line-height:1.2"></div>
-    <div id="resultScore" style="font-size:15px;font-weight:800;color:#9070b0;margin-bottom:6px"></div>
-    <div id="resultMsg" style="font-size:14px;color:#8060a0;line-height:1.6;margin-bottom:24px;max-width:340px"></div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
-      <button id="resultRetryBtn" class="ghost-btn" style="display:none">Try Again</button>
-      <button id="resultNextBtn" class="primary-btn" style="display:none">Next Level →</button>
-      <button id="resultReviewBtn" class="primary-btn secondary">Review Answers</button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
