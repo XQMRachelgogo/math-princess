@@ -1700,12 +1700,14 @@ body{
       });
 
       if (lessonRows.length > 0) {
+        console.log('[knight] showing teaching for spells:', newSpellIds, '| lessons found:', lessonRows.length);
         // Show knight teaching modal before the quiz
         showKnightTeaching(levelNo, lessonRows, () => {
           renderQuiz(levelNo, questions);
           $('quizModal').classList.add('open');
         });
       } else {
+        console.log('[knight] no lessons found for new spells:', newSpellIds, '| newPlans:', newPlans.map(p=>p.role+':'+p.spell_id));
         renderQuiz(levelNo, questions);
         $('quizModal').classList.add('open');
       }
