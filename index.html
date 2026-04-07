@@ -2083,21 +2083,31 @@ body{
   $('startLevelBtn').addEventListener('click', startLevelFlow);
   $('submitQuizBtn').addEventListener('click', submitQuiz);
 
-  $('resultRetryBtn').addEventListener('click', () => {
-    $('resultModal').style.display = 'none';
-    startLevelFlow();
-  });
-  $('resultNextBtn').addEventListener('click', () => {
-    $('resultModal').style.display = 'none';
-    $('quizModal').classList.remove('open');
-    openMapModal();
-  });
-  $('resultReviewBtn').addEventListener('click', () => {
-    $('resultModal').style.display = 'none';
-    // quiz modal stays open, user can scroll to review
-    const qc = $('quizQuestions');
-    if (qc) qc.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+  const resultRetryBtn = $('resultRetryBtn');
+  const resultNextBtn = $('resultNextBtn');
+  const resultReviewBtn = $('resultReviewBtn');
+
+  if (resultRetryBtn) {
+    resultRetryBtn.addEventListener('click', () => {
+      $('resultModal').style.display = 'none';
+      startLevelFlow();
+    });
+  }
+  if (resultNextBtn) {
+    resultNextBtn.addEventListener('click', () => {
+      $('resultModal').style.display = 'none';
+      $('quizModal').classList.remove('open');
+      openMapModal();
+    });
+  }
+  if (resultReviewBtn) {
+    resultReviewBtn.addEventListener('click', () => {
+      $('resultModal').style.display = 'none';
+      // quiz modal stays open, user can scroll to review
+      const qc = $('quizQuestions');
+      if (qc) qc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 
   $('retryQuizBtn').addEventListener('click', startLevelFlow);
   $('nextLevelBtn').addEventListener('click', () => {
