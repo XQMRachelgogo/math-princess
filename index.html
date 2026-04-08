@@ -460,7 +460,7 @@ body{
       </div>
       <div>
         <h1>Save the Kingdom with Math</h1>
-        <p>A Princess · A Quest · A Math Adventure <span style="background:#e8d5f0;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:900;color:#9060c0;letter-spacing:.3px">v0403-E</span></p>
+        <p>A Princess · A Quest · A Math Adventure <span style="background:#e8d5f0;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:900;color:#9060c0;letter-spacing:.3px">v0407-F</span></p>
       </div>
     </div>
     <div class="top-actions">
@@ -657,6 +657,11 @@ body{
   const MAX_MAIN_LEVELS = 36;
 
   const $ = (id) => document.getElementById(id);
+  const on = (id, event, handler) => {
+    const el = $(id);
+    if (el) el.addEventListener(event, handler);
+    return el;
+  };
   const modalIds = ['authModal','guideModal','spellModal','mapModal','levelModal','quizModal'];
 
   const state = {
@@ -2075,38 +2080,48 @@ body{
     m.style.display = 'flex';
   }
 
-  $('spellBookBtn').addEventListener('click', openSpellBook);
-  $('authBtn').addEventListener('click', toggleAuth);
-  $('sendMagicBtn').addEventListener('click', sendMagicLink);
-  $('startBtn').addEventListener('click', startJourney);
-  $('continueBtn').addEventListener('click', continueJourney);
-  $('startLevelBtn').addEventListener('click', startLevelFlow);
-  $('submitQuizBtn').addEventListener('click', submitQuiz);
+  on('spellBookBtn', 'click', openSpellBook);
+  on('authBtn', 'click', toggleAuth);
+  on('sendMagicBtn', 'click', sendMagicLink);
+  on('startBtn', 'click', startJourney);
+  on('continueBtn', 'click', continueJourney);
+  on('startLevelBtn', 'click', startLevelFlow);
+  on('submitQuizBtn', 'click', submitQuiz);
 
-  $('resultRetryBtn').addEventListener('click', () => {
-    $('resultModal').style.display = 'none';
+  on('resultRetryBtn', 'click', () => {
+    const resultModal = $('resultModal');
+    if (resultModal) resultModal.style.display = 'none';
     startLevelFlow();
   });
-  $('resultNextBtn').addEventListener('click', () => {
-    $('resultModal').style.display = 'none';
-    $('quizModal').classList.remove('open');
+  on('resultNextBtn', 'click', () => {
+    const resultModal = $('resultModal');
+    if (resultModal) resultModal.style.display = 'none';
+    const quizModal = $('quizModal');
+    if (quizModal) quizModal.classList.remove('open');
     openMapModal();
   });
-  $('resultReviewBtn').addEventListener('click', () => {
-    $('resultModal').style.display = 'none';
+  on('resultReviewBtn', 'click', () => {
+    const resultModal = $('resultModal');
+    if (resultModal) resultModal.style.display = 'none';
     // quiz modal stays open, user can scroll to review
     const qc = $('quizQuestions');
     if (qc) qc.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
-  $('retryQuizBtn').addEventListener('click', startLevelFlow);
-  $('nextLevelBtn').addEventListener('click', () => {
-    modalIds.forEach(id => $(id).classList.remove('open'));
+  on('retryQuizBtn', 'click', startLevelFlow);
+  on('nextLevelBtn', 'click', () => {
+    modalIds.forEach(id => {
+      const modal = $(id);
+      if (modal) modal.classList.remove('open');
+    });
     state.currentLevelNo = nextPlayableLevel(state.levels, state.progress);
     openMapModal();
   });
-  $('claimBossBtn').addEventListener('click', claimBossReward);
-  document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', () => $(btn.dataset.close).classList.remove('open')));
+  on('claimBossBtn', 'click', claimBossReward);
+  document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', () => {
+    const modal = $(btn.dataset.close);
+    if (modal) modal.classList.remove('open');
+  }));
 
   init();
 })();
