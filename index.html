@@ -460,7 +460,7 @@ body{
       </div>
       <div>
         <h1>Save the Kingdom with Math</h1>
-        <p>A Princess · A Quest · A Math Adventure <span style="background:#e8d5f0;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:900;color:#9060c0;letter-spacing:.3px">v0407-H</span></p>
+        <p>A Princess · A Quest · A Math Adventure <span style="background:#e8d5f0;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:900;color:#9060c0;letter-spacing:.3px">v0407-I</span></p>
       </div>
     </div>
     <div class="top-actions">
@@ -2487,13 +2487,17 @@ body{
   function applyDecay(){
     const d=load(), last=d.lastInteract||Date.now();
     const days=Math.floor((Date.now()-last)/(24*60*60*1000));
-    if(days>0){ ps.happiness=Math.max(0,ps.happiness-days*10); save({happiness:ps.happiness}); }
+    if(days>0){
+      ps.happiness=Math.max(0,ps.happiness-days*10);
+      ps.fullness=Math.max(0,ps.fullness-days*10);
+      save({happiness:ps.happiness,fullness:ps.fullness,lastInteract:Date.now()});
+    }
   }
 
   /* ── actions ── */
-  function doEat(){ if(sleeping) return; if(stones()<2){ noStones(2); return; } spend(2); ps.fullness=Math.min(100,ps.fullness+15); ps.happiness=Math.min(100,ps.happiness+5); updateBars(); hearts('🐟',2); addLog('🐟 Snowball ate a fish!'); doAction('eat'); save({happiness:ps.happiness,fullness:ps.fullness}); }
-  function doFeast(){ if(sleeping) return; if(stones()<3){ noStones(3); return; } spend(3); ps.fullness=Math.min(100,ps.fullness+30); ps.happiness=Math.min(100,ps.happiness+15); updateBars(); hearts('🍱',5); addLog('🍱 Snowball had a feast!!'); doAction('feast',2600); save({happiness:ps.happiness,fullness:ps.fullness}); }
-  function doPlay(){ if(sleeping) return; if(stones()<1){ noStones(1); return; } spend(1); ps.happiness=Math.min(100,ps.happiness+12); ps.fullness=Math.max(0,ps.fullness-5); updateBars(); hearts('🎀',3); addLog('🎀 Snowball played!'); doAction('play',2400); save({happiness:ps.happiness,fullness:ps.fullness}); }
+  function doEat(){ if(sleeping) return; if(stones()<2){ noStones(2); return; } spend(2); ps.fullness=Math.min(100,ps.fullness+15); ps.happiness=Math.min(100,ps.happiness+5); updateBars(); hearts('🐟',2); addLog('🐟 Snowball ate a fish!'); doAction('eat'); save({happiness:ps.happiness,fullness:ps.fullness,lastInteract:Date.now()}); }
+  function doFeast(){ if(sleeping) return; if(stones()<3){ noStones(3); return; } spend(3); ps.fullness=Math.min(100,ps.fullness+30); ps.happiness=Math.min(100,ps.happiness+15); updateBars(); hearts('🍱',5); addLog('🍱 Snowball had a feast!!'); doAction('feast',2600); save({happiness:ps.happiness,fullness:ps.fullness,lastInteract:Date.now()}); }
+  function doPlay(){ if(sleeping) return; if(stones()<1){ noStones(1); return; } spend(1); ps.happiness=Math.min(100,ps.happiness+12); ps.fullness=Math.max(0,ps.fullness-5); updateBars(); hearts('🎀',3); addLog('🎀 Snowball played!'); doAction('play',2400); save({happiness:ps.happiness,fullness:ps.fullness,lastInteract:Date.now()}); }
   function doPat(){ if(sleeping) return; ps.happiness=Math.min(100,ps.happiness+8); updateBars(); hearts('💕',3); addLog('✋ You patted Snowball!'); doAction('happy'); save({happiness:ps.happiness,fullness:ps.fullness,lastInteract:Date.now()}); }
 
   /* ── open ── */
@@ -2575,7 +2579,7 @@ body{
       document.body.style.overflow='';
       const pm=G('petRoomModal'); if(pm) pm.style.display='none';
       clearTimeout(idleT); clearTimeout(actionT);
-      save({happiness:ps.happiness,fullness:ps.fullness,log:ps.log});
+      save({happiness:ps.happiness,fullness:ps.fullness,log:ps.log,lastInteract:Date.now()});
     });
     G('eatBtn').addEventListener('click',doEat);
     G('feastBtn').addEventListener('click',doFeast);
