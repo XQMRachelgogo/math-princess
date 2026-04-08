@@ -460,7 +460,7 @@ body{
       </div>
       <div>
         <h1>Save the Kingdom with Math</h1>
-        <p>A Princess · A Quest · A Math Adventure <span style="background:#e8d5f0;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:900;color:#9060c0;letter-spacing:.3px">v0407-F</span></p>
+        <p>A Princess · A Quest · A Math Adventure <span style="background:#e8d5f0;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:900;color:#9060c0;letter-spacing:.3px">v0407-G</span></p>
       </div>
     </div>
     <div class="top-actions">
@@ -2088,24 +2088,33 @@ body{
   on('startLevelBtn', 'click', startLevelFlow);
   on('submitQuizBtn', 'click', submitQuiz);
 
-  on('resultRetryBtn', 'click', () => {
-    const resultModal = $('resultModal');
-    if (resultModal) resultModal.style.display = 'none';
-    startLevelFlow();
-  });
-  on('resultNextBtn', 'click', () => {
-    const resultModal = $('resultModal');
-    if (resultModal) resultModal.style.display = 'none';
-    const quizModal = $('quizModal');
-    if (quizModal) quizModal.classList.remove('open');
-    openMapModal();
-  });
-  on('resultReviewBtn', 'click', () => {
-    const resultModal = $('resultModal');
-    if (resultModal) resultModal.style.display = 'none';
-    // quiz modal stays open, user can scroll to review
-    const qc = $('quizQuestions');
-    if (qc) qc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('#resultRetryBtn, #resultNextBtn, #resultReviewBtn');
+    if (!target) return;
+
+    if (target.id === 'resultRetryBtn') {
+      const resultModal = $('resultModal');
+      if (resultModal) resultModal.style.display = 'none';
+      startLevelFlow();
+      return;
+    }
+
+    if (target.id === 'resultNextBtn') {
+      const resultModal = $('resultModal');
+      if (resultModal) resultModal.style.display = 'none';
+      const quizModal = $('quizModal');
+      if (quizModal) quizModal.classList.remove('open');
+      openMapModal();
+      return;
+    }
+
+    if (target.id === 'resultReviewBtn') {
+      const resultModal = $('resultModal');
+      if (resultModal) resultModal.style.display = 'none';
+      // quiz modal stays open, user can scroll to review
+      const qc = $('quizQuestions');
+      if (qc) qc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   });
 
   on('retryQuizBtn', 'click', startLevelFlow);
